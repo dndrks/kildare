@@ -21,8 +21,8 @@ Engine_RTchanges : CroneEngine {
 			var envelope = EnvGen.kr(envelope: Env.perc(attackTime: 0, releaseTime: 15, level: 0.5),gate: kill_gate);
 			var kill_when_dead = Env.perc(attackTime: 0, releaseTime: 15, level: 0.5).kr(doneAction:2);
 
-			var slewed_cut = Lag2.kr(cutoff,0.1);
-			var filter = MoogFF.ar(in: mix, freq: In.kr(cutoff), gain: 3);
+			var slewed_cut = In.kr(cutoff).lag2(0.1);
+			var filter = MoogFF.ar(in: mix, freq: slewed_cut, gain: 3);
 
 			var signal = Pan2.ar(filter*envelope,0);
 
