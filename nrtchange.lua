@@ -1,13 +1,13 @@
--- realtime changes test
+-- nonrealtime changes test
 
-engine.name = "RealtimeChanges"
+engine.name = "NRTchanges"
 
 function init()
   clock.run(
       function()
         while true do
           clock.sync(1)
-          engine.modulating_cutoff(math.random(200,5000))
+          engine.cutoff(math.random(200,5000))
         end
       end
   )

@@ -1,13 +1,12 @@
-Engine_RealtimeChanges : CroneEngine {
+Engine_NRTchanges : CroneEngine {
 
 	var params;
 	var voice;
-	var buscontrol;
 
 	alloc {
 
 		// add SynthDefs
-		SynthDef("RealtimeChanges", {
+		SynthDef("NRTchanges", {
 			arg out = 0,
 			freq, cutoff,
 			kill_gate = 1;
@@ -19,10 +18,10 @@ Engine_RealtimeChanges : CroneEngine {
 			var mix = Mix.ar([pulse,saw,sub,noise]);
 
 			var envelope = EnvGen.kr(envelope: Env.perc(attackTime: 0, releaseTime: 15, level: 0.5),gate: kill_gate);
-			var kill_when_dead = Env.perc(attackTime: 0, releaseTime: 15, level: 0.5).kr(doneAction:2);
+      var kill_when_dead = Env.perc(attackTime: 0, releaseTime: 15, level: 0.5).kr(doneAction:2);
 
-			var slewed_cut = Lag2.kr(cutoff,0.1);
-			var filter = MoogFF.ar(in: mix, freq: In.kr(cutoff), gain: 3);
+			var slewedcut = Lag2.kr(cutoff,0.1);
+			var filter = MoogFF.ar(in: mix, freq: slewedcut, gain: 3);
 
 			var signal = Pan2.ar(filter*envelope,0);
 
@@ -30,13 +29,10 @@ Engine_RealtimeChanges : CroneEngine {
 
 		}).add;
 
-		buscontrol = Bus('control',numChannels:1);
-		buscontrol.set(8000);
-
 		Server.default.sync;
 
-/*		params = Dictionary.newFrom([
-			\cutoff, buscontrol,
+		params = Dictionary.newFrom([
+			\cutoff, 8000,
 		]);
 
 		params.keysDo({ arg key;
@@ -50,7 +46,7 @@ Engine_RealtimeChanges : CroneEngine {
 					});
 				});
 			});
-		});*/
+		});
 
 		this.addCommand("hz", "f", { arg msg;
 			if (voice == nil,{
@@ -59,18 +55,8 @@ Engine_RealtimeChanges : CroneEngine {
 					voice.set(\kill_gate,-1.05);
 				});
 			});
-			voice = Synth("RealtimeChanges", [\freq, msg[1], \cutoff, buscontrol]);
+			voice = Synth("NRTchanges", [\freq, msg[1]] ++ params.getPairs);
 			NodeWatcher.register(voice);
-		});
-
-		this.addCommand("modulating_cutoff", "f", { arg msg;
-			if (voice == nil,{
-				},{
-				if (voice.isRunning,{
-					("setting "++(msg[1])).postln;
-					buscontrol.set(msg[1]);
-				});
-			});
 		});
 
 	}
