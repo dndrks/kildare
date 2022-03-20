@@ -22,6 +22,7 @@ Engine_drumexample : CroneEngine {
 	}
 
 	alloc {
+
 		synthArray = Array.newClear(10);
 		bd_busDepot = Dictionary.new();
 		sd_busDepot = Dictionary.new();
