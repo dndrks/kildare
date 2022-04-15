@@ -41,7 +41,7 @@ Engine_drumexample : CroneEngine {
 			bd_SPTCH_bus = 0, bd_SCHNK_bus = 0,
 			bd_AMD_bus = 0, bd_AMF_bus = 0,
 			bd_EQF_bus = 0, bd_EQG_bus = 0, bd_brate_bus = 0, bd_bcnt_bus = 0,
-			bd_click_bus = 0, bd_LPfreq_bus = 0, bd_HPfreq_bus = 0, bd_filterQ_bus = 0;
+			bd_LPfreq_bus = 0, bd_HPfreq_bus = 0, bd_filterQ_bus = 0;
 
 			var bd_amp, bd_carHz, bd_carAtk, bd_carRel,
 			bd_modHz, bd_modAmp, bd_modAtk, bd_modRel, bd_feedAmp,
@@ -49,10 +49,10 @@ Engine_drumexample : CroneEngine {
 			bd_SPTCH, bd_SCHNK,
 			bd_AMD, bd_AMF,
 			bd_EQF, bd_EQG, bd_brate, bd_bcnt,
-			bd_click, bd_LPfreq, bd_HPfreq, bd_filterQ;
+			bd_LPfreq, bd_HPfreq, bd_filterQ;
 
 			var bd_car, bd_mod, bd_carEnv, bd_modEnv, bd_carRamp,
-			bd_feedMod, bd_feedCar, bd_ampMod, bd_EQ, bd_clicksound,
+			bd_feedMod, bd_feedCar, bd_ampMod, bd_EQ, bd_click, bd_clicksound,
 			mod_1;
 
 			bd_amp=In.kr(bd_amp_bus,1);
@@ -72,7 +72,6 @@ Engine_drumexample : CroneEngine {
 			bd_EQG=In.kr(bd_EQG_bus,1);
 			bd_brate=In.kr(bd_brate_bus,1);
 			bd_bcnt=In.kr(bd_bcnt_bus,1);
-			bd_click=In.kr(bd_click_bus,1);
 			bd_LPfreq=In.kr(bd_LPfreq_bus,1).lag3(1);
 			bd_HPfreq=In.kr(bd_HPfreq_bus,1).lag3(1);
 			bd_filterQ=In.kr(bd_filterQ_bus,1);
@@ -171,6 +170,7 @@ Engine_drumexample : CroneEngine {
 			sd_noise = RHPF.ar(in:sd_noise,freq:sd_HPfreq, rq: sd_filterQ, mul:1);
 
 			sd_ampMod = SinOsc.ar(freq:sd_AMF,mul:(sd_AMD/2),add:1);
+			sd_car = sd_car * sd_ampMod;
 
 			sd_car = BPeakEQ.ar(in:sd_car,freq:sd_EQF,rq:1,db:sd_EQG,mul:1);
 			sd_car = BLowPass.ar(in:sd_car,freq:sd_LPfreq, rq: sd_filterQ, mul:1);
@@ -632,7 +632,6 @@ Engine_drumexample : CroneEngine {
 			\bd_EQG,0,
 			\bd_brate,24000,
 			\bd_bcnt,24,
-			\bd_click,1,
 			\bd_LPfreq,19000,
 			\bd_HPfreq,0,
 			\bd_filterQ,1,
@@ -670,7 +669,6 @@ Engine_drumexample : CroneEngine {
 				\bd_feedAmp_bus,bd_busDepot.at(\bd_feedAmp++1),
 				\bd_rampDepth_bus,bd_busDepot.at(\bd_rampDepth++1),
 				\bd_rampDec_bus,bd_busDepot.at(\bd_rampDec++1),
-				\bd_click_bus,bd_busDepot.at(\bd_click++1),
 				\bd_AMD_bus,bd_busDepot.at(\bd_AMD++1),
 				\bd_AMF_bus,bd_busDepot.at(\bd_AMF++1),
 				\bd_EQF_bus,bd_busDepot.at(\bd_EQF++1),
