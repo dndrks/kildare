@@ -2,8 +2,6 @@ local Kildare = {}
 local specs = {}
 local ControlSpec = require "controlspec"
 
-local types = {"bd","sd"}
-
 function Kildare.init()
   
   drum_params = {
