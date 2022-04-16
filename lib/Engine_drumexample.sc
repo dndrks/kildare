@@ -3,19 +3,19 @@ Engine_drumexample : CroneEngine {
 	var bd_params;
 	var bd_busDepot;
 	var sd_params;
-	var	sd_busDepot;
+	var sd_busDepot;
 	var xt_params;
-	var	xt_busDepot;
+	var xt_busDepot;
 	var cp_params;
-	var	cp_busDepot;
+	var cp_busDepot;
 	var rs_params;
-	var	rs_busDepot;
+	var rs_busDepot;
 	var cb_params;
-	var	cb_busDepot;
+	var cb_busDepot;
 	var hh_params;
-	var	hh_busDepot;
+	var hh_busDepot;
 	var cy_params;
-	var	cy_busDepot;
+	var cy_busDepot;
 
 	*new { arg context, doneCallback;
 		^super.new(context, doneCallback);
@@ -63,6 +63,7 @@ Engine_drumexample : CroneEngine {
 			bd_modAmp=In.kr(bd_modAmp_bus,1);
 			bd_modAtk=In.kr(bd_modAtk_bus,1);
 			bd_modRel=In.kr(bd_modRel_bus,1);
+			// bd_feedAmp=LinLin.kr(In.kr(bd_feedAmp_bus,1),0,127,0.0,10.0);
 			bd_feedAmp=In.kr(bd_feedAmp_bus,1);
 			bd_rampDepth=In.kr(bd_rampDepth_bus,1);
 			bd_rampDec=In.kr(bd_rampDec_bus,1);
@@ -78,6 +79,13 @@ Engine_drumexample : CroneEngine {
 			bd_pan=In.kr(bd_pan_bus,1).lag2(0.1);
 			bd_SPTCH=In.kr(bd_SPTCH_bus,1);
 			bd_SCHNK=In.kr(bd_SCHNK_bus,1);
+
+			bd_filterQ = LinLin.kr(bd_filterQ,0,100,2.0,0.001);
+			bd_modAmp = LinLin.kr(bd_modAmp,0.0,1.0,0,127);
+			bd_feedAmp = LinLin.kr(bd_feedAmp,0.0,1.0,0.0,10.0);
+			bd_EQG = LinLin.kr(bd_EQG,0.0,1.0,0.0,10.0);
+			bd_rampDepth = LinLin.kr(bd_rampDepth,0.0,100,0.0,2.0);
+			bd_AMD = LinLin.kr(bd_AMD,0,100,0.0,2.0);
 
 			bd_modEnv = EnvGen.kr(Env.perc(bd_modAtk, bd_modRel),gate: kill_gate);
 			bd_carRamp = EnvGen.kr(Env([1000, 0.000001], [bd_rampDec], curve: \exp));
@@ -95,12 +103,13 @@ Engine_drumexample : CroneEngine {
 			bd_clicksound = LPF.ar(Impulse.ar(0.003),16000,bd_click) * EnvGen.kr(envelope: Env.perc(bd_carAtk, 0.2),gate: kill_gate);
 			bd_car = (bd_car + bd_clicksound)* bd_ampMod;
 
+			bd_car = Squiz.ar(in:bd_car, pitchratio:bd_SPTCH, zcperchunk:bd_SCHNK, mul:1);
+			bd_car = Decimator.ar(Pan2.ar(bd_car,bd_pan),bd_brate,bd_bcnt,1.0);
+
 			bd_car = BPeakEQ.ar(in:bd_car,freq:bd_EQF,rq:1,db:bd_EQG,mul:1);
 			bd_car = BLowPass.ar(in:bd_car,freq:bd_LPfreq, rq: bd_filterQ, mul:1);
 			bd_car = RHPF.ar(in:bd_car,freq:bd_HPfreq, rq: bd_filterQ, mul:1);
-			bd_car = Squiz.ar(in:bd_car, pitchratio:bd_SPTCH, zcperchunk:bd_SCHNK, mul:1);
 
-			bd_car = Decimator.ar(Pan2.ar(bd_car,bd_pan),bd_brate,bd_bcnt,1.0);
 			Out.ar(out, bd_car);
 		}).add;
 
@@ -155,31 +164,41 @@ Engine_drumexample : CroneEngine {
 			sd_SPTCH=In.kr(sd_SPTCH_bus,1);
 			sd_SCHNK=In.kr(sd_SCHNK_bus,1);
 
+			sd_filterQ = LinLin.kr(sd_filterQ,0,100,2.0,0.001);
 			sd_modEnv = EnvGen.kr(Env.perc(sd_modAtk, sd_modRel));
 			sd_carRamp = EnvGen.kr(Env([1000, 0.000001], [sd_rampDec], curve: \exp));
 			sd_carEnv = EnvGen.kr(Env.perc(sd_carAtk, sd_carRel),gate: kill_gate);
+			sd_modAmp = LinLin.kr(sd_modAmp,0.0,1.0,0,127);
 			sd_feedMod = SinOsc.ar(sd_modHz, mul:sd_modAmp*100) * sd_modEnv;
+			sd_feedAmp = LinLin.kr(sd_feedAmp,0,1,0.0,10.0);
+			sd_EQG = LinLin.kr(sd_EQG,0.0,1.0,0.0,10.0);
 			sd_feedAmp = sd_feedAmp * sd_modAmp; // 220224
+			sd_rampDepth = LinLin.kr(sd_rampDepth,0,100,0.0,2.0);
 			sd_feedCar = SinOsc.ar(sd_carHz + sd_feedMod + (sd_carRamp*sd_rampDepth)) * sd_carEnv * (sd_feedAmp/sd_modAmp * 127);
 			sd_mod = SinOsc.ar(sd_modHz + sd_feedCar, mul:sd_modAmp*100) * sd_modEnv;
 			sd_car = SinOsc.ar(sd_carHz + sd_mod + (sd_carRamp*sd_rampDepth)) * sd_carEnv * sd_amp;
+
 			sd_noiseEnv = EnvGen.kr(Env.perc(sd_noiseAtk,sd_noiseRel),gate: kill_gate);
 			sd_noise = BPF.ar(WhiteNoise.ar,8000,1.3) * (sd_noiseAmp*sd_noiseEnv);
 			sd_noise = BPeakEQ.ar(in:sd_noise,freq:sd_EQF,rq:1,db:sd_EQG,mul:1);
 			sd_noise = BLowPass.ar(in:sd_noise,freq:sd_LPfreq, rq: sd_filterQ, mul:1);
 			sd_noise = RHPF.ar(in:sd_noise,freq:sd_HPfreq, rq: sd_filterQ, mul:1);
 
+			sd_AMD = LinLin.kr(sd_AMD,0,100,0.0,2.0);
 			sd_ampMod = SinOsc.ar(freq:sd_AMF,mul:(sd_AMD/2),add:1);
 			sd_car = sd_car * sd_ampMod;
+
+			sd_car = Squiz.ar(in:sd_car, pitchratio:sd_SPTCH, zcperchunk:sd_SCHNK, mul:1);
+        	sd_noise = Squiz.ar(in:sd_noise, pitchratio:sd_SPTCH, zcperchunk:sd_SCHNK*100, mul:1);
+
+			sd_car = Decimator.ar(sd_car,sd_brate,sd_bcnt,1.0);
 
 			sd_car = BPeakEQ.ar(in:sd_car,freq:sd_EQF,rq:1,db:sd_EQG,mul:1);
 			sd_car = BLowPass.ar(in:sd_car,freq:sd_LPfreq, rq: sd_filterQ, mul:1);
 			sd_car = RHPF.ar(in:sd_car,freq:sd_HPfreq, rq: sd_filterQ, mul:1);
 
-			sd_car = Squiz.ar(in:sd_car, pitchratio:sd_SPTCH, zcperchunk:sd_SCHNK, mul:1);
-        	sd_noise = Squiz.ar(in:sd_noise, pitchratio:sd_SPTCH, zcperchunk:sd_SCHNK*100, mul:1);
-
-			sd_mix = Decimator.ar(sd_car,sd_brate,sd_bcnt,1.0);
+			// sd_mix = Decimator.ar(sd_car,sd_brate,sd_bcnt,1.0);
+			sd_mix = sd_car;
 			Out.ar(out, Pan2.ar(sd_mix,sd_pan));
 			Out.ar(out, Pan2.ar(sd_noise,sd_pan));
 			FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(sd_noiseEnv));
@@ -233,6 +252,13 @@ Engine_drumexample : CroneEngine {
 			xt_SPTCH=In.kr(xt_SPTCH_bus,1);
 			xt_SCHNK=In.kr(xt_SCHNK_bus,1);
 
+			xt_filterQ = LinLin.kr(xt_filterQ,0,100,2.0,0.001);
+			xt_modAmp = LinLin.kr(xt_modAmp,0.0,1.0,0,127);
+			xt_feedAmp = LinLin.kr(xt_feedAmp,0.0,1.0,0.0,10.0);
+			xt_EQG = LinLin.kr(xt_EQG,0.0,1.0,0.0,10.0);
+			xt_rampDepth = LinLin.kr(xt_rampDepth,0.0,100,0.0,2.0);
+			xt_AMD = LinLin.kr(xt_AMD,0,100,0.0,2.0);
+
 			xt_modEnv = EnvGen.kr(Env.perc(xt_modAtk, xt_modRel));
 			xt_carRamp = EnvGen.kr(Env([600, 0.000001], [xt_rampDec], curve: \lin));
 			xt_carEnv = EnvGen.kr(Env.perc(xt_carAtk, xt_carRel), gate: kill_gate, doneAction:2);
@@ -249,13 +275,13 @@ Engine_drumexample : CroneEngine {
 			xt_clicksound = LPF.ar(Impulse.ar(0.003),16000,xt_click) * EnvGen.kr(envelope: Env.perc(xt_carAtk, 0.2),gate: kill_gate);
 			xt_car = (xt_car + xt_clicksound) * xt_ampMod;
 			xt_car = Squiz.ar(in:xt_car, pitchratio:xt_SPTCH, zcperchunk:xt_SCHNK, mul:1);
+			xt_car = Decimator.ar(Pan2.ar(xt_car,xt_pan),xt_brate,xt_bcnt,1.0);
 
 			xt_car = BPeakEQ.ar(in:xt_car,freq:xt_EQF,rq:1,db:xt_EQG,mul:1);
 
 			xt_car = BLowPass.ar(in:xt_car,freq:xt_LPfreq, rq: xt_filterQ, mul:1);
 			xt_car = RHPF.ar(in:xt_car,freq:xt_HPfreq, rq: xt_filterQ, mul:1);
 
-			xt_car = Decimator.ar(Pan2.ar(xt_car,xt_pan),xt_brate,xt_bcnt,1.0);
 			Out.ar(out, xt_car);
 		}).add;
 
@@ -301,6 +327,12 @@ Engine_drumexample : CroneEngine {
 			cp_SPTCH=In.kr(cp_SPTCH_bus,1);
 			cp_SCHNK=In.kr(cp_SCHNK_bus,1);
 
+			cp_filterQ = LinLin.kr(cp_filterQ,0,100,2.0,0.001);
+			cp_modAmp = LinLin.kr(cp_modAmp,0.0,1.0,0,127);
+			cp_feedAmp = LinLin.kr(cp_feedAmp,0.0,1.0,0.0,10.0);
+			cp_EQG = LinLin.kr(cp_EQG,0.0,1.0,0.0,10.0);
+			cp_AMD = LinLin.kr(cp_AMD,0,100,0.0,2.0);
+
 			cp_modEnv = EnvGen.ar(
 				Env.new(
 					[0, 1, 0, 0.9, 0, 0.7, 0, 0.5, 0],
@@ -339,9 +371,9 @@ Engine_drumexample : CroneEngine {
 
 			cp_car = Squiz.ar(in:cp_car, pitchratio:cp_SPTCH, zcperchunk:cp_SCHNK, mul:1);
 
-			cp_car = BPeakEQ.ar(in:cp_car,freq:cp_EQF,rq:1,db:cp_EQG,mul:1);
-
 			cp_car = Decimator.ar(Pan2.ar(cp_car,cp_pan),cp_brate,cp_bcnt,1.0);
+
+			cp_car = BPeakEQ.ar(in:cp_car,freq:cp_EQF,rq:1,db:cp_EQG,mul:1);
 
 			cp_car = BLowPass.ar(in:cp_car,freq:cp_LPfreq, rq: cp_filterQ, mul:1);
 			cp_car = RHPF.ar(in:cp_car,freq:cp_HPfreq, rq: cp_filterQ, mul:1);
@@ -402,7 +434,13 @@ Engine_drumexample : CroneEngine {
 			rs_SPTCH=In.kr(rs_SPTCH_bus,1);
 			rs_SCHNK=In.kr(rs_SCHNK_bus,1);
 
-			rs_modAmp = rs_modAmp;
+			rs_filterQ = LinLin.kr(rs_filterQ,0,100,2.0,0.001);
+			rs_modAmp = LinLin.kr(rs_modAmp,0.0,1.0,0,127);
+			// rs_feedAmp = LinLin.kr(rs_feedAmp,0.0,1.0,0.0,10.0);
+			rs_EQG = LinLin.kr(rs_EQG,0.0,1.0,0.0,10.0);
+			rs_rampDepth = LinLin.kr(rs_rampDepth,0.0,100,0.0,2.0);
+			rs_AMD = LinLin.kr(rs_AMD,0,100,0.0,2.0);
+
 			rs_feedAmp = rs_modAmp.linlin(0, 127, 0, 3);
 			rs_feedAMP = rs_modAmp.linlin(0, 127, 0, 4);
 			rs_carRamp = EnvGen.kr(Env([600, 0.000001], [rs_rampDec], curve: \lin));
@@ -423,15 +461,15 @@ Engine_drumexample : CroneEngine {
 			rs_car = SinOscFB.ar(rs_carHz + (mod_1+mod_2) + (rs_carRamp*rs_rampDepth),rs_feedAMP) * rs_carEnv * rs_amp;
 
 			rs_ampMod = SinOsc.ar(freq:rs_AMF,mul:rs_AMD,add:1);
-			rs_car = (rs_car+(LPF.ar(Impulse.ar(0.003),16000,1)*1)) * rs_ampMod;
-			rs_car = BPeakEQ.ar(in:rs_car,freq:rs_EQF,rq:1,db:rs_EQG,mul:1);
+			rs_car = (rs_car+(LPF.ar(Impulse.ar(0.003),16000,1)*rs_amp)) * rs_ampMod;
 			rs_car = Squiz.ar(in:rs_car, pitchratio:rs_SPTCH, zcperchunk:rs_SCHNK, mul:1);
+			rs_car = Decimator.ar(Pan2.ar(rs_car,rs_pan),rs_brate,rs_bcnt,1.0);
+
+			rs_car = BPeakEQ.ar(in:rs_car,freq:rs_EQF,rq:1,db:rs_EQG,mul:1);
 
 			rs_car = BLowPass.ar(in:rs_car,freq:rs_LPfreq, rq: rs_filterQ, mul:1);
 			rs_car = RHPF.ar(in:rs_car,freq:rs_HPfreq, rq: rs_filterQ, mul:1);
 
-
-			rs_car = Decimator.ar(Pan2.ar(rs_car,rs_pan),rs_brate,rs_bcnt,1.0);
 			rs_car = LPF.ar(rs_car,12000,1);
 			Out.ar(out, Pan2.ar(rs_car,rs_pan));
 
@@ -443,11 +481,13 @@ Engine_drumexample : CroneEngine {
 			sd_feedCar = SinOsc.ar(rs_carHz + sd_feedMod + (rs_carRamp*rs_rampDepth)) * sd_carEnv * (rs_feedAmp*10);
 			sd_mod = SinOsc.ar(rs_modHz + sd_feedCar, mul:rs_modAmp) * sd_modEnv;
 			sd_car = SinOsc.ar(rs_carHz + sd_mod + (rs_carRamp*rs_rampDepth)) * sd_carEnv * rs_sdAmp;
-			sd_mix = Decimator.ar(sd_car,rs_brate,rs_bcnt,1.0);
-
+			sd_car = sd_car * rs_ampMod;
+			sd_mix = Squiz.ar(in:sd_car, pitchratio:rs_SPTCH, zcperchunk:rs_SCHNK, mul:1);
+			sd_mix = Decimator.ar(sd_mix,rs_brate,rs_bcnt,1.0);
+			sd_mix = BPeakEQ.ar(in:sd_mix,freq:rs_EQF,rq:1,db:rs_EQG,mul:1);
 			sd_mix = BLowPass.ar(in:sd_mix,freq:rs_LPfreq, rq: rs_filterQ, mul:1);
 			sd_mix = RHPF.ar(in:sd_mix,freq:rs_HPfreq, rq: rs_filterQ, mul:1);
-			sd_mix = Squiz.ar(in:sd_mix, pitchratio:rs_SPTCH, zcperchunk:rs_SCHNK, mul:1);
+
 			Out.ar(out, Pan2.ar(sd_mix,rs_pan));
 
 			FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(rs_carEnv));
@@ -502,38 +542,27 @@ Engine_drumexample : CroneEngine {
 			cb_SPTCH=In.kr(cb_SPTCH_bus,1);
 			cb_SCHNK=In.kr(cb_SCHNK_bus,1);
 
+			cb_filterQ = LinLin.kr(cb_filterQ,0,100,2.0,0.001);
+			cb_feedAmp = LinLin.kr(cb_feedAmp,0.0,1.0,1.0,3.0);
+			cb_EQG = LinLin.kr(cb_EQG,0.0,1.0,0.0,10.0);
+			cb_rampDepth = LinLin.kr(cb_rampDepth,0.0,100,0.0,2.0);
+			cb_AMD = LinLin.kr(cb_AMD,0,100,0.0,2.0);
+			cb_snap = LinLin.kr(cb_snap,0.0,1.0,0.0,10.0);
+
 			cb_modEnv = EnvGen.kr(Env.perc(cb_modAtk, cb_modRel), gate:kill_gate);
 			cb_carRamp = EnvGen.kr(Env([600, 0.000001], [cb_rampDec], curve: \lin));
 			cb_carEnv = EnvGen.kr(Env.perc(cb_carAtk, cb_carRel),gate: kill_gate);
 
 			cb_1 = LFPulse.ar((cb_carHz) + (cb_carRamp*cb_rampDepth)) * cb_carEnv * cb_amp;
-			cb_feedAmp = cb_feedAmp.linlin(0,127,1,3);
 			cb_2 = SinOscFB.ar((cb_carHz*1.5085)+ (cb_carRamp*cb_rampDepth),cb_feedAmp) * cb_carEnv * cb_amp;
 			cb_ampMod = SinOsc.ar(freq:cb_AMF,mul:cb_AMD,add:1);
 			cb_1 = (cb_1+(LPF.ar(Impulse.ar(0.003),16000,1)*cb_snap)) * cb_ampMod;
-			cb_2 = (cb_2+(LPF.ar(Impulse.ar(0.003),16000,1)*cb_snap)) * cb_ampMod;
-			cb_1 = BPeakEQ.ar(in:cb_1,freq:cb_EQF,rq:1,db:cb_EQG,mul:1);
-			cb_2 = BPeakEQ.ar(in:cb_2,freq:cb_EQF,rq:1,db:cb_EQG,mul:1);
-			cb_1 = BLowPass.ar(in:cb_1,freq:cb_LPfreq, rq: cb_filterQ, mul:1);
-			cb_2 = BLowPass.ar(in:cb_2,freq:cb_LPfreq, rq: cb_filterQ, mul:1);
-			cb_1 = RHPF.ar(in:cb_1,freq:cb_HPfreq, rq: cb_filterQ, mul:1);
-			cb_2 = RHPF.ar(in:cb_2,freq:cb_HPfreq, rq: cb_filterQ, mul:1);
-			cb_1 = Decimator.ar(Pan2.ar(cb_1,cb_pan),cb_brate,cb_bcnt,1.0);
-			cb_2 = Decimator.ar(Pan2.ar(cb_2,cb_pan),cb_brate,cb_bcnt,1.0);
-			sig = (DynKlank.ar(`
-				[[cb_modHz,cb_modHz*1.5085, cb_modHz*3.017, cb_modHz*4.5255, cb_modHz*5.27975,cb_modHz*7.5425, cb_modHz*9.051,cb_modHz*10.5595,cb_modHz*18.102]
-					, [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.05],
-					[cb_modRel, cb_modRel, cb_modRel, cb_modRel,cb_modRel,cb_modRel,cb_modRel,cb_modRel,cb_modRel]],
-			Impulse.ar(0.003))*cb_click) * cb_modEnv * cb_modAmp.linlin(0,127,0,1);
-			sig = LPF.ar(sig,2000);
-			sig = (sig+(LPF.ar(Impulse.ar(0.003),16000,1)*cb_snap)) * cb_ampMod;
-			sig = BPeakEQ.ar(in:sig,freq:cb_EQF,rq:1,db:cb_EQG,mul:1);
-
-			sig = BLowPass.ar(in:sig,freq:cb_LPfreq, rq: cb_filterQ, mul:1);
-			sig = RHPF.ar(in:sig,freq:cb_HPfreq, rq: cb_filterQ, mul:1);
-			sig = Decimator.ar(Pan2.ar(sig,cb_pan),cb_brate,cb_bcnt,1.0);
-			cb_1 = (cb_1*0.33)+(cb_2*0.33)+(sig);
+			cb_1 = (cb_1*0.33)+(cb_2*0.33);
 			cb_1 = Squiz.ar(in:cb_1, pitchratio:cb_SPTCH, zcperchunk:cb_SCHNK, mul:1);
+			cb_1 = Decimator.ar(Pan2.ar(cb_1,cb_pan),cb_brate,cb_bcnt,1.0);
+			cb_1 = BPeakEQ.ar(in:cb_1,freq:cb_EQF,rq:1,db:cb_EQG,mul:1);
+			cb_1 = BLowPass.ar(in:cb_1,freq:cb_LPfreq, rq: cb_filterQ, mul:1);
+			cb_1 = RHPF.ar(in:cb_1,freq:cb_HPfreq, rq: cb_filterQ, mul:1);
 			Out.ar(out, cb_1);
 			FreeSelf.kr(Done.kr(cb_carEnv) * Done.kr(cb_modEnv));
 		}).add;
