@@ -618,6 +618,13 @@ Engine_drumexample : CroneEngine {
 			hh_SPTCH=In.kr(hh_SPTCH_bus,1);
 			hh_SCHNK=In.kr(hh_SCHNK_bus,1);
 
+			hh_filterQ = LinLin.kr(hh_filterQ,0,100,2.0,0.001);
+			hh_modAmp = LinLin.kr(hh_modAmp,0.0,1.0,0,127);
+			hh_feedAmp = LinLin.kr(hh_feedAmp,0.0,1.0,0.0,10.0);
+			hh_EQG = LinLin.kr(hh_EQG,0.0,1.0,0.0,10.0);
+			hh_tremDepth = LinLin.kr(hh_tremDepth,0.0,100,0.0,1.0);
+			hh_AMD = LinLin.kr(hh_AMD,0,100,0.0,2.0);
+
 			hh_modEnv = EnvGen.kr(Env.perc(hh_modAtk, hh_modRel));
 			hh_carRamp = EnvGen.kr(Env([1000, 0.000001], [hh_tremHz], curve: \exp));
 			hh_carEnv = EnvGen.kr(Env.perc(hh_carAtk, hh_carRel), gate: kill_gate, doneAction:2);
@@ -630,11 +637,12 @@ Engine_drumexample : CroneEngine {
 			tremod = (1.0 - hh_tremDepth) + tremolo;
 			hh_car = hh_car*tremod;
 			hh_car = Squiz.ar(in:hh_car, pitchratio:hh_SPTCH, zcperchunk:hh_SCHNK, mul:1);
-			hh_car = BPeakEQ.ar(in:hh_car,freq:hh_EQF,rq:1,db:hh_EQG*15,mul:1);
+			hh_car = Decimator.ar(Pan2.ar(hh_car,hh_pan),hh_brate,hh_bcnt,1.0);
+			hh_car = BPeakEQ.ar(in:hh_car,freq:hh_EQF,rq:1,db:hh_EQG,mul:1);
 
 			hh_car = BLowPass.ar(in:hh_car,freq:hh_LPfreq, rq: hh_filterQ, mul:1);
 			hh_car = RHPF.ar(in:hh_car,freq:hh_HPfreq, rq: hh_filterQ, mul:1);
-			hh_car = Pan2.ar(hh_car,hh_pan);
+			// hh_car = Pan2.ar(hh_car,hh_pan);
 			Out.ar(out, hh_car);
 		}).add;
 
