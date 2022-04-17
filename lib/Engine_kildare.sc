@@ -1,4 +1,4 @@
-Engine_drumexample : CroneEngine {
+Engine_kildare : CroneEngine {
 	var synthArray;
 	var bd_params;
 	var bd_busDepot;

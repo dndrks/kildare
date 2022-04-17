@@ -162,10 +162,10 @@ function Kildare.init()
     },
     ["cb"] = {
       {type = 'separator', name = 'carrier'},
-      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 5, warp = 'lin', default = 0.35, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 5, warp = 'lin', default = 0.25, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 200, max = 3600, warp = 'exp', default = 404, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
-      {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
+      {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.15, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'modulator'},
       {id = 'feedAmp', name = 'modulator feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'snap'},
@@ -189,7 +189,7 @@ function Kildare.init()
     },
     ["hh"] = {
       {type = 'separator', name = 'carrier'},
-      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 5, warp = 'lin', default = 0.5, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 5, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 200, max = 1400, warp = 'exp', default = 200, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.03, formatter = function(param) return (round_form(param:get(),0.01," s")) end},

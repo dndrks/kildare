@@ -1,4 +1,4 @@
-engine.name = 'drumexample'
+engine.name = 'kildare'
 s = require 'sequins'
 
 kildare_setup = include 'lib/kildare'
@@ -85,8 +85,4 @@ function iter()
       engine.trig_cb()
     end
   end
-end
-
-function r()
-  norns.script.load(norns.state.script)
 end
