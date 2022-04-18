@@ -1,6 +1,6 @@
 local Kildare = {}
 local specs = {}
-local ControlSpec = require "controlspec"
+ControlSpec = require "controlspec"
 frm = require 'formatters'
 
 local drums = {"bd","sd","xt","cp","rs","cb","hh"}
@@ -32,9 +32,9 @@ function Kildare.init()
       {id = 'rampDepth', name = 'ramp depth', type = 'number', min = 0, max = 100, default = 11, formatter = function(param) return (param:get().."%") end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.3, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (param:get()) end end},
-      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1},
-      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
+      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form(param:get(),1,'%')) end},
       {id = 'AMF', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQF', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQG', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -65,9 +65,9 @@ function Kildare.init()
       {id = 'rampDepth', name = 'ramp depth', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.06, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (param:get()) end end},
-      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1},
-      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
+      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form(param:get(),1,'%')) end},
       {id = 'AMF', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 2698.8, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQF', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 12000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQG', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -94,9 +94,9 @@ function Kildare.init()
       {id = 'rampDepth', name = 'ramp depth', type = 'number', min = 0, max = 100, default = 30, formatter = function(param) return (param:get().."%") end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.06, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (param:get()) end end},
-      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1},
-      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
+      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form(param:get(),1,'%')) end},
       {id = 'AMF', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 2698.8, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQF', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQG', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -120,9 +120,9 @@ function Kildare.init()
       {type = 'separator', name = 'click'},
       {id = 'click', name = 'click', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (param:get()) end end},
-      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1},
-      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
+      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form(param:get(),1,'%')) end},
       {id = 'AMF', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 2698.8, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQF', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQG', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -147,9 +147,9 @@ function Kildare.init()
       {id = 'sdAtk', name = 'snare attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'sdRel', name = 'snare release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (param:get()) end end},
-      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1},
-      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
+      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form(param:get(),1,'%')) end},
       {id = 'AMF', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQF', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQG', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -174,9 +174,9 @@ function Kildare.init()
       {id = 'rampDepth', name = 'ramp depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 4, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (param:get()) end end},
-      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1},
-      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
+      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form(param:get(),1,'%')) end},
       {id = 'AMF', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 2698.8, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQF', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 12000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQG', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -200,12 +200,12 @@ function Kildare.init()
       {id = 'modRel', name = 'modulator release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'feedAmp', name = 'modulator feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'tremolo'},
-      {id = 'tremDepth', name = 'tremolo depth', type = 'number', min = 0, max = 100, default = 100, formatter = function(param) return (param:get().."%") end},
+      {id = 'tremDepth', name = 'tremolo depth', type = 'number', min = 0, max = 100, default = 100, formatter = function(param) return (round_form(param:get(),1,"%")) end},
       {id = 'tremHz', name = 'tremolo rate', type = 'control', min = 0.01, max = 8000, warp = 'exp', default = 1000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (param:get()) end end},
-      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1},
-      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
+      {id = 'SPTCH', name = 'squish pitch', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'SCHNK', name = 'squish chunkiness', type = 'number', min = 1, max = 10, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'AMD', name = 'amp mod depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form(param:get(),1,'%')) end},
       {id = 'AMF', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQF', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'EQG', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -250,6 +250,7 @@ function Kildare.init()
         end)
       end
     end
+    -- add lfos
   end
   
   params:bang()

@@ -2,8 +2,10 @@ engine.name = 'kildare'
 s = require 'sequins'
 
 kildare_setup = include 'lib/kildare'
+kildare_lfos = include 'lib/kildare_lfos'
 
-active_voices = {"bd","sd","xt","cp","rs","cb","hh"}
+-- active_voices = {"bd","sd","xt","cp","rs","cb","hh"}
+active_voices = {"bd","hh"}
 
 function establish()
   bd = s{1,0,0,0,1,0,0,0,1,0,0,1,0,1,0,1}
@@ -20,6 +22,7 @@ sync_vals = s{1/4,1/8,1,1/3}
 
 function init()
   kildare_setup.init()
+  kildare_lfos.add_params()
   establish()
   clock.run(parse_patterns)
 end
@@ -72,4 +75,8 @@ function redraw()
     screen.text("K2: RE-ESTABLISH / K3: RESEED")
   end
   screen.update()
+end
+
+function r()
+  norns.script.load(norns.state.script)
 end

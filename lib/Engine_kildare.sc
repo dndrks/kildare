@@ -14,8 +14,8 @@ Engine_kildare : CroneEngine {
 	var cb_busDepot;
 	var hh_params;
 	var hh_busDepot;
-	var cy_params;
-	var cy_busDepot;
+	// var cy_params;
+	// var cy_busDepot;
 
 	*new { arg context, doneCallback;
 		^super.new(context, doneCallback);
@@ -31,7 +31,7 @@ Engine_kildare : CroneEngine {
 		rs_busDepot = Dictionary.new();
 		cb_busDepot = Dictionary.new();
 		hh_busDepot = Dictionary.new();
-		cy_busDepot = Dictionary.new();
+		// cy_busDepot = Dictionary.new();
 
 		SynthDef("bd", {
 			arg out = 0, kill_gate = 1,
@@ -41,7 +41,8 @@ Engine_kildare : CroneEngine {
 			bd_SPTCH_bus = 0, bd_SCHNK_bus = 0,
 			bd_AMD_bus = 0, bd_AMF_bus = 0,
 			bd_EQF_bus = 0, bd_EQG_bus = 0, bd_brate_bus = 0, bd_bcnt_bus = 0,
-			bd_LPfreq_bus = 0, bd_HPfreq_bus = 0, bd_filterQ_bus = 0;
+			bd_LPfreq_bus = 0, bd_HPfreq_bus = 0, bd_filterQ_bus = 0,
+			bd_lfo_dest_bus = 0;
 
 			var bd_amp, bd_carHz, bd_carAtk, bd_carRel,
 			bd_modHz, bd_modAmp, bd_modAtk, bd_modRel, bd_feedAmp,
@@ -49,11 +50,13 @@ Engine_kildare : CroneEngine {
 			bd_SPTCH, bd_SCHNK,
 			bd_AMD, bd_AMF,
 			bd_EQF, bd_EQG, bd_brate, bd_bcnt,
-			bd_LPfreq, bd_HPfreq, bd_filterQ;
+			bd_LPfreq, bd_HPfreq, bd_filterQ,
+			bd_lfo_dest;
 
 			var bd_car, bd_mod, bd_carEnv, bd_modEnv, bd_carRamp,
 			bd_feedMod, bd_feedCar, bd_ampMod, bd_EQ, bd_click, bd_clicksound,
-			mod_1;
+			mod_1,
+			bd_lfo;
 
 			bd_amp=In.kr(bd_amp_bus,1);
 			bd_carHz=In.kr(bd_carHz_bus,1);
@@ -679,7 +682,7 @@ Engine_kildare : CroneEngine {
 			bd_busDepot.at(key++1).set(value);
 			this.addCommand(key, "f", { arg msg;
 				// NOTE: added a little debug here
-				["setting",key,1,msg[1],bd_busDepot.at(key++1)].postln;
+				// ["setting",key,1,msg[1],bd_busDepot.at(key++1)].postln;
 				bd_busDepot.at(key++1).set(msg[1]);
 			});
 		});
@@ -692,10 +695,10 @@ Engine_kildare : CroneEngine {
 					synthArray[1-1].set(\kill_gate,-1.05);
 				});
 			});
-			[(\bd_amp++1),bd_busDepot.at(\bd_amp++1)].postln;
+			// [(\bd_amp++1),bd_busDepot.at(\bd_amp++1)].postln;
 			// synthArray[1-1]=Synth.new("hh",bd_params.getPairs);
 			synthArray[1-1]=Synth.new("bd",[
-				\bd_amp_bus,bd_busDepot.at(\bd_amp++1).index.postln,
+				\bd_amp_bus,bd_busDepot.at(\bd_amp++1),
 				\bd_carHz_bus,bd_busDepot.at(\bd_carHz++1),
 				\bd_carAtk_bus,bd_busDepot.at(\bd_carAtk++1),
 				\bd_carRel_bus,bd_busDepot.at(\bd_carRel++1),
@@ -720,7 +723,7 @@ Engine_kildare : CroneEngine {
 				\bd_SCHNK_bus,bd_busDepot.at(\bd_SCHNK++1),
 			],target:context.server); // NOTE: added the target, just in case...
 			NodeWatcher.register(synthArray[1-1]);
-			("triggering a thing "++(synthArray[1-1].nodeID)).postln;
+			// ("triggering a thing "++(synthArray[1-1].nodeID)).postln;
 		});
 
 		sd_params = Dictionary.newFrom([
@@ -758,7 +761,7 @@ Engine_kildare : CroneEngine {
 			sd_busDepot.at(key++2).set(value);
 			this.addCommand(key, "f", { arg msg;
 				// NOTE: added a little debug here
-				["setting",key,2,msg[1],sd_busDepot.at(key++2)].postln;
+				// ["setting",key,2,msg[1],sd_busDepot.at(key++2)].postln;
 				sd_busDepot.at(key++2).set(msg[1]);
 			});
 		});
@@ -771,10 +774,10 @@ Engine_kildare : CroneEngine {
 					synthArray[2-1].set(\kill_gate,-1.05);
 				});
 			});
-			[(\sd_amp++2),sd_busDepot.at(\sd_amp++2)].postln;
+			// [(\sd_amp++2),sd_busDepot.at(\sd_amp++2)].postln;
 			// synthArray[2-1]=Synth.new("hh",sd_params.getPairs);
 			synthArray[2-1]=Synth.new("sd",[
-				\sd_amp_bus,sd_busDepot.at(\sd_amp++2).index.postln,
+				\sd_amp_bus,sd_busDepot.at(\sd_amp++2),
 				\sd_carHz_bus,sd_busDepot.at(\sd_carHz++2),
 				\sd_carAtk_bus,sd_busDepot.at(\sd_carAtk++2),
 				\sd_carRel_bus,sd_busDepot.at(\sd_carRel++2),
@@ -803,7 +806,7 @@ Engine_kildare : CroneEngine {
 				\sd_SCHNK_bus,sd_busDepot.at(\sd_SCHNK++2),
 			],target:context.server); // NOTE: added the target, just in case...
 			NodeWatcher.register(synthArray[2-1]);
-			("triggering a thing "++(synthArray[2-1].nodeID)).postln;
+			// ("triggering a thing "++(synthArray[2-1].nodeID)).postln;
 		});
 
 		xt_params = Dictionary.newFrom([
@@ -838,7 +841,7 @@ Engine_kildare : CroneEngine {
 			xt_busDepot.at(key++3).set(value);
 			this.addCommand(key, "f", { arg msg;
 				// NOTE: added a little debug here
-				["setting",key,3,msg[1],xt_busDepot.at(key++3)].postln;
+				// ["setting",key,3,msg[1],xt_busDepot.at(key++3)].postln;
 				xt_busDepot.at(key++3).set(msg[1]);
 			});
 		});
@@ -851,10 +854,10 @@ Engine_kildare : CroneEngine {
 					synthArray[3-1].set(\kill_gate,-1.05);
 				});
 			});
-			[(\xt_amp++3),xt_busDepot.at(\xt_amp++3)].postln;
+			// [(\xt_amp++3),xt_busDepot.at(\xt_amp++3)].postln;
 			// synthArray[3-1]=Synth.new("hh",xt_params.getPairs);
 			synthArray[3-1]=Synth.new("xt",[
-				\xt_amp_bus,xt_busDepot.at(\xt_amp++3).index.postln,
+				\xt_amp_bus,xt_busDepot.at(\xt_amp++3),
 				\xt_carHz_bus,xt_busDepot.at(\xt_carHz++3),
 				\xt_carAtk_bus,xt_busDepot.at(\xt_carAtk++3),
 				\xt_carRel_bus,xt_busDepot.at(\xt_carRel++3),
@@ -880,7 +883,7 @@ Engine_kildare : CroneEngine {
 				\xt_SCHNK_bus,xt_busDepot.at(\xt_SCHNK++3),
 			],target:context.server); // NOTE: added the target, just in case...
 			NodeWatcher.register(synthArray[3-1]);
-			("triggering a thing "++(synthArray[3-1].nodeID)).postln;
+			// ("triggering a thing "++(synthArray[3-1].nodeID)).postln;
 		});
 
 		cp_params = Dictionary.newFrom([
@@ -911,7 +914,7 @@ Engine_kildare : CroneEngine {
 			cp_busDepot.at(key++4).set(value);
 			this.addCommand(key, "f", { arg msg;
 				// NOTE: added a little debug here
-				["setting",key,4,msg[1],cp_busDepot.at(key++4)].postln;
+				// ["setting",key,4,msg[1],cp_busDepot.at(key++4)].postln;
 				cp_busDepot.at(key++4).set(msg[1]);
 			});
 		});
@@ -924,10 +927,10 @@ Engine_kildare : CroneEngine {
 					synthArray[4-1].set(\kill_gate,-1.05);
 				});
 			});
-			[(\cp_amp++4),cp_busDepot.at(\cp_amp++4)].postln;
+			// [(\cp_amp++4),cp_busDepot.at(\cp_amp++4)].postln;
 			// synthArray[4-1]=Synth.new("hh",cp_params.getPairs);
 			synthArray[4-1]=Synth.new("cp",[
-				\cp_amp_bus,cp_busDepot.at(\cp_amp++4).index.postln,
+				\cp_amp_bus,cp_busDepot.at(\cp_amp++4),
 				\cp_carHz_bus,cp_busDepot.at(\cp_carHz++4),
 				\cp_carRel_bus,cp_busDepot.at(\cp_carRel++4),
 				\cp_modAmp_bus,cp_busDepot.at(\cp_modAmp++4),
@@ -949,7 +952,7 @@ Engine_kildare : CroneEngine {
 				\cp_SCHNK_bus,cp_busDepot.at(\cp_SCHNK++4),
 			],target:context.server); // NOTE: added the target, just in case...
 			NodeWatcher.register(synthArray[4-1]);
-			("triggering a thing "++(synthArray[4-1].nodeID)).postln;
+			// ("triggering a thing "++(synthArray[4-1].nodeID)).postln;
 		});
 
 		cb_params = Dictionary.newFrom([
@@ -985,7 +988,7 @@ Engine_kildare : CroneEngine {
 			cb_busDepot.at(key++5).set(value);
 			this.addCommand(key, "f", { arg msg;
 				// NOTE: added a little debug here
-				["setting",key,5,msg[1],cb_busDepot.at(key++5)].postln;
+				// ["setting",key,5,msg[1],cb_busDepot.at(key++5)].postln;
 				cb_busDepot.at(key++5).set(msg[1]);
 			});
 		});
@@ -998,10 +1001,10 @@ Engine_kildare : CroneEngine {
 					synthArray[5-1].set(\kill_gate,-1.05);
 				});
 			});
-			[(\cb_amp++5),cb_busDepot.at(\cb_amp++5)].postln;
+			// [(\cb_amp++5),cb_busDepot.at(\cb_amp++5)].postln;
 			// synthArray[5-1]=Synth.new("hh",cb_params.getPairs);
 			synthArray[5-1]=Synth.new("cb",[
-				\cb_amp_bus,cb_busDepot.at(\cb_amp++5).index.postln,
+				\cb_amp_bus,cb_busDepot.at(\cb_amp++5),
 				\cb_carHz_bus,cb_busDepot.at(\cb_carHz++5),
 				\cb_carAtk_bus,cb_busDepot.at(\cb_carAtk++5),
 				\cb_carRel_bus,cb_busDepot.at(\cb_carRel++5),
@@ -1028,7 +1031,7 @@ Engine_kildare : CroneEngine {
 				\cb_SCHNK_bus,cb_busDepot.at(\cb_SCHNK++5),
 			],target:context.server); // NOTE: added the target, just in case...
 			NodeWatcher.register(synthArray[5-1]);
-			("triggering a thing "++(synthArray[5-1].nodeID)).postln;
+			// ("triggering a thing "++(synthArray[5-1].nodeID)).postln;
 		});
 
 		rs_params = Dictionary.newFrom([
@@ -1063,7 +1066,7 @@ Engine_kildare : CroneEngine {
 			rs_busDepot.at(key++6).set(value);
 			this.addCommand(key, "f", { arg msg;
 				// NOTE: added a little debug here
-				["setting",key,6,msg[1],rs_busDepot.at(key++6)].postln;
+				// ["setting",key,6,msg[1],rs_busDepot.at(key++6)].postln;
 				rs_busDepot.at(key++6).set(msg[1]);
 			});
 		});
@@ -1076,10 +1079,10 @@ Engine_kildare : CroneEngine {
 					synthArray[6-1].set(\kill_gate,-1.05);
 				});
 			});
-			[(\rs_amp++6),rs_busDepot.at(\rs_amp++6)].postln;
+			// [(\rs_amp++6),rs_busDepot.at(\rs_amp++6)].postln;
 			// synthArray[6-1]=Synth.new("rs",rs_params.getPairs);
 			synthArray[6-1]=Synth.new("rs",[
-				\rs_amp_bus,rs_busDepot.at(\rs_amp++6).index.postln,
+				\rs_amp_bus,rs_busDepot.at(\rs_amp++6),
 				\rs_carHz_bus,rs_busDepot.at(\rs_carHz++6),
 				\rs_carAtk_bus,rs_busDepot.at(\rs_carAtk++6),
 				\rs_carRel_bus,rs_busDepot.at(\rs_carRel++6),
@@ -1104,7 +1107,7 @@ Engine_kildare : CroneEngine {
 				\rs_SCHNK_bus,rs_busDepot.at(\rs_SCHNK++6),
 			],target:context.server); // NOTE: added the target, just in case...
 			NodeWatcher.register(synthArray[6-1]);
-			("triggering a thing "++(synthArray[6-1].nodeID)).postln;
+			// ("triggering a thing "++(synthArray[6-1].nodeID)).postln;
 		});
 
 		hh_params = Dictionary.newFrom([
@@ -1138,7 +1141,7 @@ Engine_kildare : CroneEngine {
 			hh_busDepot.at(key++7).set(value);
 			this.addCommand(key, "f", { arg msg;
 				// NOTE: added a little debug here
-				["setting",key,7,msg[1],hh_busDepot.at(key++7)].postln;
+				// ["setting",key,7,msg[1],hh_busDepot.at(key++7)].postln;
 				hh_busDepot.at(key++7).set(msg[1]);
 			});
 		});
@@ -1151,10 +1154,10 @@ Engine_kildare : CroneEngine {
 					synthArray[7-1].set(\kill_gate,-1.05);
 				});
 			});
-			[(\hh_amp++7),hh_busDepot.at(\hh_amp++7)].postln;
+			// [(\hh_amp++7),hh_busDepot.at(\hh_amp++7)].postln;
 			// synthArray[7-1]=Synth.new("hh",hh_params.getPairs);
 			synthArray[7-1]=Synth.new("hh",[
-				\hh_amp_bus,hh_busDepot.at(\hh_amp++7).index.postln,
+				\hh_amp_bus,hh_busDepot.at(\hh_amp++7),
 				\hh_carHz_bus,hh_busDepot.at(\hh_carHz++7),
 				\hh_carAtk_bus,hh_busDepot.at(\hh_carAtk++7),
 				\hh_carRel_bus,hh_busDepot.at(\hh_carRel++7),
@@ -1179,7 +1182,7 @@ Engine_kildare : CroneEngine {
 				\hh_SCHNK_bus,hh_busDepot.at(\hh_SCHNK++7),
 			],target:context.server); // NOTE: added the target, just in case...
 			NodeWatcher.register(synthArray[7-1]);
-			("triggering a thing "++(synthArray[7-1].nodeID)).postln;
+			// ("triggering a thing "++(synthArray[7-1].nodeID)).postln;
 		});
 
 	}
@@ -1193,6 +1196,6 @@ Engine_kildare : CroneEngine {
 		rs_busDepot.keysValuesDo({ arg key,value; value.free});
 		cb_busDepot.keysValuesDo({ arg key,value; value.free});
 		hh_busDepot.keysValuesDo({ arg key,value; value.free});
-		cy_busDepot.keysValuesDo({ arg key,value; value.free});
+		// cy_busDepot.keysValuesDo({ arg key,value; value.free});
 	}
 }
