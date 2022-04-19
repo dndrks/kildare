@@ -53,7 +53,8 @@ function lfos.add_params()
   for i = 1,lfos.NUM_LFOS do
     last_param[i] = drums[util.wrap(i,1,7)].."_amp"
     params:add_separator("lfo "..i)
-    params:add_control("lfo_return_value_"..i,"value to return to", controlspec.new(0,30000,'lin',0.01,30000,'',0.01,false))
+    params:add_number("lfo_depth_"..i,"depth",0,100,0,function(param) return (param:get().."%") end)
+    params:set_action("lfo_depth_"..i, function(x) if x == 0 then lfos.return_to_baseline(i,true) end end)
     params:add_option("lfo_target_track_"..i, "track", drums, util.wrap(i,1,7))
     params:set_action("lfo_target_track_"..i,
       function(x)
@@ -65,31 +66,21 @@ function lfos.add_params()
         end
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
-        -- local drum_target = params:get("lfo_target_track_"..i)
-        -- local param_name = drums[drum_target].."_"..(params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
-        -- engine[last_param[i]](params:get(last_param[i]))
         lfos.return_to_baseline(i)
       end
     )
     params:add_option("lfo_target_param_"..i, "param",params_list[drums[util.wrap(i,1,7)]].names,1)
     params:set_action("lfo_target_param_"..i,
       function(x)
-        -- rebuild min/max for LFOs
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
-        -- local drum_target = params:get("lfo_target_track_"..i)
-        -- local param_name = drums[drum_target].."_"..(params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
-        -- engine[last_param[i]](params:get(last_param[i]))
         lfos.return_to_baseline(i)
       end
     )
-    params:add_option("lfo_"..i,"state",{"off","on"},1)
+    params:add_option("lfo_"..i,"state",{"off","on"},2)
     params:set_action("lfo_"..i,function(x)
       lfos.sync_lfos(i)
       if x == 1 then
-        -- local drum_target = params:get("lfo_target_track_"..i)
-        -- local param_name = drums[drum_target].."_"..(params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
-        -- engine[param_name](params:get(param_name))
         lfos.return_to_baseline(i,true)
       end
     end)
@@ -164,13 +155,31 @@ function lfos.add_params()
   lfos.update_freqs()
   lfos.lfo_update()
   metro.init(lfos.lfo_update, 1 / lfos.LFO_UPDATE_FREQ):start()
+  params:set_action("clock_tempo",
+  function(bpm)
+    local source = params:string("clock_source")
+    if source == "internal" then clock.internal.set_tempo(bpm)
+    elseif source == "link" then clock.link.set_tempo(bpm) end
+    norns.state.clock.tempo = bpm
+    if tempo_updater_clock then
+      clock.cancel(tempo_updater_clock)
+    end
+    tempo_updater_clock = clock.run(function() clock.sleep(0.05) lfos.update_tempo() end)
+  end)
   -- params:bang()
+end
+
+function lfos.update_tempo()
+  for i = 1,lfos.NUM_LFOS do
+    lfos.sync_lfos(i)
+  end
 end
 
 function lfos.return_to_baseline(i,silent)
   local drum_target = params:get("lfo_target_track_"..i)
   local param_name = drums[drum_target].."_"..(params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
   engine[last_param[i]](params:get(last_param[i]))
+  print("returbn",last_param[i],params:get(last_param[i]))
   if not silent then
     last_param[i] = param_name
   end
@@ -264,17 +273,16 @@ function lfos.lfo_update()
     local min = params:get("lfo_min_"..i)
     local max = params:get("lfo_max_"..i)
     local mid = math.abs(min-max)/2
-    local value = util.linlin(-1,1,min,max,math.sin(lfos.lfo_progress[i]))
-    if value ~= lfos.lfo_values[i] then
+    local percentage = math.abs(max-min) * (params:get("lfo_depth_"..i)/100) -- new
+    local target_name = params:string("lfo_target_track_"..i).."_"..params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))]
+    local value = util.linlin(-1,1,util.clamp(params:get(target_name)-percentage,min,max),util.clamp(params:get(target_name)+percentage,min,max),math.sin(lfos.lfo_progress[i])) -- new
+    if value ~= lfos.lfo_values[i] and (params:get("lfo_depth_"..i)/100 > 0) then
       lfos.lfo_values[i] = value
       if params:string("lfo_"..i) == "on" then
         -- TODO FIX AFTER ID AND NAME IS STATIC
-        local target_name = params:string("lfo_target_track_"..i).."_"..params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))]
         if params:string("lfo_shape_"..i) == "sine" then
-          -- params:set(target_name, value)
           engine[target_name](value)
         elseif params:string("lfo_shape_"..i) == "square" then
-          -- params:set(target_name, value >= mid and max or min)
           engine[target_name](value >= mid and max or min)
         elseif params:string("lfo_shape_"..i) == "random" then
           -- TODO: if it's a fast rate, then switch to this calc...maybe even more aggressive...

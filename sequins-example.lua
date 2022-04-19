@@ -5,7 +5,8 @@ kildare_setup = include 'lib/kildare'
 kildare_lfos = include 'lib/kildare_lfos'
 
 -- active_voices = {"bd","sd","xt","cp","rs","cb","hh"}
-active_voices = {"bd","hh"}
+-- active_voices = {"bd","xt","sd","hh"}
+active_voices = {"bd","hh","rs","sd","xt"}
 
 function establish()
   bd = s{1,0,0,0,1,0,0,0,1,0,0,1,0,1,0,1}
