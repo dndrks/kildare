@@ -4,15 +4,16 @@ s = require 'sequins'
 kildare_setup = include 'lib/kildare'
 kildare_lfos = include 'lib/kildare_lfos'
 
--- active_voices = {"bd","sd","xt","cp","rs","cb","hh"}
--- active_voices = {"bd","xt","sd","hh"}
-active_voices = {"bd","hh","rs","sd","xt"}
+-- active_voices = {"bd","sd","tm","cp","rs","cb","hh"}
+-- active_voices = {"bd","tm","sd","hh"}
+active_voices = {"bd","sd","tm","cp","rs","cb","hh"}
+-- active_voices = {'hh'}
 
 function establish()
   bd = s{1,0,0,0,1,0,0,0,1,0,0,1,0,1,0,1}
   sd = s{0,1,0,1,1,0,1,0,0,0,0,0,1,1,1,1}
-  xt = s{1,0,1,0,0,0,0,0,1,1,1,1}
-  cp = s{0,0,0,0,0,1}
+  tm = s{1,0,1,0,0,0,0,0,1,1,0,0}
+  cp = s{0,0,0,0,0,1,0,0,0,0}
   rs = s{0,0,0,1,0,1,0,0,0,0,1}
   cb = s{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1}
   hh = s{1,1,0,0,0,0,1,0,1}
@@ -23,7 +24,6 @@ sync_vals = s{1/4,1/8,1,1/3}
 
 function init()
   kildare_setup.init()
-  kildare_lfos.add_params()
   establish()
   clock.run(parse_patterns)
 end
