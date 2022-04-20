@@ -84,8 +84,8 @@ Engine_kildare : CroneEngine {
 			bd_modAmp = LinLin.kr(bd_modAmp,0.0,1.0,0,127);
 			bd_feedAmp = LinLin.kr(bd_feedAmp,0.0,1.0,0.0,10.0);
 			bd_EQG = LinLin.kr(bd_EQG,0.0,1.0,0.0,10.0);
-			bd_rampDepth = LinLin.kr(bd_rampDepth,0.0,100,0.0,2.0);
-			bd_AMD = LinLin.kr(bd_AMD,0,100,0.0,2.0);
+			bd_rampDepth = LinLin.kr(bd_rampDepth,0.0,1.0,0.0,2.0);
+			bd_AMD = LinLin.kr(bd_AMD,0.0,1.0,0.0,2.0);
 
 			bd_modEnv = EnvGen.kr(Env.perc(bd_modAtk, bd_modRel),gate: kill_gate);
 			bd_carRamp = EnvGen.kr(Env([1000, 0.000001], [bd_rampDec], curve: \exp));
@@ -104,13 +104,14 @@ Engine_kildare : CroneEngine {
 			bd_car = (bd_car + bd_clicksound)* bd_ampMod;
 
 			bd_car = Squiz.ar(in:bd_car, pitchratio:bd_SPTCH, zcperchunk:bd_SCHNK, mul:1);
-			bd_car = Decimator.ar(Pan2.ar(bd_car,bd_pan),bd_brate,bd_bcnt,1.0);
+			bd_car = Decimator.ar(bd_car,bd_brate,bd_bcnt,1.0);
 
 			bd_car = BPeakEQ.ar(in:bd_car,freq:bd_EQF,rq:1,db:bd_EQG,mul:1);
 			bd_car = BLowPass.ar(in:bd_car,freq:bd_LPfreq, rq: bd_filterQ, mul:1);
 			bd_car = RHPF.ar(in:bd_car,freq:bd_HPfreq, rq: bd_filterQ, mul:1);
 
 			bd_car = Compander.ar(in:bd_car,control:bd_car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+			bd_car = Pan2.ar(bd_car,bd_pan);
 			Out.ar(out, bd_car);
 		}).add;
 
@@ -174,7 +175,7 @@ Engine_kildare : CroneEngine {
 			sd_feedAmp = LinLin.kr(sd_feedAmp,0,1,0.0,10.0);
 			sd_EQG = LinLin.kr(sd_EQG,0.0,1.0,0.0,10.0);
 			sd_feedAmp = sd_feedAmp * sd_modAmp; // 220224
-			sd_rampDepth = LinLin.kr(sd_rampDepth,0,100,0.0,2.0);
+			sd_rampDepth = LinLin.kr(sd_rampDepth,0.0,1.0,0.0,2.0);
 			sd_feedCar = SinOsc.ar(sd_carHz + sd_feedMod + (sd_carRamp*sd_rampDepth)) * sd_carEnv * (sd_feedAmp/sd_modAmp * 127);
 			sd_mod = SinOsc.ar(sd_modHz + sd_feedCar, mul:sd_modAmp*100) * sd_modEnv;
 			sd_car = SinOsc.ar(sd_carHz + sd_mod + (sd_carRamp*sd_rampDepth)) * sd_carEnv * sd_amp;
@@ -185,7 +186,7 @@ Engine_kildare : CroneEngine {
 			sd_noise = BLowPass.ar(in:sd_noise,freq:sd_LPfreq, rq: sd_filterQ, mul:1);
 			sd_noise = RHPF.ar(in:sd_noise,freq:sd_HPfreq, rq: sd_filterQ, mul:1);
 
-			sd_AMD = LinLin.kr(sd_AMD,0,100,0.0,2.0);
+			sd_AMD = LinLin.kr(sd_AMD,0.0,1.0,0.0,2.0);
 			sd_ampMod = SinOsc.ar(freq:sd_AMF,mul:(sd_AMD/2),add:1);
 			sd_car = sd_car * sd_ampMod;
 
@@ -259,8 +260,8 @@ Engine_kildare : CroneEngine {
 			tm_modAmp = LinLin.kr(tm_modAmp,0.0,1.0,0,127);
 			tm_feedAmp = LinLin.kr(tm_feedAmp,0.0,1.0,0.0,10.0);
 			tm_EQG = LinLin.kr(tm_EQG,0.0,1.0,0.0,10.0);
-			tm_rampDepth = LinLin.kr(tm_rampDepth,0.0,100,0.0,2.0);
-			tm_AMD = LinLin.kr(tm_AMD,0,100,0.0,2.0);
+			tm_rampDepth = LinLin.kr(tm_rampDepth,0.0,1.0,0.0,2.0);
+			tm_AMD = LinLin.kr(tm_AMD,0,1.0,0.0,2.0);
 
 			tm_modEnv = EnvGen.kr(Env.perc(tm_modAtk, tm_modRel));
 			tm_carRamp = EnvGen.kr(Env([600, 0.000001], [tm_rampDec], curve: \lin));
@@ -278,7 +279,7 @@ Engine_kildare : CroneEngine {
 			tm_clicksound = LPF.ar(Impulse.ar(0.003),16000,tm_click) * EnvGen.kr(envelope: Env.perc(tm_carAtk, 0.2),gate: kill_gate);
 			tm_car = (tm_car + tm_clicksound) * tm_ampMod;
 			tm_car = Squiz.ar(in:tm_car, pitchratio:tm_SPTCH, zcperchunk:tm_SCHNK, mul:1);
-			tm_car = Decimator.ar(Pan2.ar(tm_car,tm_pan),tm_brate,tm_bcnt,1.0);
+			tm_car = Decimator.ar(tm_car,tm_brate,tm_bcnt,1.0);
 
 			tm_car = BPeakEQ.ar(in:tm_car,freq:tm_EQF,rq:1,db:tm_EQG,mul:1);
 
@@ -287,7 +288,7 @@ Engine_kildare : CroneEngine {
 
 			tm_car = Compander.ar(in:tm_car,control:tm_car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
-			Out.ar(out, tm_car);
+			Out.ar(out, Pan2.ar(tm_car,tm_pan));
 		}).add;
 
 		SynthDef("cp", {
@@ -336,7 +337,7 @@ Engine_kildare : CroneEngine {
 			cp_modAmp = LinLin.kr(cp_modAmp,0.0,1.0,0,127);
 			cp_feedAmp = LinLin.kr(cp_feedAmp,0.0,1.0,0.0,10.0);
 			cp_EQG = LinLin.kr(cp_EQG,0.0,1.0,0.0,10.0);
-			cp_AMD = LinLin.kr(cp_AMD,0,100,0.0,2.0);
+			cp_AMD = LinLin.kr(cp_AMD,0,1.0,0.0,2.0);
 
 			cp_modEnv = EnvGen.ar(
 				Env.new(
@@ -376,7 +377,7 @@ Engine_kildare : CroneEngine {
 
 			cp_car = Squiz.ar(in:cp_car, pitchratio:cp_SPTCH, zcperchunk:cp_SCHNK, mul:1);
 
-			cp_car = Decimator.ar(Pan2.ar(cp_car,cp_pan),cp_brate,cp_bcnt,1.0);
+			cp_car = Decimator.ar(cp_car,cp_brate,cp_bcnt,1.0);
 
 			cp_car = BPeakEQ.ar(in:cp_car,freq:cp_EQF,rq:1,db:cp_EQG,mul:1);
 
@@ -384,7 +385,7 @@ Engine_kildare : CroneEngine {
 			cp_car = RHPF.ar(in:cp_car,freq:cp_HPfreq, rq: cp_filterQ, mul:1);
 
 			cp_car = cp_car.softclip;
-			Out.ar(out, cp_car);
+			Out.ar(out, Pan2.ar(cp_car,cp_pan));
 			FreeSelf.kr(Done.kr(cp_modEnv) * Done.kr(cp_carEnv));
 		}).add;
 
@@ -443,8 +444,8 @@ Engine_kildare : CroneEngine {
 			rs_modAmp = LinLin.kr(rs_modAmp,0.0,1.0,0,127);
 			// rs_feedAmp = LinLin.kr(rs_feedAmp,0.0,1.0,0.0,10.0);
 			rs_EQG = LinLin.kr(rs_EQG,0.0,1.0,0.0,10.0);
-			rs_rampDepth = LinLin.kr(rs_rampDepth,0.0,100,0.0,2.0);
-			rs_AMD = LinLin.kr(rs_AMD,0,100,0.0,2.0);
+			rs_rampDepth = LinLin.kr(rs_rampDepth,0.0,1.0,0.0,2.0);
+			rs_AMD = LinLin.kr(rs_AMD,0,1.0,0.0,2.0);
 
 			rs_feedAmp = rs_modAmp.linlin(0, 127, 0, 3);
 			rs_feedAMP = rs_modAmp.linlin(0, 127, 0, 4);
@@ -478,6 +479,7 @@ Engine_kildare : CroneEngine {
 			rs_car = LPF.ar(rs_car,12000,1);
 			rs_car = rs_car.softclip;
 			rs_car = Compander.ar(in:rs_car,control:rs_car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+
 			Out.ar(out, Pan2.ar(rs_car,rs_pan));
 
 			sd_modHz = rs_carHz*2.52;
@@ -555,8 +557,8 @@ Engine_kildare : CroneEngine {
 			cb_filterQ = LinLin.kr(cb_filterQ,0,100,2.0,0.001);
 			cb_feedAmp = LinLin.kr(cb_feedAmp,0.0,1.0,1.0,3.0);
 			cb_EQG = LinLin.kr(cb_EQG,0.0,1.0,0.0,10.0);
-			cb_rampDepth = LinLin.kr(cb_rampDepth,0.0,100,0.0,2.0);
-			cb_AMD = LinLin.kr(cb_AMD,0,100,0.0,2.0);
+			cb_rampDepth = LinLin.kr(cb_rampDepth,0.0,1.0,0.0,2.0);
+			cb_AMD = LinLin.kr(cb_AMD,0,1.0,0.0,2.0);
 			cb_snap = LinLin.kr(cb_snap,0.0,1.0,0.0,10.0);
 
 			cb_modEnv = EnvGen.kr(Env.perc(cb_modAtk, cb_modRel), gate:kill_gate);
@@ -569,12 +571,12 @@ Engine_kildare : CroneEngine {
 			cb_1 = (cb_1+(LPF.ar(Impulse.ar(0.003),16000,1)*cb_snap)) * cb_ampMod;
 			cb_1 = (cb_1*0.33)+(cb_2*0.33);
 			cb_1 = Squiz.ar(in:cb_1, pitchratio:cb_SPTCH, zcperchunk:cb_SCHNK, mul:1);
-			cb_1 = Decimator.ar(Pan2.ar(cb_1,cb_pan),cb_brate,cb_bcnt,1.0);
+			cb_1 = Decimator.ar(cb_1,cb_brate,cb_bcnt,1.0);
 			cb_1 = BPeakEQ.ar(in:cb_1,freq:cb_EQF,rq:1,db:cb_EQG,mul:1);
 			cb_1 = BLowPass.ar(in:cb_1,freq:cb_LPfreq, rq: cb_filterQ, mul:1);
 			cb_1 = RHPF.ar(in:cb_1,freq:cb_HPfreq, rq: cb_filterQ, mul:1);
 			cb_1 = Compander.ar(in:cb_1,control:cb_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-			Out.ar(out, cb_1);
+			Out.ar(out, Pan2.ar(cb_1,cb_pan));
 			FreeSelf.kr(Done.kr(cb_carEnv) * Done.kr(cb_modEnv));
 		}).add;
 
@@ -634,7 +636,7 @@ Engine_kildare : CroneEngine {
 			hh_feedAmp = LinLin.kr(hh_feedAmp,0.0,1.0,0.0,10.0);
 			hh_EQG = LinLin.kr(hh_EQG,0.0,1.0,0.0,10.0);
 			hh_tremDepth = LinLin.kr(hh_tremDepth,0.0,100,0.0,1.0);
-			hh_AMD = LinLin.kr(hh_AMD,0,100,0.0,2.0);
+			hh_AMD = LinLin.kr(hh_AMD,0,1.0,0.0,2.0);
 
 			hh_modEnv = EnvGen.kr(Env.perc(hh_modAtk, hh_modRel));
 			hh_carRamp = EnvGen.kr(Env([1000, 0.000001], [hh_tremHz], curve: \exp));
@@ -648,13 +650,13 @@ Engine_kildare : CroneEngine {
 			tremod = (1.0 - hh_tremDepth) + tremolo;
 			hh_car = hh_car*tremod;
 			hh_car = Squiz.ar(in:hh_car, pitchratio:hh_SPTCH, zcperchunk:hh_SCHNK, mul:1);
-			hh_car = Decimator.ar(Pan2.ar(hh_car,hh_pan),hh_brate,hh_bcnt,1.0);
+			hh_car = Decimator.ar(hh_car,hh_brate,hh_bcnt,1.0);
 			hh_car = BPeakEQ.ar(in:hh_car,freq:hh_EQF,rq:1,db:hh_EQG,mul:1);
 
 			hh_car = BLowPass.ar(in:hh_car,freq:hh_LPfreq, rq: hh_filterQ, mul:1);
 			hh_car = RHPF.ar(in:hh_car,freq:hh_HPfreq, rq: hh_filterQ, mul:1);
 			hh_car = Compander.ar(in:hh_car,control:hh_car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-			Out.ar(out, hh_car);
+			Out.ar(out, Pan2.ar(hh_car,hh_pan));
 		}).add;
 
 		context.server.sync;
@@ -1096,8 +1098,8 @@ Engine_kildare : CroneEngine {
 				\rs_carRel_bus,rs_busDepot.at(\rs_carRel++6),
 				\rs_modAmp_bus,rs_busDepot.at(\rs_modAmp++6),
 				\rs_modHz_bus,rs_busDepot.at(\rs_modHz++6),
-				\rs_ramDepth_bus,rs_busDepot.at(\rs_ramDepth++6),
-				\rs_ramDec_bus,rs_busDepot.at(\rs_ramDec++6),
+				\rs_rampDepth_bus,rs_busDepot.at(\rs_rampDepth++6),
+				\rs_rampDec_bus,rs_busDepot.at(\rs_rampDec++6),
 				\rs_sdAmp_bus,rs_busDepot.at(\rs_sdAmp++6),
 				\rs_sdAtk_bus,rs_busDepot.at(\rs_sdAtk++6),
 				\rs_sdRel_bus,rs_busDepot.at(\rs_sdRel++6),

@@ -31,7 +31,7 @@ end
 -- param_seq[selected_seq].bd_carHz = s{30,50,600,300,100}
 -- param_seq[selected_seq].sd_carHz = s{300,500,200,2000,4000,17000,400}
 -- param_seq[selected_seq].sd_carHz = s{params:get("sd_carHz")}
--- param_seq[4].cb_rampDepth = s{100,0,30,40,80,0,0}
+-- param_seq[4].cb_rampDepth = s{1,0,0.3,0.4,0.8,0,0}
 
 -- sequins sequencer scratchpad
 -- uncomment and live-execute to infuse changes into the sequences
