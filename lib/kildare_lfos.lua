@@ -40,8 +40,8 @@ function lfos.add_params()
     local i = 1
     for key,val in pairs(drum_params[k]) do
       if drum_params[k][key].type ~= "separator" then
-        min_specs[k][i] = {min = drum_params[k][key].min, max = drum_params[k][key].max, warp = drum_params[k][key].warp, step = 0.01, default = drum_params[k][key].default, quantum = 0.01}
-        max_specs[k][i] = {min = drum_params[k][key].min, max = drum_params[k][key].max, warp = drum_params[k][key].warp, step = 0.01, default = drum_params[k][key].max, quantum = 0.01}
+        min_specs[k][i] = {min = drum_params[k][key].min, max = drum_params[k][key].max, warp = drum_params[k][key].warp, step = 0.01, default = drum_params[k][key].default, quantum = 0.01, formatter = drum_params[k][key].formatter}
+        max_specs[k][i] = {min = drum_params[k][key].min, max = drum_params[k][key].max, warp = drum_params[k][key].warp, step = 0.01, default = drum_params[k][key].max, quantum = 0.01, formatter = drum_params[k][key].formatter}
         i = i+1 -- do not increment by the separators' gaps...
       end
     end
@@ -202,11 +202,19 @@ function lfos.rebuild_param(param,i)
     default_value,
     '',
     min_specs[params:string("lfo_target_track_"..i)][params:get("lfo_target_param_"..i)].quantum)
+  if param == "min" then
+    if min_specs[params:string("lfo_target_track_"..i)][params:get("lfo_target_param_"..i)].formatter ~= nil then
+      params.params[param_id].formatter = min_specs[params:string("lfo_target_track_"..i)][params:get("lfo_target_param_"..i)].formatter
+    end
+  end
   if param == "max" then
     if params:string("lfo_target_param_"..i) == "pan" then
       default_value = 1
     end
     params.params[param_id]:set_raw(params.params[param_id].controlspec:unmap(default_value))
+    if max_specs[params:string("lfo_target_track_"..i)][params:get("lfo_target_param_"..i)].formatter ~= nil then
+      params.params[param_id].formatter = max_specs[params:string("lfo_target_track_"..i)][params:get("lfo_target_param_"..i)].formatter
+    end
   end
 end
 
@@ -270,11 +278,14 @@ function lfos.lfo_update()
         elseif params:string("lfo_shape_"..i) == "square" then
           engine[target_name](value >= mid and max or min)
         elseif params:string("lfo_shape_"..i) == "random" then
-          if value == min or value == max then
+          local rand_calc = util.linlin(-1,1,min,max,math.sin(lfos.lfo_progress[i]))
+          if util.round(rand_calc,0.001) == min or util.round(rand_calc,0.001) == max then
             if min < max then
-              engine[target_name](math.random(util.round(min*100),util.round(max*100))/100)
+              local send_value = math.random(util.round(util.clamp(params:get(target_name)-percentage,min,max)*100),util.round(util.clamp(params:get(target_name)+percentage,min,max)*100))/100
+              engine[target_name](send_value)
             else
-              engine[target_name](math.random(util.round(max*100),util.round(min*100))/100)
+              local send_value = math.random(util.round(util.clamp(params:get(target_name)+percentage,min,max)*100),util.round(util.clamp(params:get(target_name)-percentage,min,max)*100))/100
+              engine[target_name](send_value)
             end
           end
         end
