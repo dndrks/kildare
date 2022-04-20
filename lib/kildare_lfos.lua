@@ -53,6 +53,39 @@ function lfos.add_params()
   for i = 1,lfos.NUM_LFOS do
     last_param[i] = drums[util.wrap(i,1,7)].."_amp"
     params:add_separator("lfo "..i)
+    params:add_option("lfo_"..i,"state",{"off","on"},1)
+    params:set_action("lfo_"..i,function(x)
+      lfos.sync_lfos(i)
+      if x == 1 then
+        lfos.return_to_baseline(i,true)
+        params:hide("lfo_target_track_"..i)
+        params:hide("lfo_target_param_"..i)
+        params:hide("lfo_depth_"..i)
+        params:hide("lfo_min_"..i)
+        params:hide("lfo_max_"..i)
+        params:hide("lfo_mode_"..i)
+        params:hide("lfo_beats_"..i)
+        params:hide("lfo_free_"..i)
+        params:hide("lfo_shape_"..i)
+        params:hide("lfo_reset_"..i)
+        _menu.rebuild_params()
+      elseif x == 2 then
+        params:show("lfo_target_track_"..i)
+        params:show("lfo_target_param_"..i)
+        params:show("lfo_depth_"..i)
+        params:show("lfo_min_"..i)
+        params:show("lfo_max_"..i)
+        params:show("lfo_mode_"..i)
+        if params:get("lfo_mode_"..i) == 1 then
+          params:show("lfo_beats_"..i)
+        else
+          params:show("lfo_free_"..i)
+        end
+        params:show("lfo_shape_"..i)
+        params:show("lfo_reset_"..i)
+        _menu.rebuild_params()
+      end
+    end)
     params:add_option("lfo_target_track_"..i, "track", drums, util.wrap(i,1,7))
     params:set_action("lfo_target_track_"..i,
       function(x)
@@ -73,14 +106,7 @@ function lfos.add_params()
         lfos.return_to_baseline(i)
       end
     )
-    params:add_option("lfo_"..i,"state",{"off","on"},2)
-    params:set_action("lfo_"..i,function(x)
-      lfos.sync_lfos(i)
-      if x == 1 then
-        lfos.return_to_baseline(i,true)
-      end
-    end)
-    params:hide("lfo_"..i)
+    -- params:hide("lfo_"..i)
     params:add_number("lfo_depth_"..i,"depth",0,100,0,function(param) return (param:get().."%") end)
     params:set_action("lfo_depth_"..i, function(x) if x == 0 then lfos.return_to_baseline(i,true) end end)
     params:add{
@@ -110,7 +136,7 @@ function lfos.add_params()
     params:add_option("lfo_mode_"..i, "update mode", {"clocked bars","free"},1)
     params:set_action("lfo_mode_"..i,
       function(x)
-        if x == 1 then
+        if x == 1 and params:string("lfo_"..i) == "on" then
           params:hide("lfo_free_"..i)
           params:show("lfo_beats_"..i)
           lfos.lfo_freqs[i] = 1/(lfos.get_the_beats() * lfo_rates[params:get("lfo_beats_"..i)] * 4)
