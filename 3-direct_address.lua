@@ -9,6 +9,8 @@ function init()
   cb_pitches = s{404,202,606,101,75}
   sd_pitches = s{404,202,606,101,75}
   rs_squish = s{1,2,3,4,5,6,7,8,9,10}
+  
+  engine.bd_amp(10) -- there's a limiter on each voice, which allows us to saturate with values outside of the normal parameters
 
   clock.run(iter)
   clock.run(iter_rs)
