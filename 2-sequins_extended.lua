@@ -1,4 +1,4 @@
-engine.name = 'kildare'
+engine.name = 'Kildare'
 s = require 'sequins'
 drums = {"bd","sd","tm","cp","rs","cb","hh"}
 
@@ -81,33 +81,39 @@ function establish_sequences()
   
   param_seq = {
     [1] = {
-      bd_modAmp = s{1,0.4,0.3,0.5,0},
-      bd_modRel = s{0.05,1,0.4,0.8},
-      bd_carHz = s{60,90,100,1000,3000},
-      sd_modAmp = s{1,0.4,0.3,0.5,0},
-      sd_modHz = s{params:get("sd_modHz")},
-      hh_pan = s{-1,0,1}
+      bd = {
+        modAmp = s{1,0.4,0.3,0.5,0},
+        modRel = s{0.05,1,0.4,0.8},
+        carHz = s{60,90,100,1000,3000},
+      },
+      sd = {
+        modAmp = s{1,0.4,0.3,0.5,0},
+        modHz = s{params:get("sd_modHz")},
+      },
+      hh = {
+        pan = s{-1,0,1}
+      }
     },
-    [2] = {
-      bd_modAmp = s{1,0.4,1,0,0},
-      bd_modRel = s{0.05,0.3,0.4,0.8,1,10},
-      bd_carHz = s{30,700,126},
-      sd_modAmp = s{1,0.5,0},
-      sd_modHz = s{2770,300,1000,5000,403},
-      hh_pan = s{-0.3,0,0.3,1,-1}
-    },
-    [3] = {
-      bd_modAmp = s{1,0.4,0.3,0.5,0},
-      bd_modRel = s{0.05,1,0.4,0.8},
-      bd_carHz = s{60,90,100,1000,3000},
-      hh_brate = s{1000,12000,400,1500},
-      hh_HPfreq = s{2300,20,4000,300}
-    },
-    [4] = {
-      bd_modAmp = s{1,0.4,0.3,0.5,0},
-      bd_modRel = s{0.05,1,0.4,0.8},
-      bd_carHz = s{60,90,100,1000,3000}
-    },
+    -- [2] = {
+    --   bd_modAmp = s{1,0.4,1,0,0},
+    --   bd_modRel = s{0.05,0.3,0.4,0.8,1,10},
+    --   bd_carHz = s{30,700,126},
+    --   sd_modAmp = s{1,0.5,0},
+    --   sd_modHz = s{2770,300,1000,5000,403},
+    --   hh_pan = s{-0.3,0,0.3,1,-1}
+    -- },
+    -- [3] = {
+    --   bd_modAmp = s{1,0.4,0.3,0.5,0},
+    --   bd_modRel = s{0.05,1,0.4,0.8},
+    --   bd_carHz = s{60,90,100,1000,3000},
+    --   hh_brate = s{1000,12000,400,1500},
+    --   hh_HPfreq = s{2300,20,4000,300}
+    -- },
+    -- [4] = {
+    --   bd_modAmp = s{1,0.4,0.3,0.5,0},
+    --   bd_modRel = s{0.05,1,0.4,0.8},
+    --   bd_carHz = s{60,90,100,1000,3000}
+    -- },
   }
   
   selected_seq = 1
@@ -119,11 +125,17 @@ function play_sequence()
     clock.sync(1/4)
     for i = 1,#drums do
       if sequences[selected_seq][drums[i]]() == 1 then
-        engine["trig_"..drums[i]]()
+        engine.trig(drums[i])
       end
     end
     for k,v in pairs(param_seq[selected_seq]) do
-      engine[k](param_seq[selected_seq][k]())
+      local drum_target = k
+      local param_pool = param_seq[selected_seq][drum_target]
+      for key,value in pairs(param_pool) do
+        local param_target = key
+        local param_value = param_pool[param_target]()
+        engine.set_param(drum_target, param_target, param_value)
+      end
     end
     screen_dirty = true
   end

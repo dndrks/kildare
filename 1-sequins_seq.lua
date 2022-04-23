@@ -1,4 +1,4 @@
-engine.name = 'kildare'
+engine.name = 'Kildare'
 s = require 'sequins'
 drums = {"bd","sd","tm","cp","rs","cb","hh"}
 
@@ -72,7 +72,7 @@ function play_sequence()
     clock.sync(1/4)
     for i = 1,#drums do
       if sequences[selected_seq][drums[i]]() == 1 then
-        engine["trig_"..drums[i]]()
+        engine.trig(drums[i])
       end
     end
     screen_dirty = true
