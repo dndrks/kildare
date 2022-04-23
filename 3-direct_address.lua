@@ -61,8 +61,8 @@ function iter()
   while true do
     clock.sync(sync_vals())
     if math.random(100) > 50 then
-      -- engine.sd_brate(math.random(8000,24000))
-      engine.set_param("bd", "brate", math.random(8000,24000))
+      -- engine.sd_bitRate(math.random(8000,24000))
+      engine.set_param("bd", "bitRate", math.random(8000,24000))
       -- engine.cb_carRel(math.random(10,1000)/1000)
       engine.set_param("cb", "carRel", math.random(10,1000)/1000)
       -- engine.cb_carHz(cb_pitches())

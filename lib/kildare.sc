@@ -37,7 +37,7 @@ Kildare {
 					pan, rampDepth, rampDec,
 					squishPitch, squishChunk,
 					amDepth, amHz,
-					eqHz, eqAmp, brate, bcnt,
+					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ;
 
 					var car, mod, carEnv, modEnv, carRamp,
@@ -73,7 +73,7 @@ Kildare {
 					car = (car + clicksound)* ampMod;
 
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					car = Decimator.ar(car,brate,bcnt,1.0);
+					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
@@ -87,7 +87,7 @@ Kildare {
 					carHz, modHz, modAmp, modAtk,
 					modRel, carAtk, carRel, amp, pan,
 					rampDepth, rampDec, feedAmp, noiseAmp,
-					noiseAtk, noiseRel, brate, bcnt,
+					noiseAtk, noiseRel, bitRate, bitCount,
 					eqHz,eqAmp,
 					squishPitch, squishChunk,
 					lpHz, hpHz, filterQ,
@@ -128,7 +128,7 @@ Kildare {
 					car = car * ampMod;
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					noise = Squiz.ar(in:noise, pitchratio:squishPitch, zcperchunk:squishChunk*100, mul:1);
-					car = Decimator.ar(car,brate,bcnt,1.0);
+					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
@@ -148,7 +148,7 @@ Kildare {
 					click,
 					squishPitch, squishChunk,
 					pan, rampDepth, rampDec, amDepth, amHz,
-					eqHz, eqAmp, brate, bcnt,
+					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod,
@@ -183,7 +183,7 @@ Kildare {
 					clicksound = LPF.ar(Impulse.ar(0.003),16000,click) * EnvGen.kr(envelope: Env.perc(carAtk, 0.2),gate: stopGate);
 					car = (car + clicksound) * ampMod;
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					car = Decimator.ar(car,brate,bcnt,1.0);
+					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
@@ -199,7 +199,7 @@ Kildare {
 					carRel, amp, click,
 					squishPitch, squishChunk,
 					pan, amDepth, amHz,
-					eqHz, eqAmp, brate, bcnt,
+					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
@@ -250,7 +250,7 @@ Kildare {
 					ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 					car = car * ampMod;
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					car = Decimator.ar(car,brate,bcnt,1.0);
+					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
@@ -266,7 +266,7 @@ Kildare {
 					modHz, modAmp,
 					carAtk, carRel, amp,
 					pan, rampDepth, rampDec, amDepth, amHz,
-					eqHz, eqAmp, brate, bcnt,
+					eqHz, eqAmp, bitRate, bitCount,
 					sdAmp, sdRel, sdAtk,
 					lpHz, hpHz, filterQ,
 					squishPitch, squishChunk;
@@ -310,7 +310,7 @@ Kildare {
 					ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 					car = (car+(LPF.ar(Impulse.ar(0.003),16000,1)*amp)) * ampMod;
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					car = Decimator.ar(Pan2.ar(car,pan),brate,bcnt,1.0);
+					car = Decimator.ar(Pan2.ar(car,pan),bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
@@ -328,7 +328,7 @@ Kildare {
 					sd_car = SinOsc.ar(carHz + sd_mod + (carRamp*rampDepth)) * sd_carEnv * sdAmp;
 					sd_car = sd_car * ampMod;
 					sd_mix = Squiz.ar(in:sd_car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					sd_mix = Decimator.ar(sd_mix,brate,bcnt,1.0);
+					sd_mix = Decimator.ar(sd_mix,bitRate,bitCount,1.0);
 					sd_mix = BPeakEQ.ar(in:sd_mix,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					sd_mix = BLowPass.ar(in:sd_mix,freq:lpHz, rq: filterQ, mul:1);
 					sd_mix = RHPF.ar(in:sd_mix,freq:hpHz, rq: filterQ, mul:1);
@@ -348,7 +348,7 @@ Kildare {
 					carAtk, carRel,
 					snap,
 					pan, rampDepth, rampDec, amDepth, amHz,
-					eqHz, eqAmp, brate, bcnt,
+					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
 					squishPitch, squishChunk;
 
@@ -377,7 +377,7 @@ Kildare {
 					voice_1 = (voice_1+(LPF.ar(Impulse.ar(0.003),16000,1)*snap)) * ampMod;
 					voice_1 = (voice_1*0.33)+(voice_2*0.33);
 					voice_1 = Squiz.ar(in:voice_1, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					voice_1 = Decimator.ar(voice_1,brate,bcnt,1.0);
+					voice_1 = Decimator.ar(voice_1,bitRate,bitCount,1.0);
 					voice_1 = BPeakEQ.ar(in:voice_1,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					voice_1 = BLowPass.ar(in:voice_1,freq:lpHz, rq: filterQ, mul:1);
 					voice_1 = RHPF.ar(in:voice_1,freq:hpHz, rq: filterQ, mul:1);
@@ -395,7 +395,7 @@ Kildare {
 					feedAmp,
 					amDepth, amHz,
 					eqHz, eqAmp,
-					brate, bcnt,
+					bitRate, bitCount,
 					lpHz, hpHz, filterQ,
 					pan,
 					squishPitch, squishChunk;
@@ -427,7 +427,7 @@ Kildare {
 					tremod = (1.0 - tremDepth) + tremolo;
 					car = car*tremod;
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					car = Decimator.ar(car,brate,bcnt,1.0);
+					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
@@ -474,8 +474,8 @@ Kildare {
 				\amHz,8175.08,
 				\eqHz,6000,
 				\eqAmp,0,
-				\brate,24000,
-				\bcnt,24,
+				\bitRate,24000,
+				\bitCount,24,
 				\lpHz,19000,
 				\hpHz,0,
 				\filterQ,50,
@@ -502,8 +502,8 @@ Kildare {
 				\amHz,2698.8,
 				\eqHz,12000,
 				\eqAmp,1,
-				\brate,24000,
-				\bcnt,24,
+				\bitRate,24000,
+				\bitCount,24,
 				\lpHz,24000,
 				\hpHz,0,
 				\filterQ,50,
@@ -527,8 +527,8 @@ Kildare {
 				\amHz,2698.8,
 				\eqHz,6000,
 				\eqAmp,0,
-				\brate,24000,
-				\bcnt,24,
+				\bitRate,24000,
+				\bitCount,24,
 				\click,1,
 				\lpHz,24000,
 				\hpHz,20,
@@ -550,8 +550,8 @@ Kildare {
 				\amHz,2698.8,
 				\eqHz,6000,
 				\eqAmp,0,
-				\brate,24000,
-				\bcnt,24,
+				\bitRate,24000,
+				\bitCount,24,
 				\click,1,
 				\lpHz,24000,
 				\hpHz,20,
@@ -576,8 +576,8 @@ Kildare {
 				\amHz,8175.08,
 				\eqHz,6000,
 				\eqAmp,0,
-				\brate,24000,
-				\bcnt,24,
+				\bitRate,24000,
+				\bitCount,24,
 				\lpHz,19000,
 				\hpHz,20,
 				\filterQ,50,
@@ -598,8 +598,8 @@ Kildare {
 				\amHz,2698.8,
 				\eqHz,12000,
 				\eqAmp,0,
-				\brate,24000,
-				\bcnt,24,
+				\bitRate,24000,
+				\bitCount,24,
 				\lpHz,24000,
 				\hpHz,20,
 				\filterQ,50,
@@ -623,8 +623,8 @@ Kildare {
 				\amHz,8175.08,
 				\eqHz,6000,
 				\eqAmp,0,
-				\brate,24000,
-				\bcnt,24,
+				\bitRate,24000,
+				\bitCount,24,
 				\lpHz,19000,
 				\hpHz,20,
 				\filterQ,50,

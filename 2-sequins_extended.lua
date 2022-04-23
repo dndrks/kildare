@@ -26,8 +26,8 @@ end
 -- sequins parameter scratchpad
 -- uncomment and live-execute to infuse modulation into the sequences
 -- param_seq[1].bd_pan = s{0.3,0.6,-1,0}
--- param_seq[1].bd_brate = s{1000,12000,400,1500}
--- param_seq[selected_seq].bd_brate = s{12000}
+-- param_seq[1].bd_bitRate = s{1000,12000,400,1500}
+-- param_seq[selected_seq].bd_bitRate = s{12000}
 -- param_seq[selected_seq].bd_carHz = s{30,50,600,300,100}
 -- param_seq[selected_seq].sd_carHz = s{300,500,200,2000,4000,17000,400}
 -- param_seq[selected_seq].sd_carHz = s{params:get("sd_carHz")}
@@ -94,26 +94,38 @@ function establish_sequences()
         pan = s{-1,0,1}
       }
     },
-    -- [2] = {
-    --   bd_modAmp = s{1,0.4,1,0,0},
-    --   bd_modRel = s{0.05,0.3,0.4,0.8,1,10},
-    --   bd_carHz = s{30,700,126},
-    --   sd_modAmp = s{1,0.5,0},
-    --   sd_modHz = s{2770,300,1000,5000,403},
-    --   hh_pan = s{-0.3,0,0.3,1,-1}
-    -- },
-    -- [3] = {
-    --   bd_modAmp = s{1,0.4,0.3,0.5,0},
-    --   bd_modRel = s{0.05,1,0.4,0.8},
-    --   bd_carHz = s{60,90,100,1000,3000},
-    --   hh_brate = s{1000,12000,400,1500},
-    --   hh_HPfreq = s{2300,20,4000,300}
-    -- },
-    -- [4] = {
-    --   bd_modAmp = s{1,0.4,0.3,0.5,0},
-    --   bd_modRel = s{0.05,1,0.4,0.8},
-    --   bd_carHz = s{60,90,100,1000,3000}
-    -- },
+    [2] = {
+      bd = {
+        modAmp = s{1,0.4,1,0,0},
+        modRel = s{0.05,0.3,0.4,0.8,1,10},
+        carHz = s{30,700,126},
+      },
+      sd = {
+        modAmp = s{1,0.5,0},
+        modHz = s{2770,300,1000,5000,403},
+      },
+      hh = {
+        pan = s{-0.3,0,0.3,1,-1}
+      },
+    },
+    [3] = {
+      bd = {
+        modAmp = s{1,0.4,0.3,0.5,0},
+        modRel = s{0.05,1,0.4,0.8},
+        carHz = s{60,90,100,1000,3000},
+      },
+      hh = {
+        bitRate = s{1000,12000,400,1500},
+        hpHz = s{2300,20,4000,300}
+      },
+    },
+    [4] = {
+      bd = {
+        modAmp = s{1,0.4,0.3,0.5,0},
+        modRel = s{0.05,1,0.4,0.8},
+        carHz = s{60,90,100,1000,3000},
+      },
+    },
   }
   
   selected_seq = 1
