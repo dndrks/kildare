@@ -1,8 +1,9 @@
 local Kildare = {}
 local specs = {}
-ControlSpec = require "controlspec"
+ControlSpec = require 'controlspec'
 frm = require 'formatters'
 local kildare_lfos = include 'lib/kildare_lfos'
+local musicutil = require 'musicutil'
 
 local drums = {"bd","sd","tm","cp","rs","cb","hh"}
 
@@ -20,7 +21,8 @@ function Kildare.init()
     ["bd"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
-      {id = 'carHz', name = 'carrier freq', type = 'control', min = 20, max = 500, warp = 'exp', default = 55, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'number', min = 15, max = 67, default = 33, formatter = function(param) return (musicutil.note_num_to_name(round_form(param:get(),1,''),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.3, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'modulator'},
@@ -49,7 +51,8 @@ function Kildare.init()
     ["sd"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
-      {id = 'carHz', name = 'carrier freq', type = 'control', min = 115, max = 660, warp = 'exp', default = 282.54, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'number', min = 46, max = 76, default = 61, formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.15, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'modulator'},
@@ -82,7 +85,8 @@ function Kildare.init()
     ["tm"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
-      {id = 'carHz', name = 'carrier freq', type = 'control', min = 40, max = 200, warp = 'exp', default = 87.3, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'number', min = 27, max = 55, default = 41, formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.43, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'modulator'},
@@ -111,7 +115,8 @@ function Kildare.init()
     ["cp"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
-      {id = 'carHz', name = 'carrier freq', type = 'control', min = 120, max = 5000, warp = 'exp', default = 1600, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'number', min = 47, max = 111, default = 91, formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.43, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -137,7 +142,8 @@ function Kildare.init()
     ["rs"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
-      {id = 'carHz', name = 'carrier freq', type = 'control', min = 200, max = 3600, warp = 'exp', default = 370, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'number', min = 55, max = 105, default = 66, formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'modulator'},
@@ -166,7 +172,8 @@ function Kildare.init()
     ["cb"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
-      {id = 'carHz', name = 'carrier freq', type = 'control', min = 200, max = 3600, warp = 'exp', default = 404, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'number', min = 55, max = 105, default = 68, formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.15, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'modulator'},
@@ -193,7 +200,8 @@ function Kildare.init()
     ["hh"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
-      {id = 'carHz', name = 'carrier freq', type = 'control', min = 200, max = 1400, warp = 'exp', default = 200, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'number', min = 55, max = 89, default = 55, formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.03, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'modulator'},
@@ -248,9 +256,15 @@ function Kildare.init()
         params:add_separator(d.name)
       end
       if d.type ~= 'separator' then
-        params:set_action(k.."_"..d.id, function(x)
-          engine.set_param(k, d.id, x)
-        end)
+        if d.id ~= "carHz" then
+          params:set_action(k.."_"..d.id, function(x)
+            engine.set_param(k, d.id, x)
+          end)
+        elseif d.id == "carHz" then
+          params:set_action(k.."_"..d.id, function(x)
+            engine.set_param(k, d.id, musicutil.note_num_to_freq(x))
+          end)
+        end
       end
     end
     -- add lfos

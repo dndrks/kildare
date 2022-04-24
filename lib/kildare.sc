@@ -15,7 +15,6 @@ Kildare {
 	var <groups;
 	// - top-level group to easily free everything
 	var <topGroup;
-
 	var <sendKeys;
 
 	*initClass {
@@ -32,7 +31,7 @@ Kildare {
 				// and instantiate via the synthdef directly. but this is fine
 				synthDefs[\bd] = SynthDef.new(\kildare_bd, {
 					arg stopGate = 1,
-					amp, carHz, carAtk, carRel,
+					amp, carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					pan, rampDepth, rampDec,
 					squishPitch, squishChunk,
@@ -44,8 +43,9 @@ Kildare {
 					feedMod, feedCar, ampMod, click, clicksound,
 					mod_1;
 
-					lpHz = lpHz.lag3(1);
-					hpHz = hpHz.lag3(1);
+					eqHz = eqHz.lag3(0.5);
+					lpHz = lpHz.lag3(0.5);
+					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
@@ -54,6 +54,7 @@ Kildare {
 					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
 					rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 					amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
+					carHz = carHz * (2.pow(carDetune/12));
 
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel),gate: stopGate);
 					carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
@@ -84,7 +85,7 @@ Kildare {
 
 				synthDefs[\sd] = SynthDef.new(\kildare_sd, {
 					arg stopGate = 1,
-					carHz, modHz, modAmp, modAtk,
+					carHz, carDetune, modHz, modAmp, modAtk,
 					modRel, carAtk, carRel, amp, pan,
 					rampDepth, rampDec, feedAmp, noiseAmp,
 					noiseAtk, noiseRel, bitRate, bitCount,
@@ -98,9 +99,11 @@ Kildare {
 
 					amp = amp/2;
 					noiseAmp = noiseAmp/2;
-					lpHz = lpHz.lag3(1);
-					hpHz = hpHz.lag3(1);
+					eqHz = eqHz.lag3(0.5);
+					lpHz = lpHz.lag3(0.5);
+					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
+					carHz = carHz * (2.pow(carDetune/12));
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
@@ -143,7 +146,7 @@ Kildare {
 
 				synthDefs[\tm] = SynthDef.new(\kildare_tm, {
 					arg stopGate = 1,
-					carHz, modHz, modAmp, modAtk, modRel, feedAmp,
+					carHz, carDetune, modHz, modAmp, modAtk, modRel, feedAmp,
 					carAtk, carRel, amp,
 					click,
 					squishPitch, squishChunk,
@@ -156,9 +159,11 @@ Kildare {
 					mod_1;
 
 					amp = amp*0.5;
-					lpHz = lpHz.lag3(1);
-					hpHz = hpHz.lag3(1);
+					eqHz = eqHz.lag3(0.5);
+					lpHz = lpHz.lag3(0.5);
+					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
+					carHz = carHz * (2.pow(carDetune/12));
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -194,7 +199,7 @@ Kildare {
 
 				synthDefs[\cp] = SynthDef.new(\kildare_cp, {
 					arg stopGate = 1,
-					carHz,
+					carHz, carDetune,
 					modHz, modAmp, modRel, feedAmp,
 					carRel, amp, click,
 					squishPitch, squishChunk,
@@ -205,9 +210,11 @@ Kildare {
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 					mod_1,mod_2;
 
-					lpHz = lpHz.lag3(1);
-					hpHz = hpHz.lag3(1);
+					eqHz = eqHz.lag3(0.5);
+					lpHz = lpHz.lag3(0.5);
+					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
+					carHz = carHz * (2.pow(carDetune/12));
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -262,7 +269,7 @@ Kildare {
 
 				synthDefs[\rs] = SynthDef.new(\kildare_rs, {
 					arg stopGate = 1,
-					carHz,
+					carHz, carDetune,
 					modHz, modAmp,
 					carAtk, carRel, amp,
 					pan, rampDepth, rampDec, amDepth, amHz,
@@ -277,9 +284,11 @@ Kildare {
 					sd_mix;
 
 					amp = amp*0.35;
-					lpHz = lpHz.lag3(1);
-					hpHz = hpHz.lag3(1);
+					eqHz = eqHz.lag3(0.5);
+					lpHz = lpHz.lag3(0.5);
+					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
+					carHz = carHz * (2.pow(carDetune/12));
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -343,7 +352,7 @@ Kildare {
 
 				synthDefs[\cb] = SynthDef.new(\kildare_cb, {
 					arg stopGate = 1,
-					amp, carHz,
+					amp, carHz, carDetune,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					carAtk, carRel,
 					snap,
@@ -356,9 +365,11 @@ Kildare {
 					sig,voice_1,voice_2,klank_env,other_mod1,other_mod2;
 
 					amp = amp*0.6;
-					lpHz = lpHz.lag3(1);
-					hpHz = hpHz.lag3(1);
+					eqHz = eqHz.lag3(0.5);
+					lpHz = lpHz.lag3(0.5);
+					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
+					carHz = carHz * (2.pow(carDetune/12));
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					feedAmp = LinLin.kr(feedAmp,0.0,1.0,1.0,3.0);
@@ -389,7 +400,7 @@ Kildare {
 
 				synthDefs[\hh] = SynthDef.new(\kildare_hh, {
 					arg stopGate = 1,
-					amp,	carHz, carAtk, carRel,
+					amp, carHz, carDetune, carAtk, carRel,
 					tremDepth, tremHz,
 					modAmp, modHz, modAtk, modRel,
 					feedAmp,
@@ -404,8 +415,9 @@ Kildare {
 					ampMod;
 
 					amp = amp*0.85;
-					lpHz = lpHz.lag3(1);
-					hpHz = hpHz.lag3(1);
+					eqHz = eqHz.lag3(0.5);
+					lpHz = lpHz.lag3(0.5);
+					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
@@ -414,6 +426,7 @@ Kildare {
 					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
 					tremDepth = LinLin.kr(tremDepth,0.0,100,0.0,1.0);
 					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
+					carHz = carHz * (2.pow(carDetune/12));
 
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
 					carRamp = EnvGen.kr(Env([1000, 0.000001], [tremHz], curve: \exp));
@@ -459,6 +472,7 @@ Kildare {
 			\bd, Dictionary.newFrom([
 				\amp,0.7,
 				\carHz,55,
+				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.3,
 				\modAmp,0,
@@ -484,6 +498,7 @@ Kildare {
 			\sd, Dictionary.newFrom([
 				\amp,0.7,
 				\carHz,282.54,
+				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.15,
 				\modAmp,0,
@@ -512,6 +527,7 @@ Kildare {
 			\tm, Dictionary.newFrom([
 				\amp,0.7,
 				\carHz,87.3,
+				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.43,
 				\modAmp,0.32,
@@ -538,6 +554,7 @@ Kildare {
 			\cp, Dictionary.newFrom([
 				\amp,0.7,
 				\carHz,1600,
+				\carDetune,0,
 				\carRel,0.43,
 				\modAmp,1,
 				\modHz,300,
@@ -561,6 +578,7 @@ Kildare {
 			\rs, Dictionary.newFrom([
 				\amp,0.7,
 				\carHz,370,
+				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.05,
 				\modAmp,1,
@@ -586,6 +604,7 @@ Kildare {
 			\cb, Dictionary.newFrom([
 				\amp,0.7,
 				\carHz,404,
+				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.15,
 				\feedAmp,0,
@@ -608,6 +627,7 @@ Kildare {
 			\hh, Dictionary.newFrom([
 				\amp,0.7,
 				\carHz,200,
+				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.03,
 				\modAmp,1,

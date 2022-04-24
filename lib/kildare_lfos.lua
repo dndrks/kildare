@@ -1,5 +1,7 @@
 -- adapted from @markeats
 
+local musicutil = require 'musicutil'
+
 local lfos = {}
 
 lfos.NUM_LFOS = 16
@@ -161,7 +163,7 @@ function lfos.add_params()
       type='control',
       id="lfo_free_"..i,
       name="rate",
-      controlspec=controlspec.new(0.001,4,'exp',0.001,0.05,'hz',0.001)
+      controlspec=controlspec.new(0.001,24,'exp',0.001,0.05,'hz',0.001)
     }
     params:set_action("lfo_free_"..i,
       function(x)
@@ -204,14 +206,18 @@ end
 function lfos.return_to_baseline(i,silent)
   local drum_target = params:get("lfo_target_track_"..i)
   local param_name = drums[drum_target].."_"..(params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
-  -- engine[last_param[i]](params:get(last_param[i]))
-  engine.set_param(drums[drum_target],last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
+  -- print(drums[drum_target],last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
+  if last_param[i] ~= "carHz" then
+    engine.set_param(drums[drum_target],last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
+  elseif last_param[i] == "carHz" then
+    engine.set_param(drums[drum_target],last_param[i],musicutil.note_num_to_freq(params:get(drums[drum_target].."_"..last_param[i])))
+  end
   if not silent then
     last_param[i] = (params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
   end
 end
 
-function lfos.rebuild_param(param,i)
+function lfos.rebuild_param(param,i) -- TODO: needs to respect number
   local param_id = params.lookup["lfo_"..param.."_"..i]
   local default_value = param == "min" and min_specs[params:string("lfo_target_track_"..i)][params:get("lfo_target_param_"..i)].min
     or params:get(
@@ -309,10 +315,12 @@ function lfos.lfo_update()
           engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],value >= mid and max or min)
         elseif params:string("lfo_shape_"..i) == "random" then
           local rand_calc = util.linlin(-1,1,min,max,math.sin(lfos.lfo_progress[i]))
+          print(rand_calc) -- TODO DIES OFF...it'll just never come close when it's going at a high rate...
           if util.round(rand_calc,0.001) == min or util.round(rand_calc,0.001) == max then
             if min < max then
               local send_value = math.random(util.round(util.clamp(params:get(target_name)-percentage,min,max)*100),util.round(util.clamp(params:get(target_name)+percentage,min,max)*100))/100
               -- engine[target_name](send_value)
+              print(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],send_value)
               engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],send_value)
             else
               local send_value = math.random(util.round(util.clamp(params:get(target_name)+percentage,min,max)*100),util.round(util.clamp(params:get(target_name)-percentage,min,max)*100))/100

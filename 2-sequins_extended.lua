@@ -25,13 +25,13 @@ end
 
 -- sequins parameter scratchpad
 -- uncomment and live-execute to infuse modulation into the sequences
--- param_seq[1].bd_pan = s{0.3,0.6,-1,0}
--- param_seq[1].bd_bitRate = s{1000,12000,400,1500}
--- param_seq[selected_seq].bd_bitRate = s{12000}
--- param_seq[selected_seq].bd_carHz = s{30,50,600,300,100}
--- param_seq[selected_seq].sd_carHz = s{300,500,200,2000,4000,17000,400}
--- param_seq[selected_seq].sd_carHz = s{params:get("sd_carHz")}
--- param_seq[4].cb_rampDepth = s{1,0,0.3,0.4,0.8,0,0}
+-- param_seq[1].bd.pan = s{0.3,0.6,-1,0}
+-- param_seq[1].bd.bitRate = s{1000,12000,400,1500}
+-- param_seq[selected_seq].bd.bitRate = s{12000}
+-- param_seq[selected_seq].bd.carHz = s{30,50,600,300,100}
+-- param_seq[selected_seq].sd.carHz = s{300,500,200,2000,4000,17000,400}
+-- param_seq[selected_seq].sd.carHz = s{params:get("sd_carHz")}
+-- param_seq[4].cb.rampDepth = s{1,0,0.3,0.4,0.8,0,0}
 
 -- sequins sequencer scratchpad
 -- uncomment and live-execute to infuse changes into the sequences
@@ -84,7 +84,7 @@ function establish_sequences()
       bd = {
         modAmp = s{1,0.4,0.3,0.5,0},
         modRel = s{0.05,1,0.4,0.8},
-        carHz = s{60,90,100,1000,3000},
+        carHz = s{60,90,100,1000,560},
       },
       sd = {
         modAmp = s{1,0.4,0.3,0.5,0},
