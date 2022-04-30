@@ -40,10 +40,10 @@ function lfos.add_params()
     min_specs[k] = {}
     max_specs[k] = {}
     local i = 1
-    for key,val in pairs(drum_params[k]) do
-      if drum_params[k][key].type ~= "separator" then
-        min_specs[k][i] = {min = drum_params[k][key].min, max = drum_params[k][key].max, warp = drum_params[k][key].warp, step = 0.01, default = drum_params[k][key].default, quantum = 0.01, formatter = drum_params[k][key].formatter}
-        max_specs[k][i] = {min = drum_params[k][key].min, max = drum_params[k][key].max, warp = drum_params[k][key].warp, step = 0.01, default = drum_params[k][key].max, quantum = 0.01, formatter = drum_params[k][key].formatter}
+    for key,val in pairs(kildare_drum_params[k]) do
+      if kildare_drum_params[k][key].type ~= "separator" then
+        min_specs[k][i] = {min = kildare_drum_params[k][key].min, max = kildare_drum_params[k][key].max, warp = kildare_drum_params[k][key].warp, step = 0.01, default = kildare_drum_params[k][key].default, quantum = 0.01, formatter = kildare_drum_params[k][key].formatter}
+        max_specs[k][i] = {min = kildare_drum_params[k][key].min, max = kildare_drum_params[k][key].max, warp = kildare_drum_params[k][key].warp, step = 0.01, default = kildare_drum_params[k][key].max, quantum = 0.01, formatter = kildare_drum_params[k][key].formatter}
         i = i+1 -- do not increment by the separators' gaps...
       end
     end
@@ -207,10 +207,12 @@ function lfos.return_to_baseline(i,silent)
   local drum_target = params:get("lfo_target_track_"..i)
   local param_name = drums[drum_target].."_"..(params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
   -- print(drums[drum_target],last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
-  if last_param[i] ~= "carHz" then
+  if last_param[i] ~= "carHz" and last_param[i] ~= "poly" and engine.name == "Kildare" then
     engine.set_param(drums[drum_target],last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
-  elseif last_param[i] == "carHz" then
+  elseif last_param[i] == "carHz" and engine.name == "Kildare" then
     engine.set_param(drums[drum_target],last_param[i],musicutil.note_num_to_freq(params:get(drums[drum_target].."_"..last_param[i])))
+  elseif last_param[i] == "poly" and engine.name == "Kildare" then
+    engine.set_param(drums[drum_target],last_param[i],params:get(drums[drum_target].."_"..last_param[i]) == 1 and 0 or 1)
   end
   if not silent then
     last_param[i] = (params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
@@ -257,10 +259,10 @@ function lfos.build_params_static()
   for i = 1,#drums do
     local style = drums[i]
     params_list[style] = {ids = {}, names = {}}
-    for j = 1,#drum_params[style] do
-      if drum_params[style][j].type ~= "separator" then
-        table.insert(params_list[style].ids, drum_params[style][j].id)
-        table.insert(params_list[style].names, drum_params[style][j].name)
+    for j = 1,#kildare_drum_params[style] do
+      if kildare_drum_params[style][j].type ~= "separator" then
+        table.insert(params_list[style].ids, kildare_drum_params[style][j].id)
+        table.insert(params_list[style].names, kildare_drum_params[style][j].name)
       end
     end
   end
@@ -300,6 +302,12 @@ function lfos.lfo_update()
     lfos.lfo_progress[i] = lfos.lfo_progress[i] + delta * lfos.lfo_freqs[i]
     local min = params:get("lfo_min_"..i)
     local max = params:get("lfo_max_"..i)
+    if min > max then
+      local old_min = min
+      local old_max = max
+      min = old_max
+      max = old_min
+    end
     local mid = math.abs(min-max)/2
     local percentage = math.abs(max-min) * (params:get("lfo_depth_"..i)/100) -- new
     local target_name = params:string("lfo_target_track_"..i).."_"..params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))]
@@ -309,10 +317,17 @@ function lfos.lfo_update()
       if params:string("lfo_"..i) == "on" then
         if params:string("lfo_shape_"..i) == "sine" then
           -- engine[target_name](value)
-          engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],value)
+          if params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))] == "poly" then
+            value = util.linlin(-1,1,min,max,math.sin(lfos.lfo_progress[i])) < mid and 0 or 1
+          end
+          if engine.name == "Kildare" then
+            engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],value)
+          end
         elseif params:string("lfo_shape_"..i) == "square" then
           -- engine[target_name](value >= mid and max or min)
-          engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],value >= mid and max or min)
+          if engine.name == "Kildare" then
+            engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],value >= mid and max or min)
+          end
         elseif params:string("lfo_shape_"..i) == "random" then
           local rand_calc = util.linlin(-1,1,min,max,math.sin(lfos.lfo_progress[i]))
           print(rand_calc) -- TODO DIES OFF...it'll just never come close when it's going at a high rate...
@@ -321,11 +336,15 @@ function lfos.lfo_update()
               local send_value = math.random(util.round(util.clamp(params:get(target_name)-percentage,min,max)*100),util.round(util.clamp(params:get(target_name)+percentage,min,max)*100))/100
               -- engine[target_name](send_value)
               print(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],send_value)
-              engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],send_value)
+              if engine.name == "Kildare" then
+                engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],send_value)
+              end
             else
               local send_value = math.random(util.round(util.clamp(params:get(target_name)+percentage,min,max)*100),util.round(util.clamp(params:get(target_name)-percentage,min,max)*100))/100
               -- engine[target_name](send_value)
-              engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],send_value)
+              if engine.name == "Kildare" then
+                engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],send_value)
+              end
             end
           end
         end

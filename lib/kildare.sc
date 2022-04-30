@@ -470,6 +470,7 @@ Kildare {
 
 		paramProtos = Dictionary.newFrom([
 			\bd, Dictionary.newFrom([
+				\poly,0,
 				\amp,0.7,
 				\carHz,55,
 				\carDetune,0,
@@ -496,6 +497,7 @@ Kildare {
 				\pan,0,
 			]),
 			\sd, Dictionary.newFrom([
+				\poly,0,
 				\amp,0.7,
 				\carHz,282.54,
 				\carDetune,0,
@@ -525,6 +527,7 @@ Kildare {
 				\pan,0,
 			]),
 			\tm, Dictionary.newFrom([
+				\poly,0,
 				\amp,0.7,
 				\carHz,87.3,
 				\carDetune,0,
@@ -552,6 +555,7 @@ Kildare {
 				\pan,0,
 			]),
 			\cp, Dictionary.newFrom([
+				\poly,0,
 				\amp,0.7,
 				\carHz,1600,
 				\carDetune,0,
@@ -576,6 +580,7 @@ Kildare {
 				\pan,0,
 			]),
 			\rs, Dictionary.newFrom([
+				\poly,0,
 				\amp,0.7,
 				\carHz,370,
 				\carDetune,0,
@@ -602,6 +607,7 @@ Kildare {
 				\pan,0,
 			]),
 			\cb, Dictionary.newFrom([
+				\poly,0,
 				\amp,0.7,
 				\carHz,404,
 				\carDetune,0,
@@ -625,6 +631,7 @@ Kildare {
 				\pan,0,
 			]),
 			\hh, Dictionary.newFrom([
+				\poly,0,
 				\amp,0.7,
 				\carHz,200,
 				\carDetune,0,
@@ -654,14 +661,20 @@ Kildare {
 	}
 
 	trigger { arg voiceKey;
-		groups[voiceKey].set(\stopGate, -1.05);
+		if( paramProtos[voiceKey][\poly] == 0,{
+			groups[voiceKey].set(\stopGate, -1.05);
+			// "stop".postln;
+		});
 		// [EB] added the synthdef name prefix
 		// [EB] fix this with `.getPairs` on the dict
 		Synth.new(\kildare_++voiceKey, paramProtos[voiceKey].getPairs, groups[voiceKey]);
 	}
 
 	setVoiceParam { arg voiceKey, paramKey, paramValue;
-		groups[voiceKey].set(paramKey, paramValue);
+		if( paramProtos[voiceKey][\poly] == 0,{
+			groups[voiceKey].set(paramKey, paramValue);
+			// "adjust".postln;
+		});
 		paramProtos[voiceKey][paramKey] = paramValue;
 	}
 
