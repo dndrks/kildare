@@ -33,6 +33,7 @@ Kildare {
 					arg stopGate = 1,
 					amp, carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
+					modFollow, modNum, modDenum,
 					pan, rampDepth, rampDec,
 					squishPitch, squishChunk,
 					amDepth, amHz,
@@ -47,6 +48,7 @@ Kildare {
 					lpHz = lpHz.lag3(0.5);
 					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
+					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -478,6 +480,9 @@ Kildare {
 				\carRel,0.3,
 				\modAmp,0,
 				\modHz,600,
+				\modFollow,0,
+				\modNum,1,
+				\modDenum,1,
 				\modAtk,0,
 				\modRel,0.05,
 				\feedAmp,1,

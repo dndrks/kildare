@@ -29,6 +29,9 @@ function Kildare.init()
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 600, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'modFollow', name = 'modulator freq from carrier?', type = 'number', min = 0, max = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'modNum', name = '--> modulator num', type = 'number', min = -20, max = 20, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'modDenum', name = '--> modulator denum', type = 'number', min = -20, max = 20, default = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modAtk', name = 'modulator attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'modRel', name = 'modulator release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'feedAmp', name = 'modulator feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -278,6 +281,9 @@ function Kildare.init()
           params:set_action(k.."_"..d.id, function(x)
             if engine.name == "Kildare" then
               engine.set_param(k, d.id, x)
+              if d.id == "modFollow" then
+                print(k,d.id,x)
+              end
             end
           end)
         elseif d.id == "carHz" then
