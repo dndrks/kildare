@@ -87,9 +87,11 @@ Kildare {
 
 				synthDefs[\sd] = SynthDef.new(\kildare_sd, {
 					arg stopGate = 1,
-					carHz, carDetune, modHz, modAmp, modAtk,
-					modRel, carAtk, carRel, amp, pan,
-					rampDepth, rampDec, feedAmp, noiseAmp,
+					carHz, carDetune, carAtk, carRel,
+					modHz, modAmp, modAtk, modRel, feedAmp,
+					modFollow, modNum, modDenum,
+					amp, pan,
+					rampDepth, rampDec, noiseAmp,
 					noiseAtk, noiseRel, bitRate, bitCount,
 					eqHz,eqAmp,
 					squishPitch, squishChunk,
@@ -106,6 +108,7 @@ Kildare {
 					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
 					carHz = carHz * (2.pow(carDetune/12));
+					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
@@ -149,6 +152,7 @@ Kildare {
 				synthDefs[\tm] = SynthDef.new(\kildare_tm, {
 					arg stopGate = 1,
 					carHz, carDetune, modHz, modAmp, modAtk, modRel, feedAmp,
+					modFollow, modNum, modDenum,
 					carAtk, carRel, amp,
 					click,
 					squishPitch, squishChunk,
@@ -166,6 +170,7 @@ Kildare {
 					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
 					carHz = carHz * (2.pow(carDetune/12));
+					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -203,6 +208,7 @@ Kildare {
 					arg stopGate = 1,
 					carHz, carDetune,
 					modHz, modAmp, modRel, feedAmp,
+					modFollow, modNum, modDenum,
 					carRel, amp, click,
 					squishPitch, squishChunk,
 					pan, amDepth, amHz,
@@ -217,6 +223,7 @@ Kildare {
 					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
 					carHz = carHz * (2.pow(carDetune/12));
+					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -273,6 +280,7 @@ Kildare {
 					arg stopGate = 1,
 					carHz, carDetune,
 					modHz, modAmp,
+					modFollow, modNum, modDenum,
 					carAtk, carRel, amp,
 					pan, rampDepth, rampDec, amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
@@ -291,6 +299,7 @@ Kildare {
 					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
 					carHz = carHz * (2.pow(carDetune/12));
+					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -356,6 +365,7 @@ Kildare {
 					arg stopGate = 1,
 					amp, carHz, carDetune,
 					modHz, modAmp, modAtk, modRel, feedAmp,
+					modFollow, modNum, modDenum,
 					carAtk, carRel,
 					snap,
 					pan, rampDepth, rampDec, amDepth, amHz,
@@ -372,6 +382,7 @@ Kildare {
 					hpHz = hpHz.lag3(0.5);
 					pan = pan.lag2(0.1);
 					carHz = carHz * (2.pow(carDetune/12));
+					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					feedAmp = LinLin.kr(feedAmp,0.0,1.0,1.0,3.0);
@@ -405,6 +416,7 @@ Kildare {
 					amp, carHz, carDetune, carAtk, carRel,
 					tremDepth, tremHz,
 					modAmp, modHz, modAtk, modRel,
+					modFollow, modNum, modDenum,
 					feedAmp,
 					amDepth, amHz,
 					eqHz, eqAmp,
@@ -429,6 +441,7 @@ Kildare {
 					tremDepth = LinLin.kr(tremDepth,0.0,100,0.0,1.0);
 					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 					carHz = carHz * (2.pow(carDetune/12));
+					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
 					carRamp = EnvGen.kr(Env([1000, 0.000001], [tremHz], curve: \exp));
@@ -510,6 +523,9 @@ Kildare {
 				\carRel,0.15,
 				\modAmp,0,
 				\modHz,2770,
+				\modFollow,0,
+				\modNum,1,
+				\modDenum,1,
 				\modAtk,0.2,
 				\modRel,1,
 				\feedAmp,0,
@@ -540,6 +556,9 @@ Kildare {
 				\carRel,0.43,
 				\modAmp,0.32,
 				\modHz,180,
+				\modFollow,0,
+				\modNum,1,
+				\modDenum,1,
 				\modAtk,0,
 				\modRel,0.2,
 				\feedAmp,1,
@@ -567,6 +586,9 @@ Kildare {
 				\carRel,0.43,
 				\modAmp,1,
 				\modHz,300,
+				\modFollow,0,
+				\modNum,1,
+				\modDenum,1,
 				\modRel,0.5,
 				\feedAmp,1,
 				\click,0,
@@ -593,6 +615,9 @@ Kildare {
 				\carRel,0.05,
 				\modAmp,1,
 				\modHz,4000,
+				\modFollow,0,
+				\modNum,1,
+				\modDenum,1,
 				\sdAmp,1,
 				\sdAtk,0,
 				\sdRel,0.05,
@@ -644,6 +669,9 @@ Kildare {
 				\carRel,0.03,
 				\modAmp,1,
 				\modHz,100,
+				\modFollow,0,
+				\modNum,1,
+				\modDenum,1,
 				\modAtk,0,
 				\modRel,2,
 				\feedAmp,1,
