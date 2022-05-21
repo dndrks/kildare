@@ -38,11 +38,12 @@ Kildare {
 					squishPitch, squishChunk,
 					amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
-					lpHz, hpHz, filterQ;
+					lpHz, hpHz, filterQ,
+					lpAtk, lpRel, lpDepth;
 
 					var car, mod, carEnv, modEnv, carRamp,
 					feedMod, feedCar, ampMod, click, clicksound,
-					mod_1;
+					mod_1, filterEnv;
 
 					eqHz = eqHz.lag3(0.5);
 					lpHz = lpHz.lag3(0.5);
@@ -59,6 +60,7 @@ Kildare {
 					carHz = carHz * (2.pow(carDetune/12));
 
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel),gate: stopGate);
+					filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 					carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
 					carEnv = EnvGen.kr(envelope: Env.perc(carAtk, carRel),gate: stopGate, doneAction:2);
 
@@ -78,7 +80,7 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
+					car = BLowPass.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					car = Pan2.ar(car,pan);
@@ -96,10 +98,11 @@ Kildare {
 					eqHz,eqAmp,
 					squishPitch, squishChunk,
 					lpHz, hpHz, filterQ,
+					lpAtk, lpRel, lpDepth,
 					amDepth, amHz;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar,
-					noise, noiseEnv, mix, ampMod;
+					noise, noiseEnv, mix, ampMod, filterEnv;
 
 					amp = amp/2;
 					noiseAmp = noiseAmp/2;
@@ -112,6 +115,7 @@ Kildare {
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
+					filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 					carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
 					carEnv = EnvGen.kr(Env.perc(carAtk, carRel),gate: stopGate);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -138,7 +142,7 @@ Kildare {
 					noise = Squiz.ar(in:noise, pitchratio:squishPitch, zcperchunk:squishChunk*100, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
+					car = BLowPass.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					mix = car;
 					mix = Compander.ar(in:mix,control:mix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
@@ -158,11 +162,12 @@ Kildare {
 					squishPitch, squishChunk,
 					pan, rampDepth, rampDec, amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
-					lpHz, hpHz, filterQ;
+					lpHz, hpHz, filterQ,
+					lpAtk, lpRel, lpDepth;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod,
 					feedCar, ampMod, clicksound,
-					mod_1;
+					mod_1, filterEnv;
 
 					amp = amp*0.5;
 					eqHz = eqHz.lag3(0.5);
@@ -180,6 +185,7 @@ Kildare {
 					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
+					filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 					carRamp = EnvGen.kr(Env([600, 0.000001], [rampDec], curve: \lin));
 					carEnv = EnvGen.kr(Env.perc(carAtk, carRel), gate: stopGate, doneAction:2);
 
@@ -197,7 +203,7 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
+					car = BLowPass.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
@@ -213,10 +219,11 @@ Kildare {
 					squishPitch, squishChunk,
 					pan, amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
-					lpHz, hpHz, filterQ;
+					lpHz, hpHz, filterQ,
+					lpAtk, lpRel, lpDepth;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-					mod_1,mod_2;
+					mod_1, mod_2, filterEnv;
 
 					eqHz = eqHz.lag3(0.5);
 					lpHz = lpHz.lag3(0.5);
@@ -238,6 +245,7 @@ Kildare {
 							curve: \lin
 						),gate: stopGate
 					);
+					filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 					carRamp = EnvGen.kr(Env([600, 0.000001], [0], curve: \lin));
 					carEnv = EnvGen.ar(
 						Env.new(
@@ -268,7 +276,7 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
+					car = BLowPass.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = car.softclip;
 
@@ -286,12 +294,13 @@ Kildare {
 					eqHz, eqAmp, bitRate, bitCount,
 					sdAmp, sdRel, sdAtk,
 					lpHz, hpHz, filterQ,
+					lpAtk, lpRel, lpDepth,
 					squishPitch, squishChunk;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 					mod_1,mod_2,feedAmp,feedAMP, sd_modHz,
 					sd_car, sd_mod, sd_carEnv, sd_modEnv, sd_carRamp, sd_feedMod, sd_feedCar, sd_noise, sd_noiseEnv,
-					sd_mix;
+					sd_mix, filterEnv;
 
 					amp = amp*0.35;
 					eqHz = eqHz.lag3(0.5);
@@ -312,6 +321,7 @@ Kildare {
 
 					carRamp = EnvGen.kr(Env([600, 0.000001], [rampDec], curve: \lin));
 					carEnv = EnvGen.kr(Env.perc(carAtk, carRel),gate: stopGate);
+					filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 
 					mod_2 = SinOscFB.ar(
 						modHz*16,
@@ -332,7 +342,7 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(Pan2.ar(car,pan),bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
+					car = BLowPass.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = LPF.ar(car,12000,1);
 					car = car.softclip;
@@ -350,7 +360,7 @@ Kildare {
 					sd_mix = Squiz.ar(in:sd_car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					sd_mix = Decimator.ar(sd_mix,bitRate,bitCount,1.0);
 					sd_mix = BPeakEQ.ar(in:sd_mix,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					sd_mix = BLowPass.ar(in:sd_mix,freq:lpHz, rq: filterQ, mul:1);
+					sd_mix = BLowPass.ar(in:sd_mix,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					sd_mix = RHPF.ar(in:sd_mix,freq:hpHz, rq: filterQ, mul:1);
 					sd_mix = sd_mix.softclip;
 					sd_mix = Compander.ar(in:sd_mix,control:sd_mix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
@@ -371,10 +381,11 @@ Kildare {
 					pan, rampDepth, rampDec, amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
+					lpAtk, lpRel, lpDepth,
 					squishPitch, squishChunk;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-					sig,voice_1,voice_2,klank_env,other_mod1,other_mod2;
+					voice_1, voice_2, filterEnv;
 
 					amp = amp*0.6;
 					eqHz = eqHz.lag3(0.5);
@@ -394,6 +405,7 @@ Kildare {
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel), gate:stopGate);
 					carRamp = EnvGen.kr(Env([600, 0.000001], [rampDec], curve: \lin));
 					carEnv = EnvGen.kr(Env.perc(carAtk, carRel),gate: stopGate);
+					filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 
 					voice_1 = LFPulse.ar((carHz) + (carRamp*rampDepth)) * carEnv * amp;
 					voice_2 = SinOscFB.ar((carHz*1.5085)+ (carRamp*rampDepth),feedAmp) * carEnv * amp;
@@ -403,7 +415,7 @@ Kildare {
 					voice_1 = Squiz.ar(in:voice_1, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					voice_1 = Decimator.ar(voice_1,bitRate,bitCount,1.0);
 					voice_1 = BPeakEQ.ar(in:voice_1,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					voice_1 = BLowPass.ar(in:voice_1,freq:lpHz, rq: filterQ, mul:1);
+					voice_1 = BLowPass.ar(in:voice_1,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					voice_1 = RHPF.ar(in:voice_1,freq:hpHz, rq: filterQ, mul:1);
 					voice_1 = Compander.ar(in:voice_1,control:voice_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
@@ -422,11 +434,12 @@ Kildare {
 					eqHz, eqAmp,
 					bitRate, bitCount,
 					lpHz, hpHz, filterQ,
+					lpAtk, lpRel, lpDepth,
 					pan,
 					squishPitch, squishChunk;
 
 					var car, mod, carEnv, modEnv, carRamp, tremolo, tremod,
-					ampMod;
+					ampMod, filterEnv;
 
 					amp = amp*0.85;
 					eqHz = eqHz.lag3(0.5);
@@ -446,6 +459,7 @@ Kildare {
 					modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
 					carRamp = EnvGen.kr(Env([1000, 0.000001], [tremHz], curve: \exp));
 					carEnv = EnvGen.kr(Env.perc(carAtk, carRel), gate: stopGate, doneAction:2);
+					filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 					ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 					mod = SinOsc.ar(modHz, mul:modAmp) * modEnv;
 					car = SinOscFB.ar(carHz + mod, feedAmp) * carEnv * amp;
@@ -457,7 +471,7 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = BLowPass.ar(in:car,freq:lpHz, rq: filterQ, mul:1);
+					car = BLowPass.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
@@ -512,6 +526,9 @@ Kildare {
 				\lpHz,19000,
 				\hpHz,0,
 				\filterQ,50,
+				\lpAtk,0,
+				\lpRel,0.3,
+				\lpDepth,1,
 				\pan,0,
 			]),
 			\sd, Dictionary.newFrom([

@@ -95,7 +95,7 @@ function lfos.add_params()
         local param_id = params.lookup["lfo_target_param_"..i]
         params.params[param_id].options = params_list[drums[x]].names
         params.params[param_id].count = tab.count(params.params[param_id].options)
-        params:set("lfo_target_param_"..i,1)
+        -- params:set("lfo_target_param_"..i,1) -- TODO CLEAN THIS UP DURING PSET LAUNCH...
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
         lfos.return_to_baseline(i)
