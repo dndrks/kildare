@@ -15,7 +15,14 @@ Kildare {
 	var <groups;
 	// - top-level group to easily free everything
 	var <topGroup;
-	var <sendKeys;
+
+	// audio bus that all the synths write to
+	var <mainBus;
+	var <delayBus;
+	var <mainOutSynth;
+	var <auxOutSynth;
+	var <fxGroup;
+	var <delaySynth;
 
 	*initClass {
 		voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh ];
@@ -30,7 +37,7 @@ Kildare {
 				// an even better alternative would be to make a random name,
 				// and instantiate via the synthdef directly. but this is fine
 				synthDefs[\bd] = SynthDef.new(\kildare_bd, {
-					arg stopGate = 1,
+					arg out = 0, stopGate = 1, delayAux,
 					amp, carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -39,7 +46,8 @@ Kildare {
 					amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
-					lpAtk, lpRel, lpDepth;
+					lpAtk, lpRel, lpDepth,
+					delayAmp;
 
 					var car, mod, carEnv, modEnv, carRamp,
 					feedMod, feedCar, ampMod, click, clicksound,
@@ -84,11 +92,12 @@ Kildare {
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					car = Pan2.ar(car,pan);
-					Out.ar(0, car);
+					Out.ar(out, car);
+					Out.ar(delayAux, car * delayAmp);
 				}).send;
 
 				synthDefs[\sd] = SynthDef.new(\kildare_sd, {
-					arg stopGate = 1,
+					arg out = 0, stopGate = 1, delayAux,
 					carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -99,7 +108,8 @@ Kildare {
 					squishPitch, squishChunk,
 					lpHz, hpHz, filterQ,
 					lpAtk, lpRel, lpDepth,
-					amDepth, amHz;
+					amDepth, amHz,
+					delayAmp;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar,
 					noise, noiseEnv, mix, ampMod, filterEnv;
@@ -148,13 +158,18 @@ Kildare {
 					mix = Compander.ar(in:mix,control:mix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					noise = Compander.ar(in:noise,control:noise, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
-					Out.ar(0, Pan2.ar(mix,pan));
-					Out.ar(0, Pan2.ar(noise,pan));
+					mix = Pan2.ar(mix,pan);
+					noise = Pan2.ar(noise,pan);
+					Out.ar(out, mix);
+					Out.ar(out, noise);
+					Out.ar(delayAux, mix * delayAmp);
+					Out.ar(delayAux, noise * delayAmp);
+
 					FreeSelf.kr(Done.kr(carEnv) * Done.kr(noiseEnv));
 				}).send;
 
 				synthDefs[\tm] = SynthDef.new(\kildare_tm, {
-					arg stopGate = 1,
+					arg out = 0, stopGate = 1, delayAux,
 					carHz, carDetune, modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
 					carAtk, carRel, amp,
@@ -163,7 +178,8 @@ Kildare {
 					pan, rampDepth, rampDec, amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
-					lpAtk, lpRel, lpDepth;
+					lpAtk, lpRel, lpDepth,
+					delayAmp;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod,
 					feedCar, ampMod, clicksound,
@@ -207,11 +223,13 @@ Kildare {
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
-					Out.ar(0, Pan2.ar(car,pan));
+					car = Pan2.ar(car,pan);
+					Out.ar(out, car);
+					Out.ar(delayAux, car*delayAmp);
 				}).send;
 
 				synthDefs[\cp] = SynthDef.new(\kildare_cp, {
-					arg stopGate = 1,
+					arg out = 0, stopGate = 1, delayAux,
 					carHz, carDetune,
 					modHz, modAmp, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -220,7 +238,8 @@ Kildare {
 					pan, amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
-					lpAtk, lpRel, lpDepth;
+					lpAtk, lpRel, lpDepth,
+					delayAmp;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 					mod_1, mod_2, filterEnv;
@@ -280,12 +299,14 @@ Kildare {
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = car.softclip;
 
-					Out.ar(0, Pan2.ar(car,pan));
+					car = Pan2.ar(car,pan);
+					Out.ar(out, car);
+					Out.ar(delayAux, car*delayAmp);
 					FreeSelf.kr(Done.kr(modEnv) * Done.kr(carEnv));
 				}).send;
 
 				synthDefs[\rs] = SynthDef.new(\kildare_rs, {
-					arg stopGate = 1,
+					arg out = 0, stopGate = 1, delayAux,
 					carHz, carDetune,
 					modHz, modAmp,
 					modFollow, modNum, modDenum,
@@ -295,7 +316,8 @@ Kildare {
 					sdAmp, sdRel, sdAtk,
 					lpHz, hpHz, filterQ,
 					lpAtk, lpRel, lpDepth,
-					squishPitch, squishChunk;
+					squishPitch, squishChunk,
+					delayAmp;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 					mod_1,mod_2,feedAmp,feedAMP, sd_modHz,
@@ -365,14 +387,18 @@ Kildare {
 					sd_mix = sd_mix.softclip;
 					sd_mix = Compander.ar(in:sd_mix,control:sd_mix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
-					Out.ar(0, Pan2.ar(car,pan));
-					Out.ar(0, Pan2.ar(sd_mix,pan));
+					car = Pan2.ar(car,pan);
+					sd_mix = Pan2.ar(sd_mix,pan);
+					Out.ar(out, car);
+					Out.ar(out, sd_mix);
+					Out.ar(delayAux, car*delayAmp);
+					Out.ar(delayAux, sd_mix*delayAmp);
 
 					FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(carEnv));
 				}).send;
 
 				synthDefs[\cb] = SynthDef.new(\kildare_cb, {
-					arg stopGate = 1,
+					arg out = 0, stopGate = 1, delayAux,
 					amp, carHz, carDetune,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -382,7 +408,8 @@ Kildare {
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
 					lpAtk, lpRel, lpDepth,
-					squishPitch, squishChunk;
+					squishPitch, squishChunk,
+					delayAmp;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 					voice_1, voice_2, filterEnv;
@@ -419,12 +446,14 @@ Kildare {
 					voice_1 = RHPF.ar(in:voice_1,freq:hpHz, rq: filterQ, mul:1);
 					voice_1 = Compander.ar(in:voice_1,control:voice_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
-					Out.ar(0, Pan2.ar(voice_1,pan));
+					voice_1 = Pan2.ar(voice_1,pan);
+					Out.ar(out, voice_1);
+					Out.ar(delayAux, voice_1*delayAmp);
 					FreeSelf.kr(Done.kr(carEnv) * Done.kr(modEnv));
 				}).send;
 
 				synthDefs[\hh] = SynthDef.new(\kildare_hh, {
-					arg stopGate = 1,
+					arg out = 0, stopGate = 1, delayAux,
 					amp, carHz, carDetune, carAtk, carRel,
 					tremDepth, tremHz,
 					modAmp, modHz, modAtk, modRel,
@@ -436,7 +465,8 @@ Kildare {
 					lpHz, hpHz, filterQ,
 					lpAtk, lpRel, lpDepth,
 					pan,
-					squishPitch, squishChunk;
+					squishPitch, squishChunk,
+					delayAmp;
 
 					var car, mod, carEnv, modEnv, carRamp, tremolo, tremod,
 					ampMod, filterEnv;
@@ -475,7 +505,9 @@ Kildare {
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
-					Out.ar(0, Pan2.ar(car,pan));
+					car = Pan2.ar(car,pan);
+					Out.ar(out, car);
+					Out.ar(delayAux, car*delayAmp);
 				}).send;
 
 			} // Server.waitForBoot
@@ -491,14 +523,35 @@ Kildare {
 
 		topGroup = Group.new(s);
 		groups = Dictionary.new;
-		sendKeys = Dictionary.new;
-		sendKeys = voiceKeys;
 		voiceKeys.do({ arg voiceKey;
 			groups[voiceKey] = Group.new(topGroup);
 		});
 
+		mainBus = Bus.audio(s, 2);
+		delayBus = Bus.audio(s, 2);
+		mainOutSynth = {
+			Out.ar(0, In.ar(mainBus.index, 2));
+		}.play(target: topGroup, addAction: \addAfter);
+
+		s.sync;
+
+		fxGroup = Group.new(target:mainOutSynth, addAction:\addBefore);
+
+		delaySynth = SynthDef.new(\delay, {
+			arg time = 1, level = 0.5;
+			var input, delay;
+			input = In.ar(delayBus, 2);
+			delay = SwitchDelay.ar(
+				in: input, drylevel: 0, wetlevel: 1, delaytime: time, delayfactor: 0.7, maxdelaytime: 4, mul: level
+			);
+			Out.ar(mainBus, delay);
+		}).play(target:fxGroup);
+
 		paramProtos = Dictionary.newFrom([
 			\bd, Dictionary.newFrom([
+				\out,mainBus,
+				\delayAux,delayBus,
+				\delayAmp,1,
 				\poly,0,
 				\amp,0.7,
 				\carHz,55,
@@ -532,6 +585,9 @@ Kildare {
 				\pan,0,
 			]),
 			\sd, Dictionary.newFrom([
+				\out,mainBus,
+				\delayAux,delayBus,
+				\delayAmp,1,
 				\poly,0,
 				\amp,0.7,
 				\carHz,282.54,
@@ -565,6 +621,9 @@ Kildare {
 				\pan,0,
 			]),
 			\tm, Dictionary.newFrom([
+				\out,mainBus,
+				\delayAux,delayBus,
+				\delayAmp,1,
 				\poly,0,
 				\amp,0.7,
 				\carHz,87.3,
@@ -596,6 +655,9 @@ Kildare {
 				\pan,0,
 			]),
 			\cp, Dictionary.newFrom([
+				\out,mainBus,
+				\delayAux,delayBus,
+				\delayAmp,1,
 				\poly,0,
 				\amp,0.7,
 				\carHz,1600,
@@ -624,6 +686,9 @@ Kildare {
 				\pan,0,
 			]),
 			\rs, Dictionary.newFrom([
+				\out,mainBus,
+				\delayAux,delayBus,
+				\delayAmp,1,
 				\poly,0,
 				\amp,0.7,
 				\carHz,370,
@@ -654,6 +719,9 @@ Kildare {
 				\pan,0,
 			]),
 			\cb, Dictionary.newFrom([
+				\out,mainBus,
+				\delayAux,delayBus,
+				\delayAmp,1,
 				\poly,0,
 				\amp,0.7,
 				\carHz,404,
@@ -678,6 +746,9 @@ Kildare {
 				\pan,0,
 			]),
 			\hh, Dictionary.newFrom([
+				\out,mainBus,
+				\delayAux,delayBus,
+				\delayAmp,1,
 				\poly,0,
 				\amp,0.7,
 				\carHz,200,
@@ -735,7 +806,11 @@ Kildare {
 
 	free {
 		// [EB] added
+		mainOutSynth.free;
 		topGroup.free;
+		mainBus.free;
+		fxGroup.free;
+		delayBus.free;
 	}
 
 }

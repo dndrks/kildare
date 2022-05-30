@@ -8,17 +8,6 @@ Engine_Kildare : CroneEngine {
 	alloc {
 		kernel = Kildare.new(Crone.server);
 
-		// one way:
-		/*kernel.sendKeys.do({ arg voiceKey;
-			this.addCommand(\trigger_++voiceKey, "", {
-				kernel.trigger(voiceKey);
-			});
-			this.addCommand(\param_++voiceKey, "sf", { arg msg;
-				kernel.setVoiceParam(voiceKey, msg[1].asSymbol, msg[2].asFloat);
-			});
-		});*/
-
-		// another way:
 		this.addCommand(\trig, "s", { arg msg;
 			var k = msg[1].asSymbol;
 			kernel.trigger(k);
