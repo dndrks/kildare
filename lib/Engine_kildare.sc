@@ -19,6 +19,12 @@ Engine_Kildare : CroneEngine {
 			var paramValue = msg[3].asFloat;
 			kernel.setVoiceParam(voiceKey, paramKey, paramValue);
 		});
+
+		this.addCommand(\set_delay_param, "sf", {arg msg;
+			var paramKey = msg[1].asSymbol;
+			var paramValue = msg[2].asFloat;
+			kernel.setDelayParam(paramKey, paramValue);
+		});
 	}
 
 	free {
