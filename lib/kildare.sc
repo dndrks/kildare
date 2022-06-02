@@ -20,11 +20,14 @@ Kildare {
 	var <mainBus;
 	var <delayBusL;
 	var <delayBusR;
+	var <reverbBus;
 	var <mainOutSynth;
 	var <auxOutSynth;
 	var <fxGroup;
 	var <delaySynth;
 	var <delayParams;
+	var <reverbSynth;
+	var <reverbParams;
 
 	*initClass {
 		voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh ];
@@ -39,7 +42,8 @@ Kildare {
 				// an even better alternative would be to make a random name,
 				// and instantiate via the synthdef directly. but this is fine
 				synthDefs[\bd] = SynthDef.new(\kildare_bd, {
-					arg out = 0, stopGate = 1, delayAuxL, delayAuxR,
+					arg out = 0, stopGate = 1,
+					delayAuxL, delayAuxR, reverbAux,
 					amp, carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -49,7 +53,7 @@ Kildare {
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
 					lpAtk, lpRel, lpDepth,
-					delayAmp;
+					delayAmp, reverbAmp;
 
 					var car, mod, carEnv, modEnv, carRamp,
 					feedMod, feedCar, ampMod, click, clicksound,
@@ -97,6 +101,7 @@ Kildare {
 					Out.ar(out, mainSend * amp);
 					Out.ar(delayAuxL, (mainSend * delayAmp));
 					Out.ar(delayAuxR, (mainSend * delayAmp).reverse);
+					Out.ar(reverbAux, (mainSend * reverbAmp));
 				}).send;
 
 				synthDefs[\sd] = SynthDef.new(\kildare_sd, {
@@ -554,6 +559,7 @@ Kildare {
 		mainBus = Bus.audio(s, 2);
 		delayBusL = Bus.audio(s, 1);
 		delayBusR = Bus.audio(s, 1);
+		reverbBus = Bus.audio(s, 2);
 		mainOutSynth = {
 			Out.ar(0, In.ar(mainBus.index, 2));
 		}.play(target: topGroup, addAction: \addAfter);
@@ -564,11 +570,11 @@ Kildare {
 
 		delaySynth = SynthDef.new(\delay, {
 			arg time = 0.8, level = 0.5, feedback = 0.7,
-			lpHz = 19000, hpHz = 5000, filterQ = 50, spread = 0;
+			lpHz = 19000, hpHz = 5000, filterQ = 50, spread = 0,
+			reverbSend = 1;
 			var input, delayL, delayR, filterDelayL, filterDelayR,
 			leftBal, rightBal, leftInput, rightInput;
 
-			time = time.lag3(0.5);
 			lpHz = lpHz.lag3(0.5);
 			hpHz = hpHz.lag3(0.5);
 
@@ -579,7 +585,9 @@ Kildare {
 			spread = LinLin.kr(spread,0,1,0,-1);
 
 			delayL = SwitchDelay.ar(SwitchDelay.ar(leftInput,0,1,time/2,0,2.0),1,1,time,feedback,4.0,level);
-			delayR = SwitchDelay.ar(rightInput,0,1,time,feedback,4.0,level);
+			// delayR = SwitchDelay.ar(rightInput,0,1,time,feedback,4.0,level);
+			delayL = CombC.ar(CombC.ar(leftInput,2.0,time/2,0),4.0,time,2,level);
+			delayR = CombC.ar(rightInput,4.0,time,2,level);
 
 			delayL = BLowPass.ar(in:delayL,freq:lpHz, rq: filterQ, mul:1);
 			delayR = BLowPass.ar(in:delayR,freq:lpHz, rq: filterQ, mul:1);
@@ -592,6 +600,35 @@ Kildare {
 			leftBal = Compander.ar(in:leftBal,control:leftBal, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 			rightBal = Compander.ar(in:rightBal,control:rightBal, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 			Out.ar(mainBus,[leftBal, rightBal]);
+			Out.ar(reverbBus,[leftBal * reverbSend, rightBal * reverbSend]);
+		}).play(target:fxGroup);
+
+		reverbSynth = SynthDef.new(\reverb, {
+			arg preDelay = 0.048, level = 0.5, decay = 6,
+			damp = 0.1, size = 4, modDepth = 0.2, modFreq = 700,
+			lowDecay = 6, midDecay = 6, highDecay = 6, gateThresh = 5;
+			var input, jp, gated;
+
+			input = In.ar(reverbBus.index,2);
+			jp = JPverb.ar(
+				in: input,
+				t60:decay,
+				damp:damp,
+				size: size,
+				earlyDiff: 0.707,
+				modDepth: modDepth,
+				modFreq: modFreq,
+				low: lowDecay,
+				mid: midDecay,
+				high: highDecay,
+				lowcut: 500.0,
+				highcut: 2000.0
+			);
+
+			// gated = Compander.ar(jp,input);
+			gated = Compander.ar(jp,jp,0.6,gateThresh);
+
+			Out.ar(mainBus,gated * level);
 		}).play(target:fxGroup);
 
 		delayParams = Dictionary.newFrom([
@@ -601,7 +638,22 @@ Kildare {
 			\spread,0,
 			\lpHz,19000,
 			\hpHz,0,
-			\filterQ,50
+			\filterQ,50,
+			\reverbSend,1
+		]);
+
+		reverbParams = Dictionary.newFrom([
+			\preDelay,0.048,
+			\level,0.5,
+			\decay,6,
+			\damp,0.1,
+			\size,0.9,
+			\modDepth,0.2,
+			\modFreq,700,
+			\lowDecay,6,
+			\midDecay,6,
+			\highDecay,6,
+			\gateThresh,3
 		]);
 
 		paramProtos = Dictionary.newFrom([
@@ -609,7 +661,9 @@ Kildare {
 				\out,mainBus,
 				\delayAuxL,delayBusL,
 				\delayAuxR,delayBusR,
+				\reverbAux,reverbBus,
 				\delayAmp,1,
+				\reverbAmp,1,
 				\poly,0,
 				\amp,0.7,
 				\carHz,55,
@@ -868,6 +922,11 @@ Kildare {
 		delaySynth.set(paramKey, paramValue);
 	}
 
+	setReverbParam { arg paramKey, paramValue;
+		reverbParams[paramKey] = paramValue;
+		reverbSynth.set(paramKey, paramValue);
+	}
+
 	// [EB] added
 	allNotesOff {
 		topGroup.set(\stopGate, 0);
@@ -881,6 +940,7 @@ Kildare {
 		fxGroup.free;
 		delayBusL.free;
 		delayBusR.free;
+		reverbBus.free
 	}
 
 }

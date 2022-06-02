@@ -400,7 +400,7 @@ function Kildare.init()
         params:set_action(k.."_"..d.id, function(x)
           if engine.name == "Kildare" then
             if d.id == "time" then
-              engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128)
+              engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128) -- TODO BAD??
             else
               engine["set_"..k.."_param"](d.id, x)
             end
