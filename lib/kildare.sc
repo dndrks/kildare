@@ -493,8 +493,9 @@ Kildare {
 
 				synthDefs[\hh] = SynthDef(\kildare_hh, {
 					arg out, stopGate = 1,
-					delayAuxL, delayAuxR, reverbAux,
-					delayAmp, reverbAmp,
+					delayAuxL, delayAuxR, delayAmp,
+					delayAtk, delayRel, delayDepth,
+					reverbAux,reverbAmp,
 					amp, carHz, carDetune, carAtk, carRel,
 					tremDepth, tremHz,
 					modAmp, modHz, modAtk, modRel,
@@ -509,7 +510,7 @@ Kildare {
 					squishPitch, squishChunk;
 
 					var car, mod, carEnv, modEnv, carRamp, tremolo, tremod,
-					ampMod, filterEnv, mainSend;
+					ampMod, filterEnv, delayEnv, mainSend;
 
 					amp = amp*0.85;
 					eqHz = eqHz.lag3(0.5);
@@ -547,9 +548,11 @@ Kildare {
 					mainSend = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					mainSend = Pan2.ar(mainSend,pan);
 
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate)) * delayDepth;
+
 					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayAmp));
-					Out.ar(delayAuxR, (mainSend * delayAmp).reverse);
+					Out.ar(delayAuxL, (mainSend * delayEnv));
+					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 
 				}).add;
@@ -927,6 +930,9 @@ Kildare {
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delaySend],
 				\reverbAux,busses[\reverbSend],
+				\delayAtk,0.7,
+				\delayRel,2,
+				\delayDepth,1,
 				\delayAmp,0,
 				\reverbAmp,0,
 				\poly,0,

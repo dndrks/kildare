@@ -26,7 +26,7 @@ local ivals = {
 }
 local drums = {"bd","sd","tm","cp","rs","cb","hh","delay"}
 
-local delay_params = {'level', 'feedback', 'spread', 'lpHz', 'hpHz', 'filterQ'}
+local delay_params = {'time', 'level', 'feedback', 'spread', 'lpHz', 'hpHz', 'filterQ'}
 
 local lfos_loaded = {}
 
@@ -54,11 +54,11 @@ function lfos.add_params()
     elseif k == "delay" then
       for key,val in pairs(kildare_fx_params[k]) do
         if kildare_fx_params[k][key].type ~= "separator" then
-          if kildare_fx_params[k][key].name ~= "time" then
+          -- if kildare_fx_params[k][key].name ~= "time" then
             min_specs[k][i] = {min = kildare_fx_params[k][key].min, max = kildare_fx_params[k][key].max, warp = kildare_fx_params[k][key].warp, step = 0.01, default = kildare_fx_params[k][key].default, quantum = 0.01, formatter = kildare_fx_params[k][key].formatter}
             max_specs[k][i] = {min = kildare_fx_params[k][key].min, max = kildare_fx_params[k][key].max, warp = kildare_fx_params[k][key].warp, step = 0.01, default = kildare_fx_params[k][key].max, quantum = 0.01, formatter = kildare_fx_params[k][key].formatter}
             i = i+1 -- do not increment by the separators' gaps...
-          end
+          -- end
         end
       end
     end
@@ -299,7 +299,8 @@ function lfos.build_params_static()
       end
     elseif style == "delay" then
       for j = 1,#kildare_fx_params[style] do
-        if kildare_fx_params[style][j].type ~= "separator" and kildare_fx_params[style][j].name ~= "time" then
+        -- if kildare_fx_params[style][j].type ~= "separator" and kildare_fx_params[style][j].name ~= "time" then
+        if kildare_fx_params[style][j].type ~= "separator" then
           table.insert(params_list[style].ids, kildare_fx_params[style][j].id)
           table.insert(params_list[style].names, kildare_fx_params[style][j].name)
         end
