@@ -21,6 +21,9 @@ Kildare {
 	var <mainBus;
 	var <delayBusL;
 	var <delayBusR;
+	var <leftDelayBuf;
+	var <leftDelayBuf2;
+	var <rightDelayBuf;
 	var <reverbBus;
 	var <mainOutSynth;
 	var <auxOutSynth;
@@ -44,7 +47,9 @@ Kildare {
 				// and instantiate via the synthdef directly. but this is fine
 				synthDefs[\bd] = SynthDef.new(\kildare_bd, {
 					arg out = 0, stopGate = 1,
-					delayAuxL, delayAuxR, reverbAux,
+					delayAuxL, delayAuxR, delayAmp,
+					delayAtk, delayRel,
+					reverbAux,reverbAmp,
 					amp, carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -53,12 +58,11 @@ Kildare {
 					amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
-					lpAtk, lpRel, lpDepth,
-					delayAmp, reverbAmp;
+					lpAtk, lpRel, lpDepth;
 
 					var car, mod, carEnv, modEnv, carRamp,
 					feedMod, feedCar, ampMod, click, clicksound,
-					mod_1, filterEnv, mainSend, delaySend;
+					mod_1, filterEnv, delayEnv, mainSend;
 
 					eqHz = eqHz.lag3(0.5);
 					lpHz = lpHz.lag3(0.5);
@@ -99,15 +103,20 @@ Kildare {
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					mainSend = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					mainSend = Pan2.ar(mainSend,pan);
+
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+
 					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayAmp));
-					Out.ar(delayAuxR, (mainSend * delayAmp).reverse);
+					Out.ar(delayAuxL, (mainSend * delayEnv));
+					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 				}).send;
 
 				synthDefs[\sd] = SynthDef.new(\kildare_sd, {
 					arg out = 0, stopGate = 1,
-					delayAuxL, delayAuxR, reverbAux,
+					delayAuxL, delayAuxR, delayAmp,
+					delayAtk, delayRel,
+					reverbAux,reverbAmp,
 					carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -118,11 +127,10 @@ Kildare {
 					squishPitch, squishChunk,
 					lpHz, hpHz, filterQ,
 					lpAtk, lpRel, lpDepth,
-					amDepth, amHz,
-					delayAmp, reverbAmp;
+					amDepth, amHz;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar,
-					noise, noiseEnv, mix, ampMod, filterEnv, mainSendCar, mainSendNoise;
+					noise, noiseEnv, mix, ampMod, filterEnv, delayEnv, mainSendCar, mainSendNoise;
 
 					amp = amp/2;
 					noiseAmp = noiseAmp/2;
@@ -174,13 +182,16 @@ Kildare {
 					mainSendNoise = Compander.ar(in:noise, control:noise, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					mainSendNoise = Pan2.ar(mainSendNoise,pan);
 
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+
 					Out.ar(out, mainSendCar * amp);
-					Out.ar(out, mainSendNoise * amp);
-					Out.ar(delayAuxL, (mainSendCar * delayAmp));
-					Out.ar(delayAuxR, (mainSendCar * delayAmp).reverse);
+					Out.ar(delayAuxL, (mainSendCar * delayEnv));
+					Out.ar(delayAuxR, (mainSendCar * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSendCar * reverbAmp));
-					Out.ar(delayAuxL, (mainSendNoise * delayAmp));
-					Out.ar(delayAuxR, (mainSendNoise * delayAmp).reverse);
+
+					Out.ar(out, mainSendNoise * amp);
+					Out.ar(delayAuxL, (mainSendNoise * delayEnv));
+					Out.ar(delayAuxR, (mainSendNoise * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSendNoise * reverbAmp));
 
 					FreeSelf.kr(Done.kr(carEnv) * Done.kr(noiseEnv));
@@ -188,7 +199,9 @@ Kildare {
 
 				synthDefs[\tm] = SynthDef.new(\kildare_tm, {
 					arg out = 0, stopGate = 1,
-					delayAuxL, delayAuxR, reverbAux,
+					delayAuxL, delayAuxR, delayAmp,
+					delayAtk, delayRel,
+					reverbAux,reverbAmp,
 					carHz, carDetune, modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
 					carAtk, carRel, amp,
@@ -197,12 +210,11 @@ Kildare {
 					pan, rampDepth, rampDec, amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
-					lpAtk, lpRel, lpDepth,
-					delayAmp, reverbAmp;
+					lpAtk, lpRel, lpDepth;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod,
 					feedCar, ampMod, clicksound,
-					mod_1, filterEnv, mainSend;
+					mod_1, filterEnv, delayEnv, mainSend;
 
 					amp = amp*0.5;
 					eqHz = eqHz.lag3(0.5);
@@ -244,15 +256,20 @@ Kildare {
 					mainSend = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					mainSend = Pan2.ar(mainSend,pan);
 
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+
 					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayAmp));
-					Out.ar(delayAuxR, (mainSend * delayAmp).reverse);
+					Out.ar(delayAuxL, (mainSend * delayEnv));
+					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSend * reverbAmp));
+
 				}).send;
 
 				synthDefs[\cp] = SynthDef.new(\kildare_cp, {
 					arg out = 0, stopGate = 1,
-					delayAuxL, delayAuxR, reverbAux,
+					delayAuxL, delayAuxR, delayAmp,
+					delayAtk, delayRel,
+					reverbAux,reverbAmp,
 					carHz, carDetune,
 					modHz, modAmp, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -261,11 +278,10 @@ Kildare {
 					pan, amDepth, amHz,
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
-					lpAtk, lpRel, lpDepth,
-					delayAmp, reverbAmp;
+					lpAtk, lpRel, lpDepth;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-					mod_1, mod_2, filterEnv, mainSend;
+					mod_1, mod_2, filterEnv, delayEnv, mainSend;
 
 					eqHz = eqHz.lag3(0.5);
 					lpHz = lpHz.lag3(0.5);
@@ -324,9 +340,11 @@ Kildare {
 					mainSend = car.softclip;
 					mainSend = Pan2.ar(mainSend,pan);
 
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+
 					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayAmp));
-					Out.ar(delayAuxR, (mainSend * delayAmp).reverse);
+					Out.ar(delayAuxL, (mainSend * delayEnv));
+					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 
 					FreeSelf.kr(Done.kr(modEnv) * Done.kr(carEnv));
@@ -334,7 +352,9 @@ Kildare {
 
 				synthDefs[\rs] = SynthDef.new(\kildare_rs, {
 					arg out = 0, stopGate = 1,
-					delayAuxL, delayAuxR, reverbAux,
+					delayAuxL, delayAuxR, delayAmp,
+					delayAtk, delayRel,
+					reverbAux,reverbAmp,
 					carHz, carDetune,
 					modHz, modAmp,
 					modFollow, modNum, modDenum,
@@ -344,13 +364,12 @@ Kildare {
 					sdAmp, sdRel, sdAtk,
 					lpHz, hpHz, filterQ,
 					lpAtk, lpRel, lpDepth,
-					squishPitch, squishChunk,
-					delayAmp, reverbAmp;
+					squishPitch, squishChunk;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 					mod_1,mod_2,feedAmp,feedAMP, sd_modHz,
 					sd_car, sd_mod, sd_carEnv, sd_modEnv, sd_carRamp, sd_feedMod, sd_feedCar, sd_noise, sd_noiseEnv,
-					sd_mix, filterEnv, mainSendCar, mainSendSnare;
+					sd_mix, filterEnv, delayEnv, mainSendCar, mainSendSnare;
 
 					amp = amp*0.35;
 					eqHz = eqHz.lag3(0.5);
@@ -419,13 +438,16 @@ Kildare {
 					mainSendSnare = Compander.ar(in:mainSendSnare,control:mainSendSnare, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					mainSendSnare = Pan2.ar(mainSendSnare,pan);
 
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+
 					Out.ar(out, mainSendCar * amp);
-					Out.ar(delayAuxL, (mainSendCar * delayAmp));
-					Out.ar(delayAuxR, (mainSendCar * delayAmp).reverse);
+					Out.ar(delayAuxL, (mainSendCar * delayEnv));
+					Out.ar(delayAuxR, (mainSendCar * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSendCar * reverbAmp));
+
 					Out.ar(out, mainSendSnare * amp);
-					Out.ar(delayAuxL, (mainSendSnare * delayAmp));
-					Out.ar(delayAuxR, (mainSendSnare * delayAmp).reverse);
+					Out.ar(delayAuxL, (mainSendSnare * delayEnv));
+					Out.ar(delayAuxR, (mainSendSnare * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSendSnare * reverbAmp));
 
 					FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(carEnv));
@@ -433,7 +455,9 @@ Kildare {
 
 				synthDefs[\cb] = SynthDef.new(\kildare_cb, {
 					arg out = 0, stopGate = 1,
-					delayAuxL, delayAuxR, reverbAux,
+					delayAuxL, delayAuxR, delayAmp,
+					delayAtk, delayRel,
+					reverbAux,reverbAmp,
 					amp, carHz, carDetune,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -443,11 +467,10 @@ Kildare {
 					eqHz, eqAmp, bitRate, bitCount,
 					lpHz, hpHz, filterQ,
 					lpAtk, lpRel, lpDepth,
-					squishPitch, squishChunk,
-					delayAmp, reverbAmp;
+					squishPitch, squishChunk;
 
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-					voice_1, voice_2, filterEnv, mainSend;
+					voice_1, voice_2, filterEnv, delayEnv, mainSend;
 
 					amp = amp*0.6;
 					eqHz = eqHz.lag3(0.5);
@@ -483,9 +506,11 @@ Kildare {
 					mainSend = Compander.ar(in:voice_1,control:voice_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					mainSend = Pan2.ar(mainSend,pan);
 
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+
 					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayAmp));
-					Out.ar(delayAuxR, (mainSend * delayAmp).reverse);
+					Out.ar(delayAuxL, (mainSend * delayEnv));
+					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 
 					FreeSelf.kr(Done.kr(carEnv) * Done.kr(modEnv));
@@ -494,7 +519,7 @@ Kildare {
 				synthDefs[\hh] = SynthDef(\kildare_hh, {
 					arg out, stopGate = 1,
 					delayAuxL, delayAuxR, delayAmp,
-					delayAtk, delayRel, delayDepth,
+					delayAtk, delayRel,
 					reverbAux,reverbAmp,
 					amp, carHz, carDetune, carAtk, carRel,
 					tremDepth, tremHz,
@@ -548,7 +573,7 @@ Kildare {
 					mainSend = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					mainSend = Pan2.ar(mainSend,pan);
 
-					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate)) * delayDepth;
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
 					Out.ar(out, mainSend * amp);
 					Out.ar(delayAuxL, (mainSend * delayEnv));
@@ -576,12 +601,12 @@ Kildare {
 		voiceKeys.do({ arg voiceKey;
 			groups[voiceKey] = Group.new(topGroup);
 		});
+		leftDelayBuf = Buffer.alloc(s, s.sampleRate * 60.0, 2);
+		leftDelayBuf2 = Buffer.alloc(s, s.sampleRate * 60.0, 2);
+		rightDelayBuf = Buffer.alloc(s, s.sampleRate * 60.0, 2);
 
 		busses = Dictionary.new;
 		busses[\mainOut] = Bus.audio(s, 2);
-		busses[\delaySendL] = Bus.audio(s, 1);
-		busses[\delaySendR] = Bus.audio(s, 1);
-		busses[\delaySend] = Bus.audio(s,2);
         busses[\reverbSend] = Bus.audio(s, 2);
 
 		mainBus = Bus.audio(s, 2);
@@ -597,92 +622,10 @@ Kildare {
 
 		s.sync;
 
-//comment all this out:
-
-		/*delaySynth = SynthDef.new(\delay, {
-			arg time = 0.8, level = 0.5, feedback = 0.7,
-			lpHz = 19000, hpHz = 5000, filterQ = 50, spread = 0,
-			reverbSend = 0, inputL, inputR, output;
-			var input, delayL, delayR, filterDelayL, filterDelayR,
-			leftBal, rightBal, leftInput, rightInput, startHit,
-			leftReverb, rightReverb;
-
-			lpHz = lpHz.lag3(0.5);
-			hpHz = hpHz.lag3(0.5);
-
-			leftInput = In.ar(inputL, 1);
-			rightInput = In.ar(inputR, 1);
-
-			filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
-			spread = LinLin.kr(spread,0,1,0,-1);
-
-			startHit = SwitchDelay.ar(leftInput,0,1,time/2,0,1.0,level);
-			delayL = SwitchDelay.ar(SwitchDelay.ar(leftInput,0,1,time/2,0,2.0),1,1,time,feedback,4.0,level);
-			delayL = CombC.ar(CombC.ar(leftInput,2.0,time/2,0),4.0,time,2,level);
-			delayR = CombC.ar(rightInput,4.0,time,2,level);
-
-			delayL = BLowPass.ar(in:delayL,freq:lpHz, rq: filterQ, mul:1);
-			delayR = BLowPass.ar(in:delayR,freq:lpHz, rq: filterQ, mul:1);
-			delayL = RHPF.ar(in:delayL,freq:hpHz, rq: filterQ, mul:1);
-			delayR = RHPF.ar(in:delayR,freq:hpHz, rq: filterQ, mul:1);
-
-			leftBal = Balance2.ar(delayL,delayR,spread,0.5);
-			rightBal = Balance2.ar(delayR,delayL,spread,0.5);
-
-			leftBal = Compander.ar(in:leftBal,control:leftBal, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-			rightBal = Compander.ar(in:rightBal,control:rightBal, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-
-			Out.ar(output,Balance2.ar(startHit,delayR,spread,0.5));
-			Out.ar(output,[leftBal, rightBal]);
-
-		}).play(target:s, addAction:\addToTail, args:[
-			\inputL, busses[\delaySendL], \inputR, busses[\delaySendR], \output, busses[\mainOut]
-		]);
-
-		reverbSynth = SynthDef.new(\reverb, {
-			arg preDelay = 0.048, level = 0.5, decay = 6,
-			damp = 0.1, size = 4, modDepth = 0.2, modFreq = 700,
-			lowDecay = 6, midDecay = 6, highDecay = 6,
-			thresh = 0, slopeBelow = 1, slopeAbove = 1,
-			input, output;
-			var jp, gated;
-
-			// input = In.ar(reverbBus.index,2);
-			// input = In.ar(busses[\reverbSend],2);
-
-			jp = JPverb.ar(
-				in: In.ar(input,2),
-				t60:decay,
-				damp:damp,
-				size: size,
-				earlyDiff: 0.707,
-				modDepth: modDepth,
-				modFreq: modFreq,
-				low: lowDecay,
-				mid: midDecay,
-				high: highDecay,
-				lowcut: 500.0,
-				highcut: 2000.0
-			);
-
-			gated = Compander.ar(jp,jp,thresh,slopeBelow,slopeAbove);
-			// Out.ar(mainBus,gated * level);
-			Out.ar(busses[\mainOut], gated * level);
-		// }).play(target:fxGroup);
-		}).play(target:s, addAction:\addToTail, args:[
-			\input, busses[\reverbSend], \out, busses[\mainOut]
-		]);
-
-		s.sync;
-
-		mainOutSynth = SynthDef.new(\mainOutput, {
-            arg in, out;
-            Out.ar(out, In.ar(in, 2));
-        }).play(target:s, addAction:\addToTail, args: [
-            \in, busses[\mainOut], \out, 0
-        ]);
-		*/
-// to here!
+		busses[\delayLSend] = Bus.audio(s, 1);
+		busses[\delayRSend] = Bus.audio(s, 1);
+		// HUH...these need to be after the sync OR be renamed and the buffers are just made in the SynthDef...huh!
+		// UGH...OR a choice. move them back up and keep them renamed to get no panning respect...
 
 		delayParams = Dictionary.newFrom([
 			\time,0.8,
@@ -712,11 +655,13 @@ Kildare {
 		paramProtos = Dictionary.newFrom([
 			\bd, Dictionary.newFrom([
 				\out,busses[\mainOut],
-				\delayAuxL,busses[\delaySendL],
-				\delayAuxR,busses[\delaySendR],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
-				\delayAmp,1,
-				\reverbAmp,1,
+				\delayAtk,0,
+				\delayRel,2,
+				\delayAmp,0,
+				\reverbAmp,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,55,
@@ -751,11 +696,13 @@ Kildare {
 			]),
 			\sd, Dictionary.newFrom([
 				\out,busses[\mainOut],
-				\delayAuxL,busses[\delaySendL],
-				\delayAuxR,busses[\delaySendR],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
-				\delayAmp,1,
-				\reverbAmp,1,
+				\delayAtk,0,
+				\delayRel,2,
+				\delayAmp,0,
+				\reverbAmp,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,282.54,
@@ -790,11 +737,13 @@ Kildare {
 			]),
 			\tm, Dictionary.newFrom([
 				\out,busses[\mainOut],
-				\delayAuxL,busses[\delaySendL],
-				\delayAuxR,busses[\delaySendR],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
-				\delayAmp,1,
-				\reverbAmp,1,
+				\delayAtk,0,
+				\delayRel,2,
+				\delayAmp,0,
+				\reverbAmp,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,87.3,
@@ -827,11 +776,13 @@ Kildare {
 			]),
 			\cp, Dictionary.newFrom([
 				\out,busses[\mainOut],
-				\delayAuxL,busses[\delaySendL],
-				\delayAuxR,busses[\delaySendR],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
-				\delayAmp,1,
-				\reverbAmp,1,
+				\delayAtk,0,
+				\delayRel,2,
+				\delayAmp,0,
+				\reverbAmp,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,1600,
@@ -861,11 +812,13 @@ Kildare {
 			]),
 			\rs, Dictionary.newFrom([
 				\out,busses[\mainOut],
-				\delayAuxL,busses[\delaySendL],
-				\delayAuxR,busses[\delaySendR],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
-				\delayAmp,1,
-				\reverbAmp,1,
+				\delayAtk,0,
+				\delayRel,2,
+				\delayAmp,0,
+				\reverbAmp,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,370,
@@ -897,11 +850,13 @@ Kildare {
 			]),
 			\cb, Dictionary.newFrom([
 				\out,busses[\mainOut],
-				\delayAuxL,busses[\delaySendL],
-				\delayAuxR,busses[\delaySendR],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
-				\delayAmp,1,
-				\reverbAmp,1,
+				\delayAtk,0,
+				\delayRel,2,
+				\delayAmp,0,
+				\reverbAmp,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,404,
@@ -928,11 +883,10 @@ Kildare {
 			\hh, Dictionary.newFrom([
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
-				\delayAuxR,busses[\delaySend],
+				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
-				\delayAtk,0.7,
+				\delayAtk,0,
 				\delayRel,2,
-				\delayDepth,1,
 				\delayAmp,0,
 				\reverbAmp,0,
 				\poly,0,
@@ -967,23 +921,16 @@ Kildare {
 		]);
 
 		outputSynths[\delay] = SynthDef.new(\delay, {
-            /*arg in, out, reverb_send_level = 0;
-			var delayed_sig;
-			delayed_sig = CombC.ar(In.ar(in, 2), 1.0, 0.2, 1.0);
-            Out.ar(out, delayed_sig);
-			Out.ar(busses[\reverbSend], delayed_sig * reverb_send_level);*/
 
 			arg time = 0.3, level = 0.5, feedback = 0.8,
 			lpHz = 19000, hpHz = 20, filterQ = 50, spread = 1,
-			reverbSend = 0, inputL, inputR, output;
-
-			/*var delayL, filterDelayL,
-			leftBal, leftInput,startHit,
-			leftReverb;*/
+			reverbSend = 0, inputL, inputR, decayTime = -2,
+			mainOutput, reverbOutput;
 
 			var delayL, delayR,
-			leftBal, rightBal, leftInput, rightInput, startHit,
-			leftReverb, rightReverb, leftPos, rightPos;
+			leftBal, rightBal,
+			leftInput, rightInput, startHit,
+			leftPos, rightPos;
 
 			lpHz = lpHz.lag3(0.5);
 			hpHz = hpHz.lag3(0.5);
@@ -992,14 +939,15 @@ Kildare {
 			rightInput = In.ar(inputR, 1);
 
 			filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
-			// spread = LinLin.kr(spread,0,1,0,-1);
 			leftPos = LinLin.kr(spread,0,1,0,-1);
 			rightPos = LinLin.kr(spread,0,1,0,1);
 
 			startHit = SwitchDelay.ar(leftInput,0,1,time/2,0,1.0,level);
-			delayL = SwitchDelay.ar(SwitchDelay.ar(leftInput,0,1,time/2,0,2.0),1,1,time,feedback,4.0,level);
-			delayL = CombC.ar(CombC.ar(leftInput,2.0,time/2,0),4.0,time,2,level);
-			delayR = CombC.ar(rightInput,4.0,time,2,level);
+			// delayL = SwitchDelay.ar(SwitchDelay.ar(leftInput,0,1,time/2,0,2.0),1,1,time,feedback,4.0,level);
+			delayL = BufCombC.ar(leftDelayBuf.bufnum,leftInput,time/2,0,level);
+			delayL = BufCombC.ar(leftDelayBuf2.bufnum,delayL,time,decayTime,level);
+			delayR = BufCombC.ar(rightDelayBuf.bufnum,rightInput,time,decayTime,level*0.27);
+			//right side is louder cuz not delayed...
 
 			startHit = BLowPass.ar(in:startHit,freq:lpHz, rq: filterQ, mul:1);
 			delayL = BLowPass.ar(in:delayL,freq:lpHz, rq: filterQ, mul:1);
@@ -1008,8 +956,6 @@ Kildare {
 			delayL = RHPF.ar(in:delayL,freq:hpHz, rq: filterQ, mul:1);
 			delayR = RHPF.ar(in:delayR,freq:hpHz, rq: filterQ, mul:1);
 
-/*			leftBal = Pan2.ar(Mix.ar(Balance2.ar(delayL,delayR,spread)),-1,0.5);
-			rightBal = Pan2.ar(Mix.ar(Balance2.ar(delayR,delayL,spread)),1,0.5);*/
 			leftBal = Pan2.ar(delayL+startHit,leftPos,0.5);
 			rightBal = Pan2.ar(delayR,rightPos,0.5);
 
@@ -1017,19 +963,17 @@ Kildare {
 			rightBal = Compander.ar(in:rightBal,control:rightBal, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
 			leftBal = leftBal + rightBal;
-			Out.ar(output,leftBal);
-
+			Out.ar(mainOutput,leftBal);
+			Out.ar(reverbOutput,leftBal * reverbSend);
 
         }).play(target:s, addAction:\addToTail, args:[
 			\inputL, busses[\delayLSend],
-			\inputR, busses[\delaySend],
-			\output, busses[\mainOut]
+			\inputR, busses[\delayRSend],
+			\reverbOutput, busses[\reverbSend],
+			\mainOutput, busses[\mainOut]
         ]);
 
         outputSynths[\reverb] = SynthDef.new(\reverb, {
-            /*arg in, out;
-            Out.ar(out, FreeVerb.ar(In.ar(in, 2), 1.0, 1));*/
-
 
 			arg preDelay = 0.048, level = 0.5, decay = 6,
 			damp = 0.1, size = 4, modDepth = 0.2, modFreq = 700,
@@ -1037,9 +981,6 @@ Kildare {
 			thresh = 0, slopeBelow = 1, slopeAbove = 1,
 			in, out;
 			var jp, gated;
-
-			// input = In.ar(reverbBus.index,2);
-			// input = In.ar(busses[\reverbSend],2);
 
 			jp = JPverb.ar(
 				in: In.ar(in,2),
@@ -1057,7 +998,6 @@ Kildare {
 			);
 
 			gated = Compander.ar(jp,jp,thresh,slopeBelow,slopeAbove);
-			// Out.ar(mainBus,gated * level);
 			Out.ar(out, gated * level);
 
         }).play(target:s, addAction:\addToTail, args:[
@@ -1122,6 +1062,9 @@ Kildare {
 		outputSynths.do({arg bus;
 			bus.free;
 		});
+		leftDelayBuf.free;
+		leftDelayBuf2.free;
+		rightDelayBuf.free;
 	}
 
 }
