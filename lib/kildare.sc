@@ -18,13 +18,9 @@ Kildare {
 	// audio bus that all the synths write to
 	var <outputSynths;
 	var <busses;
-	var <mainBus;
-	var <delayBusL;
-	var <delayBusR;
 	var <leftDelayBuf;
 	var <leftDelayBuf2;
 	var <rightDelayBuf;
-	var <reverbBus;
 	var <mainOutSynth;
 	var <auxOutSynth;
 	var <fxGroup;
@@ -48,7 +44,7 @@ Kildare {
 				synthDefs[\bd] = SynthDef.new(\kildare_bd, {
 					arg out = 0, stopGate = 1,
 					delayAuxL, delayAuxR, delayAmp,
-					delayAtk, delayRel,
+					delaySendByPan = 1, delayAtk, delayRel,
 					reverbAux,reverbAmp,
 					amp, carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
@@ -107,8 +103,8 @@ Kildare {
 					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
 					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayEnv));
-					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
+					Out.ar(delayAuxL, (Select.ar(delaySendByPan > 1, [car * delayEnv, mainSend * delayEnv])));
+					Out.ar(delayAuxR, (Select.ar(delaySendByPan > 1, [car * delayEnv, (mainSend * delayEnv).reverse])));
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 				}).send;
 
@@ -609,14 +605,6 @@ Kildare {
 		busses[\mainOut] = Bus.audio(s, 2);
         busses[\reverbSend] = Bus.audio(s, 2);
 
-		mainBus = Bus.audio(s, 2);
-		delayBusL = Bus.audio(s, 1);
-		delayBusR = Bus.audio(s, 1);
-		reverbBus = Bus.audio(s, 2);
-/*		mainOutSynth = {
-			Out.ar(0, In.ar(mainBus.index, 2));
-		}.play(target: topGroup, addAction: \addAfter);*/
-
 		// fxGroup = Group.new(target:mainOutSynth, addAction:\addBefore);
 		fxGroup = Group.new(s);
 
@@ -1051,11 +1039,7 @@ Kildare {
 		// [EB] added
 		mainOutSynth.free;
 		topGroup.free;
-		mainBus.free;
 		fxGroup.free;
-		delayBusL.free;
-		delayBusR.free;
-		reverbBus.free;
 		busses.do({arg bus;
 			bus.free;
 		});
