@@ -366,7 +366,12 @@ function lfos.lfo_update()
               engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],value)
             elseif params:string("lfo_target_track_"..i) == "delay" then
               local delay_param_target = params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))]
-              engine.set_delay_param(delay_param_target,value)
+              if delay_param_target == "time" then
+                engine.set_delay_param(delay_param_target,clock.get_beat_sec() * value/128)
+              else
+                engine.set_delay_param(delay_param_target,value)
+              end
+              print(delay_param_target,value)
             end
           end
         elseif params:string("lfo_shape_"..i) == "square" then

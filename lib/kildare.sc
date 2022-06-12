@@ -21,6 +21,7 @@ Kildare {
 	var <leftDelayBuf;
 	var <leftDelayBuf2;
 	var <rightDelayBuf;
+	var <delayBufs;
 	var <mainOutSynth;
 	var <auxOutSynth;
 	var <fxGroup;
@@ -601,6 +602,9 @@ Kildare {
 		leftDelayBuf2 = Buffer.alloc(s, s.sampleRate * 60.0, 2);
 		rightDelayBuf = Buffer.alloc(s, s.sampleRate * 60.0, 2);
 
+		delayBufs = Dictionary.new;
+		delayBufs[\initHit] = Buffer.alloc(s, s.sampleRate * 60.0, 2);
+
 		busses = Dictionary.new;
 		busses[\mainOut] = Bus.audio(s, 2);
         busses[\reverbSend] = Bus.audio(s, 2);
@@ -918,7 +922,8 @@ Kildare {
 			var delayL, delayR,
 			leftBal, rightBal,
 			leftInput, rightInput, startHit,
-			leftPos, rightPos;
+			leftPos, rightPos,
+			feedbackDecayTime;
 
 			lpHz = lpHz.lag3(0.5);
 			hpHz = hpHz.lag3(0.5);
@@ -930,11 +935,13 @@ Kildare {
 			leftPos = LinLin.kr(spread,0,1,0,-1);
 			rightPos = LinLin.kr(spread,0,1,0,1);
 
-			startHit = SwitchDelay.ar(leftInput,0,1,time/2,0,1.0,level);
-			// delayL = SwitchDelay.ar(SwitchDelay.ar(leftInput,0,1,time/2,0,2.0),1,1,time,feedback,4.0,level);
+			feedbackDecayTime = (0.001.log * time) / feedback.log;
+
+			// startHit = SwitchDelay.ar(leftInput,0,1,time/2,0,1.0,level);
+			startHit = BufCombC.ar(delayBufs[\initHit].bufnum,leftInput,time/2,0,level);
 			delayL = BufCombC.ar(leftDelayBuf.bufnum,leftInput,time/2,0,level);
-			delayL = BufCombC.ar(leftDelayBuf2.bufnum,delayL,time,decayTime,level);
-			delayR = BufCombC.ar(rightDelayBuf.bufnum,rightInput,time,decayTime,level*0.27);
+			delayL = BufCombC.ar(leftDelayBuf2.bufnum,delayL,time,feedbackDecayTime,level);
+			delayR = BufCombC.ar(rightDelayBuf.bufnum,rightInput,time,feedbackDecayTime,level*0.29);
 			//right side is louder cuz not delayed...
 
 			startHit = BLowPass.ar(in:startHit,freq:lpHz, rq: filterQ, mul:1);
@@ -964,10 +971,16 @@ Kildare {
         outputSynths[\reverb] = SynthDef.new(\reverb, {
 
 			arg preDelay = 0.048, level = 0.5, decay = 6,
-			damp = 0.1, size = 4, modDepth = 0.2, modFreq = 700,
+			damp = 0.1, size = 4, earlyDiff = 0.707, modDepth = 0.2, modFreq = 700,
 			lowDecay = 6, midDecay = 6, highDecay = 6,
+
 			thresh = 0, slopeBelow = 1, slopeAbove = 1,
+
 			in, out;
+
+			/*delayTime = 0.1, damp = 1, size = 3, diff = 0.7, feedback = 0.9,
+			modDepth = 0.1, modFreq = 2, level = 0.5*/
+
 			var jp, gated;
 
 			jp = JPverb.ar(
@@ -975,7 +988,7 @@ Kildare {
 				t60:decay,
 				damp:damp,
 				size: size,
-				earlyDiff: 0.707,
+				earlyDiff: earlyDiff,
 				modDepth: modDepth,
 				modFreq: modFreq,
 				low: lowDecay,
@@ -984,6 +997,20 @@ Kildare {
 				lowcut: 500.0,
 				highcut: 2000.0
 			);
+			/*jp = NHHall.ar(
+				in: In.ar(in,2),
+				stereo: 0
+			);*/
+			/*jp = Greyhole.ar(
+				in: In.ar(in,2),
+				delayTime: delayTime,
+				damp: damp,
+				size: size,
+				diff: diff,
+				feedback: feedback,
+				modDepth: modDepth,
+				modFreq: modFreq
+			);*/
 
 			gated = Compander.ar(jp,jp,thresh,slopeBelow,slopeAbove);
 			Out.ar(out, gated * level);
@@ -1027,7 +1054,7 @@ Kildare {
 
 	setReverbParam { arg paramKey, paramValue;
 		reverbParams[paramKey] = paramValue;
-		reverbSynth.set(paramKey, paramValue);
+		outputSynths[\reverb].set(paramKey, paramValue);
 	}
 
 	// [EB] added
@@ -1045,6 +1072,9 @@ Kildare {
 		});
 		outputSynths.do({arg bus;
 			bus.free;
+		});
+		delayBufs.do({arg buf;
+			buf.free;
 		});
 		leftDelayBuf.free;
 		leftDelayBuf2.free;

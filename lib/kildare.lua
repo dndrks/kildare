@@ -6,7 +6,7 @@ local kildare_lfos = include 'kildare/lib/kildare_lfos'
 local musicutil = require 'musicutil'
 
 local drums = {"bd","sd","tm","cp","rs","cb","hh"}
-local fx = {"delay"}
+local fx = {"delay", "reverb"}
 
 function round_form(param,quant,form)
   return(util.round(param,quant)..form)
@@ -57,6 +57,7 @@ function Kildare.init()
       {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, formatter = frm.bipolar_as_pan_widget},
       {type = 'separator', name = 'fx sends'},
       {id = 'delayAmp', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'reverbAmp', name = 'reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     },
     ["sd"] = {
       {type = 'separator', name = 'carrier'},
@@ -100,6 +101,7 @@ function Kildare.init()
       {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, formatter = frm.bipolar_as_pan_widget},
       {type = 'separator', name = 'fx sends'},
       {id = 'delayAmp', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'reverbAmp', name = 'reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     },
     ["tm"] = {
       {type = 'separator', name = 'carrier'},
@@ -139,6 +141,7 @@ function Kildare.init()
       {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, formatter = frm.bipolar_as_pan_widget},
       {type = 'separator', name = 'fx sends'},
       {id = 'delayAmp', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'reverbAmp', name = 'reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     },
     ["cp"] = {
       {type = 'separator', name = 'carrier'},
@@ -175,6 +178,7 @@ function Kildare.init()
       {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, formatter = frm.bipolar_as_pan_widget},
       {type = 'separator', name = 'fx sends'},
       {id = 'delayAmp', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'reverbAmp', name = 'reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     },
     ["rs"] = {
       {type = 'separator', name = 'carrier'},
@@ -214,6 +218,7 @@ function Kildare.init()
       {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, formatter = frm.bipolar_as_pan_widget},
       {type = 'separator', name = 'fx sends'},
       {id = 'delayAmp', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'reverbAmp', name = 'reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     },
     ["cb"] = {
       {type = 'separator', name = 'carrier'},
@@ -248,6 +253,7 @@ function Kildare.init()
       {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, formatter = frm.bipolar_as_pan_widget},
       {type = 'separator', name = 'fx sends'},
       {id = 'delayAmp', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'reverbAmp', name = 'reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     },
     ["hh"] = {
       {type = 'separator', name = 'carrier'},
@@ -287,13 +293,14 @@ function Kildare.init()
       {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, formatter = frm.bipolar_as_pan_widget},
       {type = 'separator', name = 'fx sends'},
       {id = 'delayAmp', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'reverbAmp', name = 'reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     },
   }
 
   kildare_fx_params = {
     ["delay"] = {
       {type = 'separator', name = 'delay settings'},
-      {id = 'time', name = 'time', type = 'number', min = 1, max = 128, default = 64},
+      {id = 'time', name = 'time', type = 'number', min = 1, max = 128, default = 64, formatter = function (param) return param:get() end},
       {id = 'level', name = 'level', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.5, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'feedback', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'spread', name = 'spread', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -301,6 +308,25 @@ function Kildare.init()
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'hpHz', name = 'hi-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 20, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'filterQ', name = 'filter q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
+    },
+    ["reverb"] = {
+      {type = 'separator', name = 'delay settings'},
+      {id = 'decay', name = 'decay', type = 'control', min = 0.1, max = 60, warp = 'exp', default = 0.5, formatter = function(param) return (param:get().."s") end},
+      {id = 'damp', name = 'damp', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'size', name = 'size', type = 'control', min = 0.5, max = 5, warp = 'exp', default = 1, formatter = function(param) return (round_form(util.linlin(0.5,5,0,1,param:get())*100,1,"%")) end},
+      {id = 'earlyDiff', name = 'early reflections', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'modDepth', name = 'modulation depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'modFreq', name = 'modulation freq', type = 'control', min = 0.001, max = 10000, warp = 'exp', default = 2, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lowDecay', name = 'low mult', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'midDecay', name = 'mid mult', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'highDecay', name = 'high mult', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      -- {id = 'delayTime', name = 'time', type = 'control', min = 0.1, max = 60, warp = 'exp', default = 0.5, formatter = function(param) return (param:get().."s") end},
+      -- {id = 'damp', name = 'damp', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      -- {id = 'size', name = 'size', type = 'control', min = 0.5, max = 5, warp = 'exp', default = 1, formatter = function(param) return (round_form(util.linlin(0.5,5,0,1,param:get())*100,1,"%")) end},
+      -- {id = 'diff', name = 'diffuser', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      -- {id = 'feedback', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      -- {id = 'modDepth', name = 'modulation depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      -- {id = 'modFreq', name = 'modulation freq', type = 'control', min = 0.001, max = 10000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
     }
   }
 
@@ -399,7 +425,7 @@ function Kildare.init()
       if d.type ~= 'separator' then
         params:set_action(k.."_"..d.id, function(x)
           if engine.name == "Kildare" then
-            if d.id == "time" then
+            if k == "delay" and d.id == "time" then
               engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128) -- TODO BAD??
             else
               engine["set_"..k.."_param"](d.id, x)
