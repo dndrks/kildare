@@ -46,7 +46,7 @@ Kildare {
 					arg out = 0, stopGate = 1,
 					delayAuxL, delayAuxR, delayAmp,
 					delaySendByPan = 1, delayAtk, delayRel,
-					reverbAux,reverbAmp,
+					reverbAux, reverbAmp,
 					amp, carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -634,8 +634,6 @@ Kildare {
 			\preDelay,0.048,
 			\level,0.5,
 			\decay,6,
-			\damp,0.1,
-			\size,0.9,
 			\modDepth,0.2,
 			\modFreq,700,
 			\lowDecay,6,
@@ -937,7 +935,6 @@ Kildare {
 
 			feedbackDecayTime = (0.001.log * time) / feedback.log;
 
-			// startHit = SwitchDelay.ar(leftInput,0,1,time/2,0,1.0,level);
 			startHit = BufCombC.ar(delayBufs[\initHit].bufnum,leftInput,time/2,0,level);
 			delayL = BufCombC.ar(leftDelayBuf.bufnum,leftInput,time/2,0,level);
 			delayL = BufCombC.ar(leftDelayBuf2.bufnum,delayL,time,feedbackDecayTime,level);
@@ -971,47 +968,94 @@ Kildare {
         outputSynths[\reverb] = SynthDef.new(\reverb, {
 
 			arg preDelay = 0.048, level = 0.5, decay = 6,
-			damp = 0.1, size = 4, earlyDiff = 0.707, modDepth = 0.2, modFreq = 700,
-			lowDecay = 6, midDecay = 6, highDecay = 6,
-
+			earlyDiff = 0.707, modDepth = 0.2, modFreq = 0.1,
+			lpHz = 1200,
 			thresh = 0, slopeBelow = 1, slopeAbove = 1,
-
 			in, out;
 
-			/*delayTime = 0.1, damp = 1, size = 3, diff = 0.7, feedback = 0.9,
-			modDepth = 0.1, modFreq = 2, level = 0.5*/
+			var jp, gated, s, z, y,
+			delayTimeBase, delayTimeRandVar, delayTimeSeeds,
+			localin, localout, local, earlyReflections;
 
-			var jp, gated;
+			lpHz = lpHz.lag3(0.5);
 
-			jp = JPverb.ar(
-				in: In.ar(in,2),
-				t60:decay,
-				damp:damp,
-				size: size,
-				earlyDiff: earlyDiff,
-				modDepth: modDepth,
-				modFreq: modFreq,
-				low: lowDecay,
-				mid: midDecay,
-				high: highDecay,
-				lowcut: 500.0,
-				highcut: 2000.0
-			);
-			/*jp = NHHall.ar(
-				in: In.ar(in,2),
-				stereo: 0
-			);*/
-			/*jp = Greyhole.ar(
-				in: In.ar(in,2),
-				delayTime: delayTime,
-				damp: damp,
-				size: size,
-				diff: diff,
-				feedback: feedback,
-				modDepth: modDepth,
-				modFreq: modFreq
-			);*/
+			delayTimeBase = Dictionary.newFrom([
+				1, (2473.0 / 48000.0),
+				2, (2767.0 / 48000.0),
+				3, (3217.0 / 48000.0),
+				4, (3557.0 / 48000.0),
+				5, (3907.0 / 48000.0),
+				6, (4127.0 / 48000.0),
+				7, (2143.0 / 48000.0),
+				8, (1933.0 / 48000.0)
+			]);
 
+			//(2473.0 / 48000.0) + (0.0010 * 1966.0)/32768
+
+			delayTimeRandVar = Dictionary.newFrom([
+				1, 0.0010,
+				2, 0.0011,
+				3, 0.0017,
+				4, 0.0006,
+				5, 0.0010,
+				6, 0.0011,
+				7, 0.0017,
+				8, 0.0006
+			]);
+
+			delayTimeSeeds = Dictionary.newFrom([
+				1, 1966.0,
+				2, 29491.0,
+				3, 22937.0,
+				4, 9830.0,
+				5, 20643.0,
+				6, 22937.0,
+				7, 29491.0,
+				8, 14417.0
+			]);
+
+
+			s = In.ar(in,2);
+			z = DelayN.ar(s, 0.5, preDelay);
+
+			8.do({
+				arg pass;
+				var lbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0),
+				rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0);
+				rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0) - (0.00001);
+
+				local = LocalIn.ar(2) + z;
+
+				earlyReflections = Mix.fill(5, {
+					arg stuff;
+					var voice = stuff.asInteger + 1, decTime = lbase/2 + LinLin.kr(LFNoise1.kr(modFreq,modDepth),-1,1,0,lbase/2);
+					CombL.ar(
+						in: local,
+						maxdelaytime: 0.1,
+						delaytime: decTime - (decTime*(voice/10)),
+						decaytime: decay,
+						mul: (1/5) * level * earlyDiff
+					);
+				});
+
+				local = local + earlyReflections;
+
+				y = BLowPass.ar(
+					AllpassL.ar(
+						in: local,
+						maxdelaytime: 0.5,
+						delaytime: [
+							lbase/2 + LinLin.kr(SinOsc.kr(freq: modFreq, mul: modDepth),-1,1,0,lbase/2),
+							rbase/2 + LinLin.kr(SinOsc.kr(freq: modFreq, mul: modDepth),-1,1,0,rbase/2),
+						],
+						decaytime: decay
+					),
+				lpHz);
+				LocalOut.ar([local,local]);
+				[local,local]
+			});
+
+			jp = AllpassN.ar(y, 0.05, [0.05.rand, 0.05.rand], decay);
 			gated = Compander.ar(jp,jp,thresh,slopeBelow,slopeAbove);
 			Out.ar(out, gated * level);
 
@@ -1021,7 +1065,11 @@ Kildare {
 
         outputSynths[\main_out] = SynthDef.new(\patch_stereo, {
             arg in, out;
-            Out.ar(out, In.ar(in, 2));
+			var src = In.ar(in, 2),
+			comp = Compander.ar(src,src,0.5,1,0.1),
+			limiter = Limiter.ar(comp,0.5);
+
+			Out.ar(out, limiter);
         }).play(target:s, addAction:\addToTail, args: [
             \in, busses[\mainOut], \out, 0
         ]);
