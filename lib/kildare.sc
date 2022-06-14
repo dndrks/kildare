@@ -6,6 +6,7 @@
 Kildare {
 	classvar <voiceKeys;
 	classvar <synthDefs;
+	const <numVoices = 3;
 
 	// [EB] we want these to be specific to the instance:
 	// - keep a dictionary of prototype paraemter values
@@ -29,6 +30,9 @@ Kildare {
 	var <delayParams;
 	var <reverbSynth;
 	var <reverbParams;
+	var <voiceTracker;
+	var <activeVoices;
+	classvar <indexTracker;
 
 	*initClass {
 		voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh ];
@@ -593,17 +597,24 @@ Kildare {
 
 		outputSynths = Dictionary.new;
 
+		voiceTracker = Dictionary.new;
+		indexTracker = Dictionary.new;
+
 		topGroup = Group.new(s);
 		groups = Dictionary.new;
 		voiceKeys.do({ arg voiceKey;
 			groups[voiceKey] = Group.new(topGroup);
+			indexTracker[voiceKey] = numVoices;
+			numVoices.do{ arg i;
+				voiceTracker[voiceKey] = Dictionary.new(numVoices);
+			};
 		});
-		leftDelayBuf = Buffer.alloc(s, s.sampleRate * 60.0, 2);
-		leftDelayBuf2 = Buffer.alloc(s, s.sampleRate * 60.0, 2);
-		rightDelayBuf = Buffer.alloc(s, s.sampleRate * 60.0, 2);
 
 		delayBufs = Dictionary.new;
 		delayBufs[\initHit] = Buffer.alloc(s, s.sampleRate * 60.0, 2);
+		delayBufs[\left1] = Buffer.alloc(s, s.sampleRate * 60.0, 2);
+		delayBufs[\left2] = Buffer.alloc(s, s.sampleRate * 60.0, 2);
+		delayBufs[\right] = Buffer.alloc(s, s.sampleRate * 60.0, 2);
 
 		busses = Dictionary.new;
 		busses[\mainOut] = Bus.audio(s, 2);
@@ -936,9 +947,9 @@ Kildare {
 			feedbackDecayTime = (0.001.log * time) / feedback.log;
 
 			startHit = BufCombC.ar(delayBufs[\initHit].bufnum,leftInput,time/2,0,level);
-			delayL = BufCombC.ar(leftDelayBuf.bufnum,leftInput,time/2,0,level);
-			delayL = BufCombC.ar(leftDelayBuf2.bufnum,delayL,time,feedbackDecayTime,level);
-			delayR = BufCombC.ar(rightDelayBuf.bufnum,rightInput,time,feedbackDecayTime,level*0.29);
+			delayL = BufCombC.ar(delayBufs[\left1].bufnum,leftInput,time/2,0,level);
+			delayL = BufCombC.ar(delayBufs[\left2].bufnum,delayL,time,feedbackDecayTime,level);
+			delayR = BufCombC.ar(delayBufs[\right].bufnum,rightInput,time,feedbackDecayTime,level*0.29);
 			//right side is louder cuz not delayed...
 
 			startHit = BLowPass.ar(in:startHit,freq:lpHz, rq: filterQ, mul:1);
@@ -1066,9 +1077,9 @@ Kildare {
         outputSynths[\main_out] = SynthDef.new(\patch_stereo, {
             arg in, out;
 			var src = In.ar(in, 2),
-			comp = Compander.ar(src,src,0.5,1,0.1),
-			limiter = Limiter.ar(comp,0.5);
-
+			// comp = Compander.ar(src,src,0.5,1,0.1),
+			// limiter = Limiter.ar(comp,0.5);
+			limiter = Limiter.ar(src,0.5);
 			Out.ar(out, limiter);
         }).play(target:s, addAction:\addToTail, args: [
             \in, busses[\mainOut], \out, 0
@@ -1080,11 +1091,22 @@ Kildare {
 	trigger { arg voiceKey;
 		if( paramProtos[voiceKey][\poly] == 0,{
 			groups[voiceKey].set(\stopGate, -1.05);
-			// "stop".postln;
-		});
-		// [EB] added the synthdef name prefix
-		// [EB] fix this with `.getPairs` on the dict
-		Synth.new(\kildare_++voiceKey, paramProtos[voiceKey].getPairs, groups[voiceKey]);
+			indexTracker[voiceKey] = numVoices;
+			Synth.new(\kildare_++voiceKey, paramProtos[voiceKey].getPairs, groups[voiceKey]);
+		},{
+			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
+			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isNil.not, {
+				if (voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying, {
+					voiceTracker[voiceKey][indexTracker[voiceKey]].set(\stopGate, -1.05);
+					// ("stopping previous iteration of  "++indexTracker[voiceKey]++voiceKey).postln;
+				});
+			});
+			voiceTracker[voiceKey][indexTracker[voiceKey]] = Synth.new(\kildare_++voiceKey, paramProtos[voiceKey].getPairs, groups[voiceKey]);
+			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isNil.not, {
+				NodeWatcher.register(voiceTracker[voiceKey][indexTracker[voiceKey]],true);
+			});
+		}
+		);
 	}
 
 	setVoiceParam { arg voiceKey, paramKey, paramValue;

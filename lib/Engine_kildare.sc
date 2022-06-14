@@ -32,7 +32,7 @@ Engine_Kildare : CroneEngine {
 			kernel.setReverbParam(paramKey, paramValue);
 		});
 
-		fork { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } };
+		// fork { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } };
 	}
 
 	free {
