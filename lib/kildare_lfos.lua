@@ -22,11 +22,15 @@ local ivals = {
   ["rs"] = {65,80},
   ["cb"] = {81,96},
   ["hh"] = {97,112},
-  ["delay"] = {113,128}
+  ["delay"] = {113,128},
+  ["reverb"] = {129,144},
+  ["main"] = {145,160}
 }
-local drums = {"bd","sd","tm","cp","rs","cb","hh","delay"}
+local drums = {"bd","sd","tm","cp","rs","cb","hh","delay","reverb","main"}
 
 local delay_params = {'time', 'level', 'feedback', 'spread', 'lpHz', 'hpHz', 'filterQ'}
+local reverb_params = {'decay', 'preDelay', 'earlyDiff', 'lpHz', 'modFreq', 'modDepth', 'level', 'thresh', 'slopeBelow', 'slopeAbove'}
+local main_params = {'lpHz', 'lpdb', 'lpQ', 'hpHz', 'hpdb', 'hpQ', 'eqHz', 'eqdb', 'eqQ'}
 
 local lfos_loaded = {}
 
@@ -43,7 +47,7 @@ function lfos.add_params()
     min_specs[k] = {}
     max_specs[k] = {}
     local i = 1
-    if k ~= "delay" then
+    if k ~= "delay" and k ~= "reverb" and k ~= "main" then
       for key,val in pairs(kildare_drum_params[k]) do
         if kildare_drum_params[k][key].type ~= "separator" then
           min_specs[k][i] = {min = kildare_drum_params[k][key].min, max = kildare_drum_params[k][key].max, warp = kildare_drum_params[k][key].warp, step = 0.01, default = kildare_drum_params[k][key].default, quantum = 0.01, formatter = kildare_drum_params[k][key].formatter}
@@ -51,7 +55,7 @@ function lfos.add_params()
           i = i+1 -- do not increment by the separators' gaps...
         end
       end
-    elseif k == "delay" then
+    else
       for key,val in pairs(kildare_fx_params[k]) do
         if kildare_fx_params[k][key].type ~= "separator" then
           -- if kildare_fx_params[k][key].name ~= "time" then
@@ -69,10 +73,14 @@ function lfos.add_params()
   params:add_group("lfos",lfos.NUM_LFOS * 12)
   for i = 1,lfos.NUM_LFOS do
     -- last_param[i] = drums[util.wrap(i,1,7)].."_amp"
-    if drums[util.wrap(i,1,8)] ~= "delay" then
-      last_param[i] = "amp"
+    if drums[util.wrap(i,1,#drums)] == "delay" then
+      last_param[i] = "time"
+    elseif drums[util.wrap(i,1,#drums)] == "reverb" then
+      last_param[i] = "decay"
+    elseif drums[util.wrap(i,1,#drums)] == "main" then
+      last_param[i] = "lpHz"
     else
-      last_param[i] = "level"
+      last_param[i] = "amp"
     end
     params:add_separator("lfo "..i)
     params:add_option("lfo_"..i,"state",{"off","on"},1)
@@ -108,7 +116,7 @@ function lfos.add_params()
         _menu.rebuild_params()
       end
     end)
-    params:add_option("lfo_target_track_"..i, "track", drums, util.wrap(i,1,8))
+    params:add_option("lfo_target_track_"..i, "track", drums, util.wrap(i,1,#drums))
     params:set_action("lfo_target_track_"..i,
       function(x)
         local param_id = params.lookup["lfo_target_param_"..i]
@@ -120,7 +128,7 @@ function lfos.add_params()
         lfos.return_to_baseline(i)
       end
     )
-    params:add_option("lfo_target_param_"..i, "param",params_list[drums[util.wrap(i,1,8)]].names,1)
+    params:add_option("lfo_target_param_"..i, "param",params_list[drums[util.wrap(i,1,#drums)]].names,1)
     params:set_action("lfo_target_param_"..i,
       function(x)
         lfos.rebuild_param("min",i)
@@ -226,8 +234,8 @@ function lfos.return_to_baseline(i,silent)
   local drum_target = params:get("lfo_target_track_"..i)
   local param_name = drums[drum_target].."_"..(params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
   -- print(drums[drum_target],last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
-  if drums[drum_target] ~= "delay" then
-    if last_param[i] == "level" then
+  if drums[drum_target] ~= "delay" and drums[drum_target] ~= "reverb" and drums[drum_target] ~= "main" then
+    if last_param[i] == "time" or last_param[i] == "decay" or last_param[i] == "lpHz" then
       last_param[i] = "poly"
     end
     if last_param[i] ~= "carHz" and last_param[i] ~= "poly" and engine.name == "Kildare" then
@@ -244,6 +252,20 @@ function lfos.return_to_baseline(i,silent)
     end
     -- print(last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
     engine.set_delay_param(last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
+  elseif drums[drum_target] == "reverb" and engine.name == "Kildare" then
+    -- TODO PREP FOR ANY PARAM...
+    if not tab.contains(reverb_params,last_param[i]) then
+      last_param[i] = reverb_params[1]
+    end
+    -- print(last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
+    engine.set_reverb_param(last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
+  elseif drums[drum_target] == "main" and engine.name == "Kildare" then
+    -- TODO PREP FOR ANY PARAM...
+    if not tab.contains(main_params,last_param[i]) then
+      last_param[i] = main_params[1]
+    end
+    -- print(last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
+    engine.set_main_param(last_param[i],params:get(drums[drum_target].."_"..last_param[i]))
   end
   if not silent then
     last_param[i] = (params_list[drums[drum_target]].ids[(params:get("lfo_target_param_"..i))])
@@ -290,14 +312,14 @@ function lfos.build_params_static()
   for i = 1,#drums do
     local style = drums[i]
     params_list[style] = {ids = {}, names = {}}
-    if style ~= "delay" then
+    if style ~= "delay" and style ~= "reverb" and style ~= "main" then
       for j = 1,#kildare_drum_params[style] do
         if kildare_drum_params[style][j].type ~= "separator" then
           table.insert(params_list[style].ids, kildare_drum_params[style][j].id)
           table.insert(params_list[style].names, kildare_drum_params[style][j].name)
         end
       end
-    elseif style == "delay" then
+    else
       for j = 1,#kildare_fx_params[style] do
         -- if kildare_fx_params[style][j].type ~= "separator" and kildare_fx_params[style][j].name ~= "time" then
         if kildare_fx_params[style][j].type ~= "separator" then
@@ -362,7 +384,7 @@ function lfos.lfo_update()
             value = util.linlin(-1,1,min,max,math.sin(lfos.lfo_progress[i])) < mid and 0 or 1
           end
           if engine.name == "Kildare" then
-            if params:string("lfo_target_track_"..i) ~= "delay" then
+            if params:string("lfo_target_track_"..i) ~= "delay" and params:string("lfo_target_track_"..i) ~= "reverb" and params:string("lfo_target_track_"..i) ~= "main" then
               engine.set_param(params:string("lfo_target_track_"..i),params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))],value)
             elseif params:string("lfo_target_track_"..i) == "delay" then
               local delay_param_target = params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))]
@@ -372,6 +394,12 @@ function lfos.lfo_update()
                 engine.set_delay_param(delay_param_target,value)
               end
               print(delay_param_target,value)
+            elseif params:string("lfo_target_track_"..i) == "reverb" then
+              local reverb_param_target = params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))]
+              engine.set_reverb_param(reverb_param_target,value)
+            elseif params:string("lfo_target_track_"..i) == "main" then
+              local main_param_target = params_list[params:string("lfo_target_track_"..i)].ids[(params:get("lfo_target_param_"..i))]
+              engine.set_main_param(main_param_target,value)
             end
           end
         elseif params:string("lfo_shape_"..i) == "square" then

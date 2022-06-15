@@ -19,19 +19,12 @@ Kildare {
 	// audio bus that all the synths write to
 	var <outputSynths;
 	var <busses;
-	var <leftDelayBuf;
-	var <leftDelayBuf2;
-	var <rightDelayBuf;
 	var <delayBufs;
-	var <mainOutSynth;
 	var <auxOutSynth;
-	var <fxGroup;
-	var <delaySynth;
 	var <delayParams;
-	var <reverbSynth;
 	var <reverbParams;
+	var <mainOutParams;
 	var <voiceTracker;
-	var <activeVoices;
 	classvar <indexTracker;
 
 	*initClass {
@@ -39,13 +32,9 @@ Kildare {
 		StartUp.add {
 			var s = Server.default;
 
-			// [EB] need to make sure the server is running b4 asking it to do stuff
 			s.waitForBoot {
 				synthDefs = Dictionary.new;
 
-				// [EB] added prefix to synthdefs.
-				// an even better alternative would be to make a random name,
-				// and instantiate via the synthdef directly. but this is fine
 				synthDefs[\bd] = SynthDef.new(\kildare_bd, {
 					arg out = 0, stopGate = 1,
 					delayAuxL, delayAuxR, delayAmp,
@@ -173,10 +162,6 @@ Kildare {
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
 					car = BLowPass.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
-					// mix = car * amp;
-					// mix = Compander.ar(in:mix,control:mix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					// noise = Compander.ar(in:noise,control:noise, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-
 
 					mainSendCar = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 					mainSendCar = Pan2.ar(mainSendCar,pan);
@@ -582,7 +567,6 @@ Kildare {
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 
 				}).add;
-				// }).play(target: Server.default, addAction: \addToTail);
 
 			} // Server.waitForBoot
 		} // StartUp
@@ -620,9 +604,6 @@ Kildare {
 		busses[\mainOut] = Bus.audio(s, 2);
         busses[\reverbSend] = Bus.audio(s, 2);
 
-		// fxGroup = Group.new(target:mainOutSynth, addAction:\addBefore);
-		fxGroup = Group.new(s);
-
 		s.sync;
 
 		busses[\delayLSend] = Bus.audio(s, 1);
@@ -631,26 +612,38 @@ Kildare {
 		// UGH...OR a choice. move them back up and keep them renamed to get no panning respect...
 
 		delayParams = Dictionary.newFrom([
-			\time,0.8,
-			\level,0.5,
-			\feedback,0.7,
-			\spread,1,
-			\lpHz,19000,
-			\hpHz,0,
-			\filterQ,50,
-			\reverbSend,0
+			\time, 0.8,
+			\level, 0.5,
+			\feedback, 0.7,
+			\spread, 1,
+			\lpHz, 19000,
+			\hpHz, 0,
+			\filterQ, 50,
+			\reverbSend, 0
 		]);
 
 		reverbParams = Dictionary.newFrom([
-			\preDelay,0.048,
-			\level,0.5,
-			\decay,6,
-			\modDepth,0.2,
-			\modFreq,700,
-			\lowDecay,6,
-			\midDecay,6,
-			\highDecay,6,
-			\thresh,0
+			\preDelay, 0.048,
+			\level, 0.5,
+			\decay, 6,
+			\modDepth, 0.2,
+			\modFreq, 700,
+			\lowDecay, 6,
+			\midDecay, 6,
+			\highDecay, 6,
+			\thresh, 0
+		]);
+
+		mainOutParams = Dictionary.newFrom([
+			\lpHz, 20,
+			\lpdb, 0,
+			\lpQ, 1,
+			\hpHz, 19000,
+			\hpdb, 0,
+			\hpQ, 1,
+			\eqHz, 5000,
+			\eqdb, 0,
+			\eqQ, 1
 		]);
 
 		paramProtos = Dictionary.newFrom([
@@ -1001,8 +994,6 @@ Kildare {
 				8, (1933.0 / 48000.0)
 			]);
 
-			//(2473.0 / 48000.0) + (0.0010 * 1966.0)/32768
-
 			delayTimeRandVar = Dictionary.newFrom([
 				1, 0.0010,
 				2, 0.0011,
@@ -1074,13 +1065,30 @@ Kildare {
             \in, busses[\reverbSend], \out, busses[\mainOut]
         ]);
 
-        outputSynths[\main_out] = SynthDef.new(\patch_stereo, {
-            arg in, out;
-			var src = In.ar(in, 2),
+        outputSynths[\main] = SynthDef.new(\patch_stereo, {
+            arg in, out,
+			lpHz, lpdb, lpQ,
+			hpHz, hpdb, hpQ,
+			eqHz, eqdb, eqQ;
+			var src = In.ar(in, 2);`
 			// comp = Compander.ar(src,src,0.5,1,0.1),
 			// limiter = Limiter.ar(comp,0.5);
-			limiter = Limiter.ar(src,0.5);
-			Out.ar(out, limiter);
+			// limiter = Limiter.ar(src,0.5);
+
+			lpHz = lpHz.lag3(0.25);
+			hpHz = hpHz.lag3(0.25);
+			eqHz = eqHz.lag3(0.25);
+
+			lpQ = LinLin.kr(lpQ,0,100,1.0,0.3);
+			hpQ = LinLin.kr(hpQ,0,100,1.0,0.3);
+			eqQ = LinLin.kr(eqQ,0,100,1.0,0.1);
+
+			src = BLowShelf.ar(src, lpHz, lpQ, lpdb);
+			src = BHiShelf.ar(src, hpHz, hpQ, hpdb);
+			src = BPeakEQ.ar(src, eqHz, eqQ, eqdb);
+			src = Limiter.ar(src,0.5);
+
+			Out.ar(out, src);
         }).play(target:s, addAction:\addToTail, args: [
             \in, busses[\mainOut], \out, 0
         ]);
@@ -1127,16 +1135,18 @@ Kildare {
 		outputSynths[\reverb].set(paramKey, paramValue);
 	}
 
+	setMainParam { arg paramKey, paramValue;
+		mainOutParams[paramKey] = paramValue;
+		outputSynths[\main].set(paramKey, paramValue);
+	}
+
 	// [EB] added
 	allNotesOff {
 		topGroup.set(\stopGate, 0);
 	}
 
 	free {
-		// [EB] added
-		mainOutSynth.free;
 		topGroup.free;
-		fxGroup.free;
 		busses.do({arg bus;
 			bus.free;
 		});
@@ -1146,9 +1156,6 @@ Kildare {
 		delayBufs.do({arg buf;
 			buf.free;
 		});
-		leftDelayBuf.free;
-		leftDelayBuf2.free;
-		rightDelayBuf.free;
 	}
 
 }

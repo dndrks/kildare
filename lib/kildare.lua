@@ -6,7 +6,7 @@ local kildare_lfos = include 'kildare/lib/kildare_lfos'
 local musicutil = require 'musicutil'
 
 local drums = {"bd","sd","tm","cp","rs","cb","hh"}
-local fx = {"delay", "reverb"}
+local fx = {"delay", "reverb", "main"}
 
 function round_form(param,quant,form)
   return(util.round(param,quant)..form)
@@ -325,7 +325,7 @@ function Kildare.init()
       {id = 'reverbSend', name = 'send to reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     },
     ["reverb"] = {
-      {type = 'separator', name = 'delay settings'},
+      {type = 'separator', name = 'reverb settings'},
       {id = 'decay', name = 'decay', type = 'control', min = 0.1, max = 60, warp = 'exp', default = 2, formatter = function(param) return (util.round(param:get(),0.01).."s") end},
       {id = 'preDelay', name = 'pre delay', type = 'control', min = 0.0, max = 0.5, warp = 'lin', default = 0, formatter = function(param) return (util.round(param:get(),0.01).."s") end},
       {id = 'earlyDiff', name = 'early reflections', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -336,6 +336,19 @@ function Kildare.init()
       {id = 'thresh', name = 'gate threshold', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'slopeBelow', name = 'slope below', type = 'control', min = 0, max = 3, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'slopeAbove', name = 'slope above', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+    },
+    ["main"] = {
+      {type = 'separator', name = 'main output settings'},
+      {id = 'lpHz', name = 'low shelf', type = 'control', min = 20, max = 12000, warp = 'exp', default = 600, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpdb', name = 'low shelf gain', type = 'number', min = -15, max = 15, default = 0, formatter = function(param) return (param:get().." dB") end},
+      {id = 'lpQ', name = 'low shelf q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
+      {id = 'hpHz', name = 'hi shelf', type = 'control', min = 800, max = 19000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'hpdb', name = 'hi shelf gain', type = 'number', min = -15, max = 15, default = 0, formatter = function(param) return (param:get().." dB") end},
+      {id = 'hpQ', name = 'hi shelf q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
+      {id = 'eqHz', name = 'eq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'eqdb', name = 'eq gain', type = 'number', min = -30, max = 15, default = 0, formatter = function(param) return (param:get().." dB") end},
+      {id = 'eqQ', name = 'eq q', type = 'number', min = -100, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
+
     }
   }
 

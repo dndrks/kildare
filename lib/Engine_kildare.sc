@@ -32,6 +32,12 @@ Engine_Kildare : CroneEngine {
 			kernel.setReverbParam(paramKey, paramValue);
 		});
 
+		this.addCommand(\set_main_param, "sf", {arg msg;
+			var paramKey = msg[1].asSymbol;
+			var paramValue = msg[2].asFloat;
+			kernel.setMainParam(paramKey, paramValue);
+		});
+
 		// fork { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } };
 	}
 
