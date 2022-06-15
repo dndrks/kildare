@@ -12,7 +12,7 @@ function round_form(param,quant,form)
   return(util.round(param,quant)..form)
 end
 
-function Kildare.init()
+function Kildare.init(poly)
 
   function percent_formatter(param)
     return (param:get().."%")
@@ -48,7 +48,7 @@ function Kildare.init()
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'number', min = 1, max = 24, default = 24},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -94,7 +94,7 @@ function Kildare.init()
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'number', min = 1, max = 24, default = 24},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -136,7 +136,7 @@ function Kildare.init()
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'number', min = 1, max = 24, default = 24},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -175,7 +175,7 @@ function Kildare.init()
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'number', min = 1, max = 24, default = 24},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -217,7 +217,7 @@ function Kildare.init()
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'number', min = 1, max = 24, default = 24},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -254,7 +254,7 @@ function Kildare.init()
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'number', min = 1, max = 24, default = 24},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -296,7 +296,7 @@ function Kildare.init()
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'number', min = 1, max = 24, default = 24},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -319,7 +319,7 @@ function Kildare.init()
       {id = 'feedback', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'spread', name = 'spread', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'hpHz', name = 'hi-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 20, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'filterQ', name = 'filter q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
       {id = 'reverbSend', name = 'send to reverb', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -329,7 +329,7 @@ function Kildare.init()
       {id = 'decay', name = 'decay', type = 'control', min = 0.1, max = 60, warp = 'exp', default = 2, formatter = function(param) return (util.round(param:get(),0.01).."s") end},
       {id = 'preDelay', name = 'pre delay', type = 'control', min = 0.0, max = 0.5, warp = 'lin', default = 0, formatter = function(param) return (util.round(param:get(),0.01).."s") end},
       {id = 'earlyDiff', name = 'early reflections', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
-      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 600, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 600, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'modFreq', name = 'mod freq', type = 'control', min = 0.1, max = 10, warp = 'exp', default = 0.1, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'modDepth', name = 'mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'level', name = 'level', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -339,12 +339,12 @@ function Kildare.init()
     },
     ["main"] = {
       {type = 'separator', name = 'main output settings'},
-      {id = 'lpHz', name = 'low shelf', type = 'control', min = 20, max = 12000, warp = 'exp', default = 600, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
-      {id = 'lpdb', name = 'low shelf gain', type = 'number', min = -15, max = 15, default = 0, formatter = function(param) return (param:get().." dB") end},
-      {id = 'lpQ', name = 'low shelf q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
-      {id = 'hpHz', name = 'hi shelf', type = 'control', min = 800, max = 19000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
-      {id = 'hpdb', name = 'hi shelf gain', type = 'number', min = -15, max = 15, default = 0, formatter = function(param) return (param:get().." dB") end},
-      {id = 'hpQ', name = 'hi shelf q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
+      {id = 'lSHz', name = 'low shelf', type = 'control', min = 20, max = 12000, warp = 'exp', default = 600, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'lSdb', name = 'low shelf gain', type = 'number', min = -15, max = 15, default = 0, formatter = function(param) return (param:get().." dB") end},
+      {id = 'lSQ', name = 'low shelf q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
+      {id = 'hSHz', name = 'hi shelf', type = 'control', min = 800, max = 19000, warp = 'exp', default = 19000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
+      {id = 'hSdb', name = 'hi shelf gain', type = 'number', min = -15, max = 15, default = 0, formatter = function(param) return (param:get().." dB") end},
+      {id = 'hSQ', name = 'hi shelf q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (param:get().."%") end},
       {id = 'eqHz', name = 'eq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," hz")) end},
       {id = 'eqdb', name = 'eq gain', type = 'number', min = -30, max = 15, default = 0, formatter = function(param) return (param:get().." dB") end},
       {id = 'eqQ', name = 'eq q', type = 'number', min = -100, max = 100, default = 0, formatter = function(param) return (param:get().."%") end},
@@ -408,6 +408,9 @@ function Kildare.init()
               engine.set_param(k, d.id, x == 1 and 0 or 1)
             end
           end)
+          if not poly then
+            params:hide(k.."_"..d.id) -- avoid exposing poly for performance management
+          end
         end
       end
     end
@@ -448,7 +451,7 @@ function Kildare.init()
         params:set_action(k.."_"..d.id, function(x)
           if engine.name == "Kildare" then
             if k == "delay" and d.id == "time" then
-              engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128) -- TODO BAD??
+              engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128)
             else
               engine["set_"..k.."_param"](d.id, x)
             end
@@ -458,7 +461,7 @@ function Kildare.init()
     end
   end
 
-  kildare_lfos.add_params()
+  kildare_lfos.add_params(poly)
   
   params:bang()
   
