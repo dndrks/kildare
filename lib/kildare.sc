@@ -1,22 +1,12 @@
-// does all heavy lifing - defines synthdefs, etc
-// norns-agnostic
-// doesn't need Crone, CroneEngine
-// works on yr mac
-
 Kildare {
 	classvar <voiceKeys;
 	classvar <synthDefs;
 	const <numVoices = 3;
 
-	// [EB] we want these to be specific to the instance:
-	// - keep a dictionary of prototype paraemter values
 	var <paramProtos;
-	// - keep a group for each voice type
 	var <groups;
-	// - top-level group to easily free everything
 	var <topGroup;
 
-	// audio busses that all the synths write to
 	var <outputSynths;
 	var <busses;
 	var <delayBufs;
@@ -37,7 +27,7 @@ Kildare {
 
 				synthDefs[\bd] = SynthDef.new(\kildare_bd, {
 					arg out = 0, stopGate = 1,
-					delayAuxL, delayAuxR, delayAmp,
+					delayAuxL, delayAuxR, delayAmp, delaySendOnlyAmp = 1,
 					delaySendByPan = 1, delayAtk, delayRel,
 					reverbAux, reverbAmp,
 					amp, carHz, carDetune, carAtk, carRel,
@@ -95,10 +85,20 @@ Kildare {
 					mainSend = Pan2.ar(mainSend,pan);
 
 					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1), gate: stopGate));
+					mainSend = mainSend * amp;
 
-					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (Select.ar(delaySendByPan > 1, [car * delayEnv, mainSend * delayEnv])));
-					Out.ar(delayAuxR, (Select.ar(delaySendByPan > 1, [car * delayEnv, (mainSend * delayEnv).reverse])));
+					Out.ar(out, mainSend);
+					// give an option:
+					// Out.ar(delayAuxL, (Select.ar(delaySendByPan > 1, [car * delayEnv, mainSend * delayEnv])));
+					// Out.ar(delayAuxR, (Select.ar(delaySendByPan > 1, [car * delayEnv, (mainSend * delayEnv).reverse])));
+					// pan determines delay line send
+					// Out.ar(delayAuxL, (mainSend * delayEnv));
+					// Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
+					// pan does not affect delay line send
+					Out.ar(delayAuxL, (car * amp * delayEnv));
+					Out.ar(delayAuxR, (car * amp * delayEnv));
+					// Out.ar(delayAuxL, (car * delaySendOnlyAmp * delayEnv));
+					// Out.ar(delayAuxR, (car * delaySendOnlyAmp * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 				}).send;
 
@@ -1029,8 +1029,10 @@ Kildare {
 				local = LocalIn.ar(2) + z;
 
 				earlyReflections = Mix.fill(5, {
-					arg stuff;
-					var voice = stuff.asInteger + 1, decTime = lbase/2 + LinLin.kr(LFNoise1.kr(modFreq,modDepth),-1,1,0,lbase/2);
+					arg iter;
+					var voice = iter.asInteger + 1,
+					decTime = lbase/2 + LinLin.kr(LFNoise1.kr(modFreq,modDepth),-1,1,0,lbase/2);
+
 					CombL.ar(
 						in: local,
 						maxdelaytime: 0.1,

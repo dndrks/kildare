@@ -1,7 +1,7 @@
 local Kildare = {}
 local specs = {}
-ControlSpec = require 'controlspec'
-frm = require 'formatters'
+local ControlSpec = require 'controlspec'
+local frm = require 'formatters'
 local kildare_lfos = include 'kildare/lib/kildare_lfos'
 local musicutil = require 'musicutil'
 
@@ -315,7 +315,7 @@ function Kildare.init(poly)
     ["delay"] = {
       {type = 'separator', name = 'delay settings'},
       {id = 'time', name = 'time', type = 'number', min = 1, max = 128, default = 64, formatter = function (param) return param:get() end},
-      {id = 'level', name = 'level', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.5, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'level', name = 'level', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'feedback', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.7, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'spread', name = 'spread', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'additional processing'},
