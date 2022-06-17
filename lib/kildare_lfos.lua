@@ -126,6 +126,8 @@ function lfos.add_params(poly)
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
         lfos.return_to_baseline(i,nil,poly)
+        params:set("lfo_target_param_"..i,1)
+        params:set("lfo_depth_"..i,0)
       end
     )
     params:add_option("lfo_target_param_"..i, "param",lfos.params_list[drums[1]].names,1)
@@ -221,7 +223,7 @@ function lfos.add_params(poly)
   function clock.tempo_change_handler(bpm,source)
     print(bpm,source)
     if lfos.tempo_updater_clock then
-      clock.cancel(tempo_updater_clock)
+      clock.cancel(lfos.tempo_updater_clock)
     end
     lfos.tempo_updater_clock = clock.run(function() clock.sleep(0.05) lfos.update_tempo() end)
   end
@@ -239,7 +241,6 @@ function lfos.return_to_baseline(i,silent,poly)
   local drum_target = params:get("lfo_target_track_"..i)
   local parent = drums[drum_target]
   local param_name = parent.."_"..(lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
-  -- print(parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
   if parent ~= "delay" and parent ~= "reverb" and parent ~= "main" then
     if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" then
       if poly then
@@ -275,7 +276,7 @@ function lfos.rebuild_param(param,i) -- TODO: needs to respect number
   local param_id = params.lookup["lfo_"..param.."_"..i]
   local target_track = params:string("lfo_target_track_"..i)
   local target_param = params:get("lfo_target_param_"..i)
-  local default_value = param == "min"and lfos.min_specs[target_track][target_param].min
+  local default_value = param == "min" and lfos.min_specs[target_track][target_param].min
     or params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
   if param == "max" then
     if lfos.min_specs[target_track][target_param].min == default_value then

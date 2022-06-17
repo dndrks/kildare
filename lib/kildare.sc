@@ -53,7 +53,7 @@ Kildare {
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
 					feedAmp = LinLin.kr(feedAmp,0.0,1.0,0.0,10.0);
-					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
+					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 					rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 					amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
 					carHz = carHz * (2.pow(carDetune/12));
@@ -79,26 +79,18 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
+					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
-					mainSend = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSend = Pan2.ar(mainSend,pan);
+					car = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
-					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1), gate: stopGate));
+					mainSend = Pan2.ar(car,pan);
 					mainSend = mainSend * amp;
 
+					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1), gate: stopGate));
+
 					Out.ar(out, mainSend);
-					// give an option:
-					// Out.ar(delayAuxL, (Select.ar(delaySendByPan > 1, [car * delayEnv, mainSend * delayEnv])));
-					// Out.ar(delayAuxR, (Select.ar(delaySendByPan > 1, [car * delayEnv, (mainSend * delayEnv).reverse])));
-					// pan determines delay line send
-					// Out.ar(delayAuxL, (mainSend * delayEnv));
-					// Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
-					// pan does not affect delay line send
 					Out.ar(delayAuxL, (car * amp * delayEnv));
 					Out.ar(delayAuxR, (car * amp * delayEnv));
-					// Out.ar(delayAuxL, (car * delaySendOnlyAmp * delayEnv));
-					// Out.ar(delayAuxR, (car * delaySendOnlyAmp * delayEnv).reverse);
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 				}).send;
 
@@ -139,7 +131,7 @@ Kildare {
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
 					feedMod = SinOsc.ar(modHz, mul:modAmp*100) * modEnv;
 					feedAmp = LinLin.kr(feedAmp,0,1,0.0,10.0);
-					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
+					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 					feedAmp = feedAmp * modAmp;
 					rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 					amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
@@ -160,27 +152,31 @@ Kildare {
 					noise = Squiz.ar(in:noise, pitchratio:squishPitch, zcperchunk:squishChunk*100, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
+					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 
-					mainSendCar = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSendCar = Pan2.ar(mainSendCar,pan);
-					mainSendNoise = Compander.ar(in:noise, control:noise, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSendNoise = Pan2.ar(mainSendNoise,pan);
+					car = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+					mainSendCar = Pan2.ar(car,pan);
+					mainSendCar = mainSendCar * amp;
+
+					noise = Compander.ar(in:noise, control:noise, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+					mainSendNoise = Pan2.ar(noise,pan);
+					mainSendNoise = mainSendNoise * amp;
 
 					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
-					Out.ar(out, mainSendCar * amp);
-					Out.ar(delayAuxL, (mainSendCar * delayEnv));
-					Out.ar(delayAuxR, (mainSendCar * delayEnv).reverse);
+					Out.ar(out, mainSendCar);
+					Out.ar(delayAuxL, (car * amp * delayEnv));
+					Out.ar(delayAuxR, (car * amp * delayEnv));
 					Out.ar(reverbAux, (mainSendCar * reverbAmp));
 
-					Out.ar(out, mainSendNoise * amp);
-					Out.ar(delayAuxL, (mainSendNoise * delayEnv));
-					Out.ar(delayAuxR, (mainSendNoise * delayEnv).reverse);
+					Out.ar(out, mainSendNoise);
+					Out.ar(delayAuxL, (noise * amp * delayEnv));
+					Out.ar(delayAuxR, (noise * amp * delayEnv));
 					Out.ar(reverbAux, (mainSendNoise * reverbAmp));
 
 					FreeSelf.kr(Done.kr(carEnv) * Done.kr(noiseEnv));
+
 				}).send;
 
 				synthDefs[\tm] = SynthDef.new(\kildare_tm, {
@@ -213,7 +209,7 @@ Kildare {
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
 					feedAmp = LinLin.kr(feedAmp,0.0,1.0,0.0,10.0);
-					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
+					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 					rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
@@ -236,17 +232,18 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
+					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 
-					mainSend = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSend = Pan2.ar(mainSend,pan);
+					car = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+					mainSend = Pan2.ar(car,pan);
+					mainSend = mainSend * amp;
 
 					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
-					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayEnv));
-					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
+					Out.ar(out, mainSend);
+					Out.ar(delayAuxL, (car * amp * delayEnv));
+					Out.ar(delayAuxR, (car * amp * delayEnv));
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 
 				}).send;
@@ -279,7 +276,7 @@ Kildare {
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
 					feedAmp = LinLin.kr(feedAmp,0.0,1.0,0.0,10.0);
-					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
+					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
 					modEnv = EnvGen.ar(
@@ -320,20 +317,22 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
+					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 
-					mainSend = car.softclip;
-					mainSend = Pan2.ar(mainSend,pan);
+					car = car.softclip;
+					mainSend = Pan2.ar(car,pan);
+					mainSend = mainSend * amp;
 
 					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
-					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayEnv));
-					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
+					Out.ar(out, mainSend);
+					Out.ar(delayAuxL, (car * amp * delayEnv));
+					Out.ar(delayAuxR, (car * amp * delayEnv));
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 
 					FreeSelf.kr(Done.kr(modEnv) * Done.kr(carEnv));
+
 				}).send;
 
 				synthDefs[\rs] = SynthDef.new(\kildare_rs, {
@@ -367,7 +366,7 @@ Kildare {
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
-					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
+					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 					rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
@@ -395,9 +394,9 @@ Kildare {
 					ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 					car = (car+(LPF.ar(Impulse.ar(0.003),16000,1)*amp)) * ampMod;
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					car = Decimator.ar(Pan2.ar(car,pan),bitRate,bitCount,1.0);
+					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
+					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 					car = LPF.ar(car,12000,1);
 
@@ -413,30 +412,33 @@ Kildare {
 					sd_mix = Squiz.ar(in:sd_car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					sd_mix = Decimator.ar(sd_mix,bitRate,bitCount,1.0);
 					sd_mix = BPeakEQ.ar(in:sd_mix,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					sd_mix = RLPF.ar(in:sd_mix,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
+					sd_mix = RLPF.ar(in:sd_mix,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
 					sd_mix = RHPF.ar(in:sd_mix,freq:hpHz, rq: filterQ, mul:1);
 
-					mainSendCar = car.softclip;
-					mainSendCar = Compander.ar(in:mainSendCar,control:mainSendCar, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSendCar = Pan2.ar(mainSendCar,pan);
+					car = car.softclip;
+					car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+					mainSendCar = Pan2.ar(car,pan);
+					mainSendCar = mainSendCar * amp;
 
-					mainSendSnare = sd_mix.softclip;
-					mainSendSnare = Compander.ar(in:mainSendSnare,control:mainSendSnare, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSendSnare = Pan2.ar(mainSendSnare,pan);
+					sd_mix = sd_mix.softclip;
+					sd_mix = Compander.ar(in:sd_mix,control:sd_mix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+					mainSendSnare = Pan2.ar(sd_mix,pan);
+					mainSendSnare = mainSendSnare * amp;
 
 					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
-					Out.ar(out, mainSendCar * amp);
-					Out.ar(delayAuxL, (mainSendCar * delayEnv));
-					Out.ar(delayAuxR, (mainSendCar * delayEnv).reverse);
+					Out.ar(out, mainSendCar);
+					Out.ar(delayAuxL, (car * amp * delayEnv));
+					Out.ar(delayAuxR, (car * amp * delayEnv));
 					Out.ar(reverbAux, (mainSendCar * reverbAmp));
 
-					Out.ar(out, mainSendSnare * amp);
-					Out.ar(delayAuxL, (mainSendSnare * delayEnv));
-					Out.ar(delayAuxR, (mainSendSnare * delayEnv).reverse);
+					Out.ar(out, mainSendSnare);
+					Out.ar(delayAuxL, (sd_mix * amp * delayEnv));
+					Out.ar(delayAuxR, (sd_mix * amp * delayEnv));
 					Out.ar(reverbAux, (mainSendSnare * reverbAmp));
 
 					FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(carEnv));
+
 				}).send;
 
 				synthDefs[\cb] = SynthDef.new(\kildare_cb, {
@@ -468,7 +470,7 @@ Kildare {
 
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					feedAmp = LinLin.kr(feedAmp,0.0,1.0,1.0,3.0);
-					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
+					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 					rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 					snap = LinLin.kr(snap,0.0,1.0,0.0,10.0);
@@ -486,20 +488,22 @@ Kildare {
 					voice_1 = Squiz.ar(in:voice_1, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					voice_1 = Decimator.ar(voice_1,bitRate,bitCount,1.0);
 					voice_1 = BPeakEQ.ar(in:voice_1,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					voice_1 = RLPF.ar(in:voice_1,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
+					voice_1 = RLPF.ar(in:voice_1,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
 					voice_1 = RHPF.ar(in:voice_1,freq:hpHz, rq: filterQ, mul:1);
 
-					mainSend = Compander.ar(in:voice_1,control:voice_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSend = Pan2.ar(mainSend,pan);
+					voice_1 = Compander.ar(in:voice_1,control:voice_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+					mainSend = Pan2.ar(voice_1,pan);
+					mainSend = mainSend * amp;
 
 					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
-					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayEnv));
-					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
+					Out.ar(out, mainSend);
+					Out.ar(delayAuxL, (voice_1 * amp * delayEnv));
+					Out.ar(delayAuxR, (voice_1 * amp * delayEnv));
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 
 					FreeSelf.kr(Done.kr(carEnv) * Done.kr(modEnv));
+
 				}).send;
 
 				synthDefs[\hh] = SynthDef(\kildare_hh, {
@@ -532,7 +536,7 @@ Kildare {
 					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 					modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
 					feedAmp = LinLin.kr(feedAmp,0.0,1.0,0.0,10.0);
-					eqAmp = LinLin.kr(eqAmp,0.0,1.0,0.0,10.0);
+					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 					tremDepth = LinLin.kr(tremDepth,0.0,100,0.0,1.0);
 					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 					carHz = carHz * (2.pow(carDetune/12));
@@ -553,17 +557,18 @@ Kildare {
 					car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 					car = Decimator.ar(car,bitRate,bitCount,1.0);
 					car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 24000), rq: filterQ, mul:1);
+					car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
 					car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 
-					mainSend = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSend = Pan2.ar(mainSend,pan);
+					car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+					mainSend = Pan2.ar(car,pan);
+					mainSend = mainSend * amp;
 
 					delayEnv = (delayAmp * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
-					Out.ar(out, mainSend * amp);
-					Out.ar(delayAuxL, (mainSend * delayEnv));
-					Out.ar(delayAuxR, (mainSend * delayEnv).reverse);
+					Out.ar(out, mainSend);
+					Out.ar(delayAuxL, (car * amp * delayEnv));
+					Out.ar(delayAuxR, (car * amp * delayEnv));
 					Out.ar(reverbAux, (mainSend * reverbAmp));
 
 				}).add;
@@ -942,15 +947,15 @@ Kildare {
 			startHit = BufCombC.ar(delayBufs[\initHit].bufnum,leftInput,time/2,0,level);
 			delayL = BufCombC.ar(delayBufs[\left1].bufnum,leftInput,time/2,0,level);
 			delayL = BufCombC.ar(delayBufs[\left2].bufnum,delayL,time,feedbackDecayTime,level);
-			//right side is louder because it's not delayed...
-			delayR = BufCombC.ar(delayBufs[\right].bufnum,rightInput,time,feedbackDecayTime,level*0.29);
+			//right side is louder because it's not delayed...?
+			delayR = BufCombC.ar(delayBufs[\right].bufnum,rightInput,time,feedbackDecayTime,level);
 
-			startHit = RLPF.ar(in:startHit,freq:lpHz, rq: filterQ, mul:1);
-			delayL = RLPF.ar(in:delayL,freq:lpHz, rq: filterQ, mul:1);
-			delayR = RLPF.ar(in:delayR,freq:lpHz, rq: filterQ, mul:1);
-			startHit = RHPF.ar(in:startHit,freq:hpHz, rq: filterQ, mul:1);
-			delayL = RHPF.ar(in:delayL,freq:hpHz, rq: filterQ, mul:1);
-			delayR = RHPF.ar(in:delayR,freq:hpHz, rq: filterQ, mul:1);
+			startHit = RLPF.ar(in:startHit, freq:lpHz, rq: filterQ, mul:1);
+			delayL = RLPF.ar(in:delayL, freq:lpHz, rq: filterQ, mul:1);
+			delayR = RLPF.ar(in:delayR, freq:lpHz, rq: filterQ, mul:1);
+			startHit = RHPF.ar(in:startHit, freq:hpHz, rq: filterQ, mul:1);
+			delayL = RHPF.ar(in:delayL, freq:hpHz, rq: filterQ, mul:1);
+			delayR = RHPF.ar(in:delayR, freq:hpHz, rq: filterQ, mul:1);
 
 			leftBal = Pan2.ar(delayL+startHit,leftPos,0.5);
 			rightBal = Pan2.ar(delayR,rightPos,0.5);
@@ -972,17 +977,22 @@ Kildare {
         outputSynths[\reverb] = SynthDef.new(\reverb, {
 
 			arg preDelay = 0.048, level = 0.5, decay = 6,
-			earlyDiff = 0.707, modDepth = 0.2, modFreq = 0.1,
-			lpHz = 1200,
+			earlyDiff = 0.707, diffDiv = 10, diffOffset = 0, modDepth = 0.2, modFreq = 0.1,
+			highCut = 8000, lowCut = 20,
 			thresh = 0, slopeBelow = 1, slopeAbove = 1,
 			in, out;
 
-			var jp, gated, s, z, y,
+			var jp, gated, sig, z, y,
 			delayTimeBase, delayTimeRandVar, delayTimeSeeds,
 			localin, localout, local, earlyReflections;
 
-			lpHz = lpHz.lag3(0.5);
+			highCut = highCut.lag3(0.25);
+			lowCut = lowCut.lag3(0.25);
 
+			// adapted from https://github.com/LMMS/lmms/blob/master/plugins/ReverbSC/revsc.c
+			// Original Author(s): Sean Costello, Istvan Varga
+			// Year: 1999, 2005
+			// Location: Opcodes/reverbsc.c
 			delayTimeBase = Dictionary.newFrom([
 				1, (2473.0 / 48000.0),
 				2, (2767.0 / 48000.0),
@@ -993,7 +1003,6 @@ Kildare {
 				7, (2143.0 / 48000.0),
 				8, (1933.0 / 48000.0)
 			]);
-
 			delayTimeRandVar = Dictionary.newFrom([
 				1, 0.0010,
 				2, 0.0011,
@@ -1004,7 +1013,6 @@ Kildare {
 				7, 0.0017,
 				8, 0.0006
 			]);
-
 			delayTimeSeeds = Dictionary.newFrom([
 				1, 1966.0,
 				2, 29491.0,
@@ -1016,34 +1024,30 @@ Kildare {
 				8, 14417.0
 			]);
 
-
-			s = In.ar(in,2);
-			z = DelayN.ar(s, 0.5, preDelay);
+			sig = In.ar(in,2);
+			z = DelayL.ar(sig, 0.5, preDelay);
 
 			8.do({
 				arg pass;
 				var lbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0),
-				rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0);
-				rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0) - (0.00001);
-
+				// rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0);
+				// rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0) - (0.00001);
+				rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0) - (0.0001);
 				local = LocalIn.ar(2) + z;
-
-				earlyReflections = Mix.fill(5, {
+				earlyReflections = 0;
+				5.do({
 					arg iter;
 					var voice = iter.asInteger + 1,
-					decTime = lbase/2 + LinLin.kr(LFNoise1.kr(modFreq,modDepth),-1,1,0,lbase/2);
-
-					CombL.ar(
+					decTime = lbase/2 + LinLin.kr(SinOsc.kr(freq: modFreq, mul: modDepth),-1,1,0,lbase/2);
+					earlyReflections = earlyReflections + CombL.ar(
 						in: local,
 						maxdelaytime: 0.1,
-						delaytime: decTime - (decTime*(voice/10)),
+						delaytime: (decTime - (decTime*(voice/diffDiv))) + (diffOffset/100),
 						decaytime: decay,
 						mul: (1/5) * level * earlyDiff
 					);
 				});
-
 				local = local + earlyReflections;
-
 				y = RLPF.ar(
 					AllpassL.ar(
 						in: local,
@@ -1054,12 +1058,13 @@ Kildare {
 						],
 						decaytime: decay
 					),
-				lpHz);
+					highCut);
 				LocalOut.ar([local,local]);
 				[local,local]
 			});
-
 			jp = AllpassN.ar(y, 0.05, [0.05.rand, 0.05.rand], decay);
+			jp = RHPF.ar(jp,lowCut);
+
 			gated = Compander.ar(jp,jp,thresh,slopeBelow,slopeAbove);
 			Out.ar(out, gated * level);
 
