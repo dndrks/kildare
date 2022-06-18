@@ -42,22 +42,29 @@ function lfos.add_params(poly)
     for key,val in pairs(param_group[k]) do
       if param_group[k][key].type ~= "separator" then
         if (poly == nil and val.id ~= "poly") or (poly == true) then
+          local system_id = params.lookup[k.."_"..param_group[k][key].id]
+          local quantum_size;
+          if params.params[system_id].controlspec ~= nil then
+            quantum_size = params.params[system_id].controlspec.quantum
+          else
+            quantum_size = param_group[k][key].quantum ~= nil and param_group[k][key].quantum or 0.01
+          end
           lfos.min_specs[k][i] = {
             min = param_group[k][key].min,
             max = param_group[k][key].max,
             warp = param_group[k][key].warp,
-            step = 0.01,
+            step = 0,
             default = param_group[k][key].default,
-            quantum = 0.01,
+            quantum = quantum_size,
             formatter = param_group[k][key].formatter
           }
           lfos.max_specs[k][i] = {
             min = param_group[k][key].min,
             max = param_group[k][key].max,
             warp = param_group[k][key].warp,
-            step = 0.01,
+            step = 0,
             default = param_group[k][key].max,
-            quantum = 0.01,
+            quantum = quantum_size,
             formatter = param_group[k][key].formatter
           }
           i = i+1 -- do not increment by the separators' gaps...
@@ -128,6 +135,8 @@ function lfos.add_params(poly)
         lfos.return_to_baseline(i,nil,poly)
         params:set("lfo_target_param_"..i,1)
         params:set("lfo_depth_"..i,0)
+        lfos.reset_bounds_in_menu(i)
+
       end
     )
     params:add_option("lfo_target_param_"..i, "param",lfos.params_list[drums[1]].names,1)
@@ -136,6 +145,7 @@ function lfos.add_params(poly)
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
         lfos.return_to_baseline(i,nil,poly)
+        lfos.reset_bounds_in_menu(i)
       end
     )
     params:add_number("lfo_depth_"..i,"depth",0,100,0,function(param) return (param:get().."%") end)
@@ -220,21 +230,34 @@ function lfos.add_params(poly)
   lfos.lfo_update()
   metro.init(lfos.lfo_update, 1 / lfos.update_freq):start()
   
-  function clock.tempo_change_handler(bpm,source)
-    print(bpm,source)
+  function clock.tempo_change_handler(bpm)
     if lfos.tempo_updater_clock then
       clock.cancel(lfos.tempo_updater_clock)
     end
     lfos.tempo_updater_clock = clock.run(function() clock.sleep(0.05) lfos.update_tempo() end)
   end
 
-  -- params:bang()
 end
 
 function lfos.update_tempo()
   for i = 1,lfos.count do
     lfos.sync_lfos(i)
   end
+end
+
+function lfos.reset_bounds_in_menu(i)
+  local target_track = params:string("lfo_target_track_"..i)
+  local target_param = params:get("lfo_target_param_"..i)
+  local restore_min = lfos.min_specs[target_track][target_param].min
+  local restore_max = params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
+  if restore_min == restore_max then
+    restore_max = lfos.min_specs[target_track][target_param].max
+  end
+  if params:string("lfo_target_param_"..i) == "pan" then
+    restore_max = 1
+  end
+  params:set("lfo_min_"..i, restore_min)
+  params:set("lfo_max_"..i, restore_max)
 end
 
 function lfos.return_to_baseline(i,silent,poly)
@@ -272,7 +295,7 @@ function lfos.return_to_baseline(i,silent,poly)
   end
 end
 
-function lfos.rebuild_param(param,i) -- TODO: needs to respect number
+function lfos.rebuild_param(param,i)
   local param_id = params.lookup["lfo_"..param.."_"..i]
   local target_track = params:string("lfo_target_track_"..i)
   local target_param = params:get("lfo_target_param_"..i)
@@ -362,6 +385,9 @@ end
 
 function lfos.send_param_value(target_track, target_id, value)
   if target_track ~= "delay" and target_track ~= "reverb" and target_track ~= "main" then
+    if target_id == "carHz" then
+      value = musicutil.note_num_to_freq(value)
+    end
     engine.set_param(target_track,target_id,value)
   else
     if target_track == "delay" then
@@ -385,14 +411,16 @@ function lfos.lfo_update()
       max = old_min
     end
 
-    local mid = math.abs(min-max)/2
-    local percentage = math.abs(max-min) * (params:get("lfo_depth_"..i)/100) -- new
+    local mid = math.abs(min-max)/2 + min
+    local percentage = math.abs(min-max) * (params:get("lfo_depth_"..i)/100)
     local target_track = params:string("lfo_target_track_"..i)
     local target_param = params:get("lfo_target_param_"..i)
     local param_name = lfos.params_list[target_track]
     local engine_target = params:get(target_track.."_"..param_name.ids[(target_param)])
-    local value = util.linlin(-1,1,util.clamp(engine_target-percentage,min,max),util.clamp(engine_target+percentage,min,max),math.sin(lfos.progress[i])) -- new
-    mid = util.linlin(min,max,util.clamp(engine_target-percentage,min,max),util.clamp(engine_target+percentage,min,max),mid) -- new
+    scaled_min = min
+    scaled_max = min + percentage
+    local value = util.linlin(-1,1,scaled_min,scaled_max,math.sin(lfos.progress[i])) -- new
+    mid = util.linlin(min,max,scaled_min,scaled_max,mid) -- new
     
     if value ~= lfos.values[i] and (params:get("lfo_depth_"..i)/100 > 0) then
       lfos.values[i] = value
@@ -404,14 +432,14 @@ function lfos.lfo_update()
           lfos.send_param_value(target_track, param_name.ids[(target_param)], value)
         elseif params:string("lfo_shape_"..i) == "square" then
           local square_value = value >= mid and max or min
-          square_value = util.linlin(min,max,util.clamp(engine_target-percentage,min,max),util.clamp(engine_target+percentage,min,max),square_value) -- new
+          square_value = util.linlin(min,max,scaled_min,scaled_max,square_value) -- new
           lfos.send_param_value(target_track, param_name.ids[(target_param)], square_value)
         elseif params:string("lfo_shape_"..i) == "random" then
           local prev_value = lfos.rand_values[i]
           lfos.rand_values[i] = value >= mid and max or min
           local rand_value;
           if prev_value ~= lfos.rand_values[i] then
-            rand_value = util.linlin(min,max,util.clamp(engine_target-percentage,min,max),util.clamp(engine_target+percentage,min,max),math.random(math.floor(min*100),math.floor(max*100))/100) -- new
+            rand_value = util.linlin(min,max,scaled_min,scaled_max,math.random(math.floor(min*100),math.floor(max*100))/100) -- new
             lfos.send_param_value(target_track, param_name.ids[(target_param)], rand_value)
           end
         end
