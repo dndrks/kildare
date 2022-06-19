@@ -19,10 +19,6 @@ for k,v in pairs(drums) do
   ivals[v] = {1 + (16*(k-1)), (16 * k)}
 end
 
-lfos.delay_params = {'time', 'level', 'feedback', 'spread', 'lpHz', 'hpHz', 'filterQ'}
-lfos.reverb_params = {'decay', 'preDelay', 'earlyDiff', 'lpHz', 'modFreq', 'modDepth', 'level', 'thresh', 'slopeBelow', 'slopeAbove'}
-lfos.main_params = {'lSHz', 'lSdb', 'lSQ', 'hSHz', 'hSdb', 'hSQ', 'eqHz', 'eqdb', 'eqQ'}
-
 lfos.params_list = {}
 
 lfos.min_specs = {}
@@ -34,10 +30,21 @@ for i = 1,lfos.count do
 end
 
 function lfos.add_params(poly)
+
+  for fx,parameters in pairs(kildare_fx_params) do
+    lfos[fx.."_params"] = {}
+    for inner,prm in pairs(kildare_fx_params[fx]) do
+      if prm.type ~= "separator" then
+        table.insert(lfos[fx.."_params"], prm.id)
+      end
+    end
+  end
+
   for k,v in pairs(ivals) do
     lfos.min_specs[k] = {}
     lfos.max_specs[k] = {}
     local i = 1
+
     local param_group = (k ~= "delay" and k ~= "reverb" and k ~= "main") and kildare_drum_params or kildare_fx_params
     for key,val in pairs(param_group[k]) do
       if param_group[k][key].type ~= "separator" then

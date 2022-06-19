@@ -368,6 +368,9 @@ function Kildare.init(poly)
       local d = kildare_drum_params[k][i]
       if d.type == 'control' then
         local quantum_size = 0.01
+        if d.quantum ~= nil then
+          quantum_size = d.quantum
+        end
         if d.id == "carHz" then
           quantum_size = 1/math.abs(d.max-d.min)
         end

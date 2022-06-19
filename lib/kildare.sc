@@ -44,10 +44,9 @@ Kildare {
 					feedMod, feedCar, ampMod, click, clicksound,
 					mod_1, filterEnv, delayEnv, mainSend;
 
-					eqHz = eqHz.lag3(0.25);
-					lpHz = lpHz.lag3(0.25);
-					hpHz = hpHz.lag3(0.25);
-					pan = pan.lag2(0.1);
+					eqHz = eqHz.lag3(0.1);
+					lpHz = lpHz.lag3(0.1);
+					hpHz = hpHz.lag3(0.1);
 					delaySend = delaySend.lag3(0.1);
 					reverbSend = reverbSend.lag3(0.1);
 					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
@@ -118,12 +117,12 @@ Kildare {
 
 					amp = amp/2;
 					noiseAmp = noiseAmp/2;
-					eqHz = eqHz.lag3(0.25);
-					lpHz = lpHz.lag3(0.25);
-					hpHz = hpHz.lag3(0.25);
-					pan = pan.lag2(0.1);
+					eqHz = eqHz.lag3(0.1);
+					lpHz = lpHz.lag3(0.1);
+					hpHz = hpHz.lag3(0.1);
 					delaySend = delaySend.lag3(0.1);
 					reverbSend = reverbSend.lag3(0.1);
+
 					carHz = carHz * (2.pow(carDetune/12));
 					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
@@ -203,12 +202,12 @@ Kildare {
 					mod_1, filterEnv, delayEnv, mainSend;
 
 					amp = amp*0.5;
-					eqHz = eqHz.lag3(0.25);
-					lpHz = lpHz.lag3(0.25);
-					hpHz = hpHz.lag3(0.25);
-					pan = pan.lag2(0.1);
+					eqHz = eqHz.lag3(0.1);
+					lpHz = lpHz.lag3(0.1);
+					hpHz = hpHz.lag3(0.1);
 					delaySend = delaySend.lag3(0.1);
 					reverbSend = reverbSend.lag3(0.1);
+
 					carHz = carHz * (2.pow(carDetune/12));
 					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
@@ -272,12 +271,12 @@ Kildare {
 					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 					mod_1, mod_2, filterEnv, delayEnv, mainSend;
 
-					eqHz = eqHz.lag3(0.25);
-					lpHz = lpHz.lag3(0.25);
-					hpHz = hpHz.lag3(0.25);
-					pan = pan.lag2(0.1);
+					eqHz = eqHz.lag3(0.1);
+					lpHz = lpHz.lag3(0.1);
+					hpHz = hpHz.lag3(0.1);
 					delaySend = delaySend.lag3(0.1);
 					reverbSend = reverbSend.lag3(0.1);
+
 					carHz = carHz * (2.pow(carDetune/12));
 					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
@@ -365,12 +364,12 @@ Kildare {
 					sd_mix, filterEnv, delayEnv, mainSendCar, mainSendSnare;
 
 					amp = amp*0.35;
-					eqHz = eqHz.lag3(0.25);
-					lpHz = lpHz.lag3(0.25);
-					hpHz = hpHz.lag3(0.25);
-					pan = pan.lag2(0.1);
+					eqHz = eqHz.lag3(0.1);
+					lpHz = lpHz.lag3(0.1);
+					hpHz = hpHz.lag3(0.1);
 					delaySend = delaySend.lag3(0.1);
 					reverbSend = reverbSend.lag3(0.1);
+
 					carHz = carHz * (2.pow(carDetune/12));
 					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
@@ -471,12 +470,12 @@ Kildare {
 					voice_1, voice_2, filterEnv, delayEnv, mainSend;
 
 					amp = amp*0.6;
-					eqHz = eqHz.lag3(0.25);
-					lpHz = lpHz.lag3(0.25);
-					hpHz = hpHz.lag3(0.25);
-					pan = pan.lag2(0.1);
+					eqHz = eqHz.lag3(0.1);
+					lpHz = lpHz.lag3(0.1);
+					hpHz = hpHz.lag3(0.1);
 					delaySend = delaySend.lag3(0.1);
 					reverbSend = reverbSend.lag3(0.1);
+
 					carHz = carHz * (2.pow(carDetune/12));
 					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
@@ -540,10 +539,9 @@ Kildare {
 					ampMod, filterEnv, delayEnv, mainSend;
 
 					amp = amp*0.85;
-					eqHz = eqHz.lag3(0.25);
-					lpHz = lpHz.lag3(0.25);
-					hpHz = hpHz.lag3(0.25);
-					pan = pan.lag2(0.1);
+					eqHz = eqHz.lag3(0.1);
+					lpHz = lpHz.lag3(0.1);
+					hpHz = hpHz.lag3(0.1);
 					delaySend = delaySend.lag3(0.1);
 					reverbSend = reverbSend.lag3(0.1);
 
@@ -627,30 +625,32 @@ Kildare {
 
 		busses[\delayLSend] = Bus.audio(s, 1);
 		busses[\delayRSend] = Bus.audio(s, 1);
-		// HUH...these need to be after the sync OR be renamed and the buffers are just made in the SynthDef...huh!
-		// UGH...OR a choice. move them back up and keep them renamed to get no panning respect...
 
 		delayParams = Dictionary.newFrom([
 			\time, 0.8,
-			\level, 0.5,
+			\level, 1,
 			\feedback, 0.7,
 			\spread, 1,
-			\lpHz, 19000,
-			\hpHz, 0,
+			\lpHz, 20000,
+			\hpHz, 20,
 			\filterQ, 50,
 			\reverbSend, 0
 		]);
 
 		reverbParams = Dictionary.newFrom([
-			\preDelay, 0.048,
-			\level, 0.5,
-			\decay, 6,
-			\modDepth, 0.2,
-			\modFreq, 700,
-			\lowDecay, 6,
-			\midDecay, 6,
-			\highDecay, 6,
-			\thresh, 0
+			\preDelay, 0,
+			\level, 1,
+			\decay, 2,
+			\earlyDiff, 0,
+			\diffOffset, 0,
+			\diffDiv, 10,
+			\modFreq, 0.1,
+			\modDepth, 0,
+			\highCut, 8000,
+			\lowCut, 10,
+			\thresh, 0,
+			\slopeBelow, 1,
+			\slopeAbove, 1
 		]);
 
 		mainOutParams = Dictionary.newFrom([
@@ -938,7 +938,8 @@ Kildare {
 
 			arg time = 0.3, level = 0.5, feedback = 0.8,
 			lpHz = 19000, hpHz = 20, filterQ = 50, spread = 1,
-			reverbSend = 0, inputL, inputR, decayTime = -2,
+			reverbSend = 0,
+			inputL, inputR,
 			mainOutput, reverbOutput;
 
 			var delayL, delayR,
@@ -947,8 +948,9 @@ Kildare {
 			leftPos, rightPos,
 			feedbackDecayTime;
 
-			lpHz = lpHz.lag3(0.25);
-			hpHz = hpHz.lag3(0.25);
+			lpHz = lpHz.lag3(0.1);
+			hpHz = hpHz.lag3(0.1);
+			level = level.lag3(0.1);
 
 			leftInput = In.ar(inputL, 1);
 			rightInput = In.ar(inputR, 1);
@@ -1000,8 +1002,8 @@ Kildare {
 			delayTimeBase, delayTimeRandVar, delayTimeSeeds,
 			localin, localout, local, earlyReflections;
 
-			highCut = highCut.lag3(0.25);
-			lowCut = lowCut.lag3(0.25);
+			highCut = highCut.lag3(0.1);
+			lowCut = lowCut.lag3(0.1);
 
 			// adapted from https://github.com/LMMS/lmms/blob/master/plugins/ReverbSC/revsc.c
 			// Original Author(s): Sean Costello, Istvan Varga
@@ -1044,8 +1046,6 @@ Kildare {
 			8.do({
 				arg pass;
 				var lbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0),
-				// rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0);
-				// rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0) - (0.00001);
 				rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0) - (0.0001);
 				local = LocalIn.ar(2) + z;
 				earlyReflections = 0;
@@ -1094,9 +1094,13 @@ Kildare {
 			level = 1.0;
 			var src = In.ar(in, 2);
 
-			lSHz = lSHz.lag3(0.25);
-			hSHz = hSHz.lag3(0.25);
-			eqHz = eqHz.lag3(0.25);
+			lSHz = lSHz.lag3(0.1);
+			hSHz = hSHz.lag3(0.1);
+			eqHz = eqHz.lag3(0.1);
+			lSdb = lSdb.lag3(0.1);
+			hSdb = hSdb.lag3(0.1);
+			eqdb = eqdb.lag3(0.1);
+			level = level.lag3(0.1);
 
 			lSQ = LinLin.kr(lSQ,0,100,1.0,0.3);
 			hSQ = LinLin.kr(hSQ,0,100,1.0,0.3);
