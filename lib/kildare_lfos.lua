@@ -12,12 +12,10 @@ lfos.rand_values = {}
 
 lfos.rates = {1/16,1/8,1/4,5/16,1/3,3/8,1/2,3/4,1,1.5,2,3,4,6,8,16,32,64,128,256,512,1024}
 lfos.rates_as_strings = {"1/16","1/8","1/4","5/16","1/3","3/8","1/2","3/4","1","1.5","2","3","4","6","8","16","32","64","128","256","512","1024"}
-local drums = {'bd','sd','tm','cp','rs','cb','hh','delay','reverb','main'}
+
+lfos.targets = {}
 
 local ivals = {}
-for k,v in pairs(drums) do
-  ivals[v] = {1 + (16*(k-1)), (16 * k)}
-end
 
 lfos.params_list = {}
 
@@ -29,7 +27,19 @@ for i = 1,lfos.count do
   lfos.last_param[i] = "empty"
 end
 
-function lfos.add_params(poly)
+function lfos.add_params(drum_names, fx_names, poly)
+
+  for k,v in pairs(drum_names) do
+    table.insert(lfos.targets,v)
+  end
+
+  for k,v in pairs(fx_names) do
+    table.insert(lfos.targets,v)
+  end
+
+  for k,v in pairs(lfos.targets) do
+    ivals[v] = {1 + (16*(k-1)), (16 * k)}
+  end
 
   for fx,parameters in pairs(kildare_fx_params) do
     lfos[fx.."_params"] = {}
@@ -84,11 +94,11 @@ function lfos.add_params(poly)
 
   params:add_group("lfos",lfos.count * 12)
   for i = 1,lfos.count do
-    if drums[util.wrap(i,1,#drums)] == "delay" then
+    if lfos.targets[util.wrap(i,1,#lfos.targets)] == "delay" then
       lfos.last_param[i] = "time"
-    elseif drums[util.wrap(i,1,#drums)] == "reverb" then
+    elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "reverb" then
       lfos.last_param[i] = "decay"
-    elseif drums[util.wrap(i,1,#drums)] == "main" then
+    elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "main" then
       lfos.last_param[i] = "lSHz"
     else
       if poly then
@@ -131,11 +141,11 @@ function lfos.add_params(poly)
         _menu.rebuild_params()
       end
     end)
-    params:add_option("lfo_target_track_"..i, "track", drums, 1)
+    params:add_option("lfo_target_track_"..i, "track", lfos.targets, 1)
     params:set_action("lfo_target_track_"..i,
       function(x)
         local param_id = params.lookup["lfo_target_param_"..i]
-        params.params[param_id].options = lfos.params_list[drums[x]].names
+        params.params[param_id].options = lfos.params_list[lfos.targets[x]].names
         params.params[param_id].count = tab.count(params.params[param_id].options)
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
@@ -146,7 +156,7 @@ function lfos.add_params(poly)
 
       end
     )
-    params:add_option("lfo_target_param_"..i, "param",lfos.params_list[drums[1]].names,1)
+    params:add_option("lfo_target_param_"..i, "param",lfos.params_list[lfos.targets[1]].names,1)
     params:set_action("lfo_target_param_"..i,
       function(x)
         lfos.rebuild_param("min",i)
@@ -237,12 +247,17 @@ function lfos.add_params(poly)
   lfos.lfo_update()
   metro.init(lfos.lfo_update, 1 / lfos.update_freq):start()
   
-  function clock.tempo_change_handler(bpm)
+  local system_tempo_change_handler = params:lookup_param("clock_tempo").action
+  
+  local new_tempo_change_handler = function(bpm)
+    system_tempo_change_handler(bpm)
     if lfos.tempo_updater_clock then
       clock.cancel(lfos.tempo_updater_clock)
     end
     lfos.tempo_updater_clock = clock.run(function() clock.sleep(0.05) lfos.update_tempo() end)
   end
+
+  params:set_action("clock_tempo", new_tempo_change_handler)
 
 end
 
@@ -269,7 +284,7 @@ end
 
 function lfos.return_to_baseline(i,silent,poly)
   local drum_target = params:get("lfo_target_track_"..i)
-  local parent = drums[drum_target]
+  local parent = lfos.targets[drum_target]
   local param_name = parent.."_"..(lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
   if parent ~= "delay" and parent ~= "reverb" and parent ~= "main" then
     if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" then
@@ -280,11 +295,11 @@ function lfos.return_to_baseline(i,silent,poly)
       end
     end
     if lfos.last_param[i] ~= "carHz" and lfos.last_param[i] ~= "poly" and engine.name == "Kildare" then
-      engine.set_param(parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
+      engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
     elseif lfos.last_param[i] == "carHz" and engine.name == "Kildare" then
-      engine.set_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..lfos.last_param[i])))
+      engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..lfos.last_param[i])))
     elseif lfos.last_param[i] == "poly" and engine.name == "Kildare" then
-      engine.set_param(parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]) == 1 and 0 or 1)
+      engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]) == 1 and 0 or 1)
     end
   elseif (parent == "delay" or parent == "reverb" or parent == "main") and engine.name == "Kildare" then
     local sources = {delay = lfos.delay_params, reverb = lfos.reverb_params, main = lfos.main_params}
@@ -338,8 +353,8 @@ function lfos.rebuild_param(param,i)
 end
 
 function lfos.build_params_static(poly)
-  for i = 1,#drums do
-    local style = drums[i]
+  for i = 1,#lfos.targets do
+    local style = lfos.targets[i]
     lfos.params_list[style] = {ids = {}, names = {}}
     local parent = (style ~= "delay" and style ~= "reverb" and style ~= "main") and kildare_drum_params[style] or kildare_fx_params[style]
     for j = 1,#parent do
@@ -395,7 +410,7 @@ function lfos.send_param_value(target_track, target_id, value)
     if target_id == "carHz" then
       value = musicutil.note_num_to_freq(value)
     end
-    engine.set_param(target_track,target_id,value)
+    engine.set_voice_param(target_track,target_id,value)
   else
     if target_track == "delay" then
       lfos.set_delay_param(target_id,value)

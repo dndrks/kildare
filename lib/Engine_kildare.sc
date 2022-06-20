@@ -1,5 +1,5 @@
 Engine_Kildare : CroneEngine {
-	var kernel;
+	var kernel, debugPrinter;
 
 	*new { arg context, doneCallback;
 		^super.new(context, doneCallback);
@@ -13,7 +13,7 @@ Engine_Kildare : CroneEngine {
 			kernel.trigger(k);
 		});
 
-		this.addCommand(\set_param, "ssf", { arg msg;
+		this.addCommand(\set_voice_param, "ssf", { arg msg;
 			var voiceKey = msg[1].asSymbol;
 			var paramKey = msg[2].asSymbol;
 			var paramValue = msg[3].asFloat;
@@ -38,10 +38,11 @@ Engine_Kildare : CroneEngine {
 			kernel.setMainParam(paramKey, paramValue);
 		});
 
-		fork { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } };
+		debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;
 	}
 
 	free {
 		kernel.free;
+		debugPrinter.stop;
 	}
 }

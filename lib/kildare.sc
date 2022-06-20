@@ -937,7 +937,8 @@ Kildare {
 		outputSynths[\delay] = SynthDef.new(\delay, {
 
 			arg time = 0.3, level = 0.5, feedback = 0.8,
-			lpHz = 19000, hpHz = 20, filterQ = 50, spread = 1,
+			lpHz = 19000, hpHz = 20, filterQ = 50,
+			spread = 1, pan = 1,
 			reverbSend = 0,
 			inputL, inputR,
 			mainOutput, reverbOutput;
@@ -973,6 +974,8 @@ Kildare {
 			delayL = RHPF.ar(in:delayL, freq:hpHz, rq: filterQ, mul:1);
 			delayR = RHPF.ar(in:delayR, freq:hpHz, rq: filterQ, mul:1);
 
+			leftPos = LinLin.kr(leftPos,0,-1,pan,-1);
+			rightPos = LinLin.kr(rightPos,0,1,pan,1);
 			leftBal = Pan2.ar(delayL+startHit,leftPos,0.5);
 			rightBal = Pan2.ar(delayR,rightPos,0.5);
 
@@ -996,9 +999,10 @@ Kildare {
 			earlyDiff = 0.707, diffDiv = 10, diffOffset = 0, modDepth = 0.2, modFreq = 0.1,
 			highCut = 8000, lowCut = 20,
 			thresh = 0, slopeBelow = 1, slopeAbove = 1,
+			clampTime = 0.01, relaxTime = 0.1,
 			in, out;
 
-			var jp, gated, sig, z, y,
+			var final, gated, sig, z, y,
 			delayTimeBase, delayTimeRandVar, delayTimeSeeds,
 			localin, localout, local, earlyReflections;
 
@@ -1076,17 +1080,17 @@ Kildare {
 				LocalOut.ar([local,local]);
 				[local,local]
 			});
-			jp = AllpassN.ar(y, 0.05, [0.05.rand, 0.05.rand], decay);
-			jp = RHPF.ar(jp,lowCut);
+			final = AllpassN.ar(y, 0.05, [0.05.rand, 0.05.rand], decay);
+			final = RHPF.ar(final,lowCut);
 
-			gated = Compander.ar(jp,jp,thresh,slopeBelow,slopeAbove);
+			gated = Compander.ar(final,final,thresh,slopeBelow,slopeAbove,clampTime,relaxTime);
 			Out.ar(out, gated * level);
 
         }).play(target:s, addAction:\addToTail, args:[
             \in, busses[\reverbSend], \out, busses[\mainOut]
         ]);
 
-        outputSynths[\main] = SynthDef.new(\patch_stereo, {
+        outputSynths[\main] = SynthDef.new(\main, {
             arg in, out,
 			lSHz, lSdb, lSQ,
 			hSHz, hSdb, hSQ,
@@ -1168,6 +1172,12 @@ Kildare {
 
 	free {
 		topGroup.free;
+		synthDefs.do({arg def;
+			def.free;
+		});
+		voiceTracker.do({arg voice;
+			voice.free;
+		});
 		busses.do({arg bus;
 			bus.free;
 		});
