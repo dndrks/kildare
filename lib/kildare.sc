@@ -641,9 +641,9 @@ Kildare {
 			\preDelay, 0,
 			\level, 1,
 			\decay, 2,
-			\earlyDiff, 0,
-			\diffOffset, 0,
-			\diffDiv, 10,
+			\refAmp, 0,
+			\refOffset, 0,
+			\refDiv, 10,
 			\modFreq, 0.1,
 			\modDepth, 0,
 			\highCut, 8000,
@@ -996,7 +996,7 @@ Kildare {
         outputSynths[\reverb] = SynthDef.new(\reverb, {
 
 			arg preDelay = 0.048, level = 0.5, decay = 6,
-			earlyDiff = 0.707, diffDiv = 10, diffOffset = 0, modDepth = 0.2, modFreq = 0.1,
+			refAmp = 0.707, refDiv = 10, refOffset = 0, modDepth = 0.2, modFreq = 0.1,
 			highCut = 8000, lowCut = 20,
 			thresh = 0, slopeBelow = 1, slopeAbove = 1,
 			clampTime = 0.01, relaxTime = 0.1,
@@ -1060,9 +1060,9 @@ Kildare {
 					earlyReflections = earlyReflections + CombL.ar(
 						in: local,
 						maxdelaytime: 0.1,
-						delaytime: (decTime - (decTime*(voice/diffDiv))) + (diffOffset/100),
+						delaytime: (decTime - (decTime*(voice/refDiv))) + (refOffset/100),
 						decaytime: decay,
-						mul: (1/5) * level * earlyDiff
+						mul: (1/5) * level * refAmp
 					);
 				});
 				local = local + earlyReflections;

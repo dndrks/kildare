@@ -15,17 +15,15 @@ lfos.rates_as_strings = {"1/16","1/8","1/4","5/16","1/3","3/8","1/2","3/4","1","
 
 lfos.targets = {}
 
-local ivals = {}
+lfos.specs = {}
 
 lfos.params_list = {}
-
-lfos.min_specs = {}
-lfos.max_specs = {}
-
 lfos.last_param = {}
 for i = 1,lfos.count do
   lfos.last_param[i] = "empty"
 end
+
+local ivals = {}
 
 function lfos.add_params(drum_names, fx_names, poly)
 
@@ -51,9 +49,20 @@ function lfos.add_params(drum_names, fx_names, poly)
   end
 
   for k,v in pairs(ivals) do
-    lfos.min_specs[k] = {}
-    lfos.max_specs[k] = {}
+    lfos.specs[k] = {}
     local i = 1
+
+    -- t values:
+    -- 0: separator
+    -- 1: number
+    -- 2: option
+    -- 3: control
+    -- 4: file
+    -- 5: taper
+    -- 6: trigger
+    -- 7: group
+    -- 8: text
+    -- 9: binary
 
     local param_group = (k ~= "delay" and k ~= "reverb" and k ~= "main") and kildare_drum_params or kildare_fx_params
     for key,val in pairs(param_group[k]) do
@@ -66,21 +75,12 @@ function lfos.add_params(drum_names, fx_names, poly)
           else
             quantum_size = param_group[k][key].quantum ~= nil and param_group[k][key].quantum or 0.01
           end
-          lfos.min_specs[k][i] = {
+          lfos.specs[k][i] = {
             min = param_group[k][key].min,
             max = param_group[k][key].max,
             warp = param_group[k][key].warp,
             step = 0,
             default = param_group[k][key].default,
-            quantum = quantum_size,
-            formatter = param_group[k][key].formatter
-          }
-          lfos.max_specs[k][i] = {
-            min = param_group[k][key].min,
-            max = param_group[k][key].max,
-            warp = param_group[k][key].warp,
-            step = 0,
-            default = param_group[k][key].max,
             quantum = quantum_size,
             formatter = param_group[k][key].formatter
           }
@@ -175,13 +175,13 @@ function lfos.add_params(drum_names, fx_names, poly)
       id="lfo_min_"..i,
       name="lfo min",
       controlspec = controlspec.new(
-        lfos.min_specs[target_track][target_param].min,
-        lfos.min_specs[target_track][target_param].max,
-        lfos.min_specs[target_track][target_param].warp,
-        lfos.min_specs[target_track][target_param].step,
-        lfos.min_specs[target_track][target_param].min,
+        lfos.specs[target_track][target_param].min,
+        lfos.specs[target_track][target_param].max,
+        lfos.specs[target_track][target_param].warp,
+        lfos.specs[target_track][target_param].step,
+        lfos.specs[target_track][target_param].min,
         '',
-        lfos.min_specs[target_track][target_param].quantum
+        lfos.specs[target_track][target_param].quantum
       )
     }
     params:add{
@@ -189,13 +189,13 @@ function lfos.add_params(drum_names, fx_names, poly)
       id="lfo_max_"..i,
       name="lfo max",
       controlspec = controlspec.new(
-        lfos.min_specs[target_track][target_param].min,
-        lfos.min_specs[target_track][target_param].max,
-        lfos.min_specs[target_track][target_param].warp,
-        lfos.min_specs[target_track][target_param].step,
-        lfos.min_specs[target_track][target_param].default,
+        lfos.specs[target_track][target_param].min,
+        lfos.specs[target_track][target_param].max,
+        lfos.specs[target_track][target_param].warp,
+        lfos.specs[target_track][target_param].step,
+        lfos.specs[target_track][target_param].default,
         '',
-        lfos.min_specs[target_track][target_param].quantum
+        lfos.specs[target_track][target_param].quantum
       )
     }
     params:add_option("lfo_mode_"..i, "update mode", {"clocked bars","free"},1)
@@ -270,10 +270,10 @@ end
 function lfos.reset_bounds_in_menu(i)
   local target_track = params:string("lfo_target_track_"..i)
   local target_param = params:get("lfo_target_param_"..i)
-  local restore_min = lfos.min_specs[target_track][target_param].min
+  local restore_min = lfos.specs[target_track][target_param].min
   local restore_max = params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
   if restore_min == restore_max then
-    restore_max = lfos.min_specs[target_track][target_param].max
+    restore_max = lfos.specs[target_track][target_param].max
   end
   if params:string("lfo_target_param_"..i) == "pan" then
     restore_max = 1
@@ -321,34 +321,30 @@ function lfos.rebuild_param(param,i)
   local param_id = params.lookup["lfo_"..param.."_"..i]
   local target_track = params:string("lfo_target_track_"..i)
   local target_param = params:get("lfo_target_param_"..i)
-  local default_value = param == "min" and lfos.min_specs[target_track][target_param].min
+  local default_value = param == "min" and lfos.specs[target_track][target_param].min
     or params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
   if param == "max" then
-    if lfos.min_specs[target_track][target_param].min == default_value then
-      default_value = lfos.min_specs[target_track][target_param].max
+    if lfos.specs[target_track][target_param].min == default_value then
+      default_value = lfos.specs[target_track][target_param].max
     end
   end
   params.params[param_id].controlspec = controlspec.new(
-    lfos.min_specs[target_track][target_param].min,
-    lfos.min_specs[target_track][target_param].max,
-    lfos.min_specs[target_track][target_param].warp,
-    lfos.min_specs[target_track][target_param].step,
+    lfos.specs[target_track][target_param].min,
+    lfos.specs[target_track][target_param].max,
+    lfos.specs[target_track][target_param].warp,
+    lfos.specs[target_track][target_param].step,
     default_value,
     '',
-    lfos.min_specs[target_track][target_param].quantum
+    lfos.specs[target_track][target_param].quantum
   )
-  if param == "min" then
-    if lfos.min_specs[target_track][target_param].formatter ~= nil then
-      params.params[param_id].formatter = lfos.min_specs[target_track][target_param].formatter
-    end
-  elseif param == "max" then
+  if param == "max" then
     if params:string("lfo_target_param_"..i) == "pan" then
       default_value = 1
     end
     params.params[param_id]:set_raw(params.params[param_id].controlspec:unmap(default_value))
-    if lfos.max_specs[target_track][target_param].formatter ~= nil then
-      params.params[param_id].formatter = lfos.max_specs[target_track][target_param].formatter
-    end
+  end
+  if lfos.specs[target_track][target_param].formatter ~= nil then
+    params.params[param_id].formatter = lfos.specs[target_track][target_param].formatter
   end
 end
 
