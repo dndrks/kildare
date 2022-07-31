@@ -13,6 +13,7 @@ KildareBD {
 					delayAuxL, delayAuxR, delaySend,
 					delayAtk, delayRel,
 					reverbAux, reverbSend,
+					velocity,
 					amp, carHz, carDetune, carAtk, carRel,
 					modHz, modAmp, modAtk, modRel, feedAmp,
 					modFollow, modNum, modDenum,
@@ -68,7 +69,7 @@ KildareBD {
 					car = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 
 					mainSend = Pan2.ar(car,pan);
-					mainSend = mainSend * amp;
+					mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
 					delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1), gate: stopGate));
 

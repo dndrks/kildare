@@ -25,7 +25,7 @@ KildareRS {
 					sd_car, sd_mod, sd_carEnv, sd_modEnv, sd_carRamp, sd_feedMod, sd_feedCar, sd_noise, sd_noiseEnv,
 					sd_mix, filterEnv, delayEnv, mainSendCar, mainSendSnare;
 
-					amp = amp*0.35;
+					amp = amp*0.45;
 					eqHz = eqHz.lag3(0.1);
 					lpHz = lpHz.lag3(0.1);
 					hpHz = hpHz.lag3(0.1);

@@ -65,7 +65,7 @@ function Kildare.init(poly)
     ["sd"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'poly', name = 'polyphony', type = 'option', options = {"mono","poly"}, default = 1},
-      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.6, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 46, max = 76, default = 61, warp = 'lin', formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
       {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, quantum = 1/240, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -111,7 +111,7 @@ function Kildare.init(poly)
     ["tm"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'poly', name = 'polyphony', type = 'option', options = {"mono","poly"}, default = 1},
-      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.65, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.6, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 27, max = 55, default = 41, warp = 'lin', formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
       {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, quantum = 1/240, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -153,7 +153,7 @@ function Kildare.init(poly)
     ["cp"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'poly', name = 'polyphony', type = 'option', options = {"mono","poly"}, default = 1},
-      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.5, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.6, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 47, max = 111, default = 91, warp = 'lin', formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
       {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, quantum = 1/240, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.43, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -192,7 +192,7 @@ function Kildare.init(poly)
     ["rs"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'poly', name = 'polyphony', type = 'option', options = {"mono","poly"}, default = 1},
-      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 1.0, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 55, max = 105, default = 66, warp = 'lin', formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
       {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, quantum = 1/240, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -234,7 +234,7 @@ function Kildare.init(poly)
     ["cb"] = {
       {type = 'separator', name = 'carrier'},
       {id = 'poly', name = 'polyphony', type = 'option', options = {"mono","poly"}, default = 1},
-      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.55, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.8, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 55, max = 105, default = 68, warp = 'lin', formatter = function(param) return (musicutil.note_num_to_name(param:get(),true)) end},
       {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, quantum = 1/240, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
       {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -367,7 +367,7 @@ function Kildare.init(poly)
   
   for j = 1,#Kildare.drums do
     local k = Kildare.drums[j]
-    params:add_group(k, #kildare_drum_params[k])
+    params:add_group('kilare_'..k, k, #kildare_drum_params[k])
     for i = 1, #kildare_drum_params[k] do
       local d = kildare_drum_params[k][i]
       if d.type == 'control' then
@@ -401,7 +401,7 @@ function Kildare.init(poly)
           d.default
         )
       elseif d.type == 'separator' then
-        params:add_separator(d.name)
+        params:add_separator('kildare_voice_params_'..k.."_"..d.name, d.name)
       end
       if d.type ~= 'separator' then
         if d.id ~= "carHz" and d.id ~= "poly" then
@@ -432,7 +432,7 @@ function Kildare.init(poly)
 
   for j = 1,#Kildare.fx do
     local k = Kildare.fx[j]
-    params:add_group(k, #kildare_fx_params[k])
+    params:add_group('kildare_'..k, k, #kildare_fx_params[k])
     for i = 1, #kildare_fx_params[k] do
       local d = kildare_fx_params[k][i]
       local quantum_size = 0.01
@@ -463,7 +463,7 @@ function Kildare.init(poly)
           d.default
         )
       elseif d.type == 'separator' then
-        params:add_separator(d.name)
+        params:add_separator('kildare_fx_params_'..d.name, d.name)
       end
       if d.type ~= 'separator' then
         params:set_action(k.."_"..d.id, function(x)

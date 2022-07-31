@@ -125,6 +125,7 @@ Kildare {
 				\delaySend,0,
 				\reverbSend,0,
 				\poly,0,
+				\velocity,127,
 				\amp,0.7,
 				\carHz,55,
 				\carDetune,0,
@@ -571,7 +572,8 @@ Kildare {
 
 	}
 
-	trigger { arg voiceKey;
+	trigger { arg voiceKey, velocity;
+		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
 			groups[voiceKey].set(\stopGate, -1.05);
 			indexTracker[voiceKey] = numVoices;
