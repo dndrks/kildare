@@ -2,7 +2,7 @@ local Kildare = {}
 local specs = {}
 local ControlSpec = require 'controlspec'
 local frm = require 'formatters'
-Kildare.lfos = include 'nc03-ds/lib/kildare_lfos'
+Kildare.lfos = include 'kildare/lib/kildare_lfos'
 local musicutil = require 'musicutil'
 
 Kildare.drums = {"bd","sd","tm","cp","rs","cb","hh"}
@@ -22,7 +22,7 @@ function Kildare.init(poly)
   kildare_drum_params = {
     ["bd"] = {
       {type = 'separator', name = 'carrier'},
-      {id = 'poly', name = 'polyphony', type = 'option', options = {"mono","poly"}, default = 1},
+      {id = 'poly', name = 'polyphony', type = 'control', min = 1, max = 2, warp = "lin", default = 1, quantum = 1, formatter = function(param) local modes = {"mono","poly"} return modes[param:get()] end},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 15, max = 67, warp = 'lin', default = 33, formatter = function(param) return (musicutil.note_num_to_name(round_form(param:get(),1,''),true)) end},
       {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, quantum = 1/240, formatter = function(param) return (round_form(param:get(),0.1," semitones")) end},
