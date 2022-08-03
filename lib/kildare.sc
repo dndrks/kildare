@@ -18,7 +18,7 @@ Kildare {
 	classvar <indexTracker;
 
 	*initClass {
-		voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh ];
+		voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh, \softcut];
 		StartUp.add {
 			var s = Server.default;
 
@@ -32,6 +32,18 @@ Kildare {
 				synthDefs[\rs] = KildareRS.new();
 				synthDefs[\cb] = KildareCB.new();
 				synthDefs[\hh] = KildareHH.new();
+
+				synthDefs[\softcut] = SynthDef(\softcut, {
+					arg out = 1,
+					delayAuxL, delayAuxR, delaySend = 1,
+					reverbAux, reverbSend = 1;
+
+					var input = SoundIn.ar([0,1]);
+					Out.ar(out, input);
+					Out.ar(delayAuxL, input * delaySend);
+					Out.ar(delayAuxR, input * delaySend);
+					Out.ar(reverbAux, input * reverbSend);
+				}).send;
 
 			} // Server.waitForBoot
 		} // StartUp
@@ -381,7 +393,15 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
+			\softcut, Dictionary.newFrom([
+				\out,busses[\mainOut],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
+				\reverbAux,busses[\reverbSend],
+			]),
 		]);
+
+		Synth.new(\softcut, paramProtos[\softcut].getPairs, groups[\softcut]);
 
 		outputSynths[\delay] = SynthDef.new(\delay, {
 
@@ -625,6 +645,7 @@ Kildare {
 		synthDefs.do({arg def;
 			def.free;
 		});
+		synthDefs[\softcut].free;
 		voiceTracker.do({arg voice;
 			voice.free;
 		});

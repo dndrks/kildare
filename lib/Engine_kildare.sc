@@ -39,11 +39,11 @@ Engine_Kildare : CroneEngine {
 			kernel.setMainParam(paramKey, paramValue);
 		});
 
-		debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;
+		// debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;
 	}
 
 	free {
 		kernel.free;
-		debugPrinter.stop;
+		// debugPrinter.stop;
 	}
 }
