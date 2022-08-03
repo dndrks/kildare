@@ -25,13 +25,13 @@ Kildare {
 			s.waitForBoot {
 				synthDefs = Dictionary.new;
 
-				synthDefs[\bd] = KildareBD.new();
-				synthDefs[\sd] = KildareSD.new();
-				synthDefs[\tm] = KildareTM.new();
-				synthDefs[\cp] = KildareCP.new();
-				synthDefs[\rs] = KildareRS.new();
-				synthDefs[\cb] = KildareCB.new();
-				synthDefs[\hh] = KildareHH.new();
+				synthDefs[\bd] = KildareBD.new(Crone.server);
+				synthDefs[\sd] = KildareSD.new(Crone.server);
+				synthDefs[\tm] = KildareTM.new(Crone.server);
+				synthDefs[\cp] = KildareCP.new(Crone.server);
+				synthDefs[\rs] = KildareRS.new(Crone.server);
+				synthDefs[\cb] = KildareCB.new(Crone.server);
+				synthDefs[\hh] = KildareHH.new(Crone.server);
 
 				synthDefs[\softcut] = SynthDef(\softcut, {
 					arg out = 1,
@@ -398,6 +398,8 @@ Kildare {
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
+				\delaySend,0,
+				\reverbSend,0,
 			]),
 		]);
 
@@ -619,6 +621,11 @@ Kildare {
 			groups[voiceKey].set(paramKey, paramValue);
 		});
 		paramProtos[voiceKey][paramKey] = paramValue;
+	}
+
+	setSoftcutParam { arg paramKey, paramValue;
+		paramProtos[\softcut][paramKey] = paramValue;
+		groups[\softcut].set(paramKey, paramValue);
 	}
 
 	setDelayParam { arg paramKey, paramValue;

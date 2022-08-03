@@ -1,76 +1,76 @@
 KildareCB {
 
-	*initClass {
-		StartUp.add {
-			var s = Server.default;
-			s.waitForBoot {
-				SynthDef(\kildare_cb, {
-					arg out = 0, stopGate = 1,
-					delayAuxL, delayAuxR, delaySend,
-					delayAtk, delayRel,
-					reverbAux,reverbSend,
-					amp, carHz, carDetune,
-					modHz, modAmp, modAtk, modRel, feedAmp,
-					modFollow, modNum, modDenum,
-					carAtk, carRel,
-					snap,
-					pan, rampDepth, rampDec, amDepth, amHz,
-					eqHz, eqAmp, bitRate, bitCount,
-					lpHz, hpHz, filterQ,
-					lpAtk, lpRel, lpDepth,
-					squishPitch, squishChunk;
+	*new {
+		arg srv;
+		^super.new.init(srv);
+	}
 
-					var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-					voice_1, voice_2, filterEnv, delayEnv, mainSend;
+	init {
+		SynthDef(\kildare_cb, {
+			arg out = 0, stopGate = 1,
+			delayAuxL, delayAuxR, delaySend,
+			delayAtk, delayRel,
+			reverbAux,reverbSend,
+			amp, carHz, carDetune,
+			modHz, modAmp, modAtk, modRel, feedAmp,
+			modFollow, modNum, modDenum,
+			carAtk, carRel,
+			snap,
+			pan, rampDepth, rampDec, amDepth, amHz,
+			eqHz, eqAmp, bitRate, bitCount,
+			lpHz, hpHz, filterQ,
+			lpAtk, lpRel, lpDepth,
+			squishPitch, squishChunk;
 
-					amp = amp*0.6;
-					eqHz = eqHz.lag3(0.1);
-					lpHz = lpHz.lag3(0.1);
-					hpHz = hpHz.lag3(0.1);
-					delaySend = delaySend.lag3(0.1);
-					reverbSend = reverbSend.lag3(0.1);
+			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
+			voice_1, voice_2, filterEnv, delayEnv, mainSend;
 
-					carHz = carHz * (2.pow(carDetune/12));
-					modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
+			amp = amp*0.6;
+			eqHz = eqHz.lag3(0.1);
+			lpHz = lpHz.lag3(0.1);
+			hpHz = hpHz.lag3(0.1);
+			delaySend = delaySend.lag3(0.1);
+			reverbSend = reverbSend.lag3(0.1);
 
-					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
-					feedAmp = LinLin.kr(feedAmp,0.0,1.0,1.0,3.0);
-					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
-					rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
-					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
-					snap = LinLin.kr(snap,0.0,1.0,0.0,10.0);
+			carHz = carHz * (2.pow(carDetune/12));
+			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
-					modEnv = EnvGen.kr(Env.perc(modAtk, modRel), gate:stopGate);
-					carRamp = EnvGen.kr(Env([600, 0.000001], [rampDec], curve: \lin));
-					carEnv = EnvGen.kr(Env.perc(carAtk, carRel),gate: stopGate);
-					filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
+			filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
+			feedAmp = LinLin.kr(feedAmp,0.0,1.0,1.0,3.0);
+			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
+			rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
+			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
+			snap = LinLin.kr(snap,0.0,1.0,0.0,10.0);
 
-					voice_1 = LFPulse.ar((carHz) + (carRamp*rampDepth)) * carEnv * amp;
-					voice_2 = SinOscFB.ar((carHz*1.5085)+ (carRamp*rampDepth),feedAmp) * carEnv * amp;
-					ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
-					voice_1 = (voice_1+(LPF.ar(Impulse.ar(0.003),16000,1)*snap)) * ampMod;
-					voice_1 = (voice_1*0.33)+(voice_2*0.33);
-					voice_1 = Squiz.ar(in:voice_1, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-					voice_1 = Decimator.ar(voice_1,bitRate,bitCount,1.0);
-					voice_1 = BPeakEQ.ar(in:voice_1,freq:eqHz,rq:1,db:eqAmp,mul:1);
-					voice_1 = RLPF.ar(in:voice_1,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
-					voice_1 = RHPF.ar(in:voice_1,freq:hpHz, rq: filterQ, mul:1);
+			modEnv = EnvGen.kr(Env.perc(modAtk, modRel), gate:stopGate);
+			carRamp = EnvGen.kr(Env([600, 0.000001], [rampDec], curve: \lin));
+			carEnv = EnvGen.kr(Env.perc(carAtk, carRel),gate: stopGate);
+			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 
-					voice_1 = Compander.ar(in:voice_1,control:voice_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-					mainSend = Pan2.ar(voice_1,pan);
-					mainSend = mainSend * amp;
+			voice_1 = LFPulse.ar((carHz) + (carRamp*rampDepth)) * carEnv * amp;
+			voice_2 = SinOscFB.ar((carHz*1.5085)+ (carRamp*rampDepth),feedAmp) * carEnv * amp;
+			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
+			voice_1 = (voice_1+(LPF.ar(Impulse.ar(0.003),16000,1)*snap)) * ampMod;
+			voice_1 = (voice_1*0.33)+(voice_2*0.33);
+			voice_1 = Squiz.ar(in:voice_1, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
+			voice_1 = Decimator.ar(voice_1,bitRate,bitCount,1.0);
+			voice_1 = BPeakEQ.ar(in:voice_1,freq:eqHz,rq:1,db:eqAmp,mul:1);
+			voice_1 = RLPF.ar(in:voice_1,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
+			voice_1 = RHPF.ar(in:voice_1,freq:hpHz, rq: filterQ, mul:1);
 
-					delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+			voice_1 = Compander.ar(in:voice_1,control:voice_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+			mainSend = Pan2.ar(voice_1,pan);
+			mainSend = mainSend * amp;
 
-					Out.ar(out, mainSend);
-					Out.ar(delayAuxL, (voice_1 * amp * delayEnv));
-					Out.ar(delayAuxR, (voice_1 * amp * delayEnv));
-					Out.ar(reverbAux, (mainSend * reverbSend));
+			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
-					FreeSelf.kr(Done.kr(carEnv) * Done.kr(modEnv));
+			Out.ar(out, mainSend);
+			Out.ar(delayAuxL, (voice_1 * amp * delayEnv));
+			Out.ar(delayAuxR, (voice_1 * amp * delayEnv));
+			Out.ar(reverbAux, (mainSend * reverbSend));
 
-				}).add;
-			} // s.waitForBoot
-		} // StartUp
-	} // *initClass
+			FreeSelf.kr(Done.kr(carEnv) * Done.kr(modEnv));
+
+		}).send;
+	}
 }

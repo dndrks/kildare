@@ -21,6 +21,12 @@ Engine_Kildare : CroneEngine {
 			kernel.setVoiceParam(voiceKey, paramKey, paramValue);
 		});
 
+		this.addCommand(\set_softcut_param, "sf", { arg msg;
+			var paramKey = msg[1].asSymbol;
+			var paramValue = msg[2].asFloat;
+			kernel.setSoftcutParam(paramKey, paramValue);
+		});
+
 		this.addCommand(\set_delay_param, "sf", {arg msg;
 			var paramKey = msg[1].asSymbol;
 			var paramValue = msg[2].asFloat;

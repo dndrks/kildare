@@ -2,7 +2,7 @@
 
 local musicutil = require 'musicutil'
 
-local lfos = {}
+lfos = {}
 lfos.count = 16
 lfos.update_freq = 128
 lfos.freqs = {}
