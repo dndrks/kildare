@@ -11,6 +11,7 @@ KildareCB {
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
 			reverbAux,reverbSend,
+			velocity,
 			amp, carHz, carDetune,
 			modHz, modAmp, modAtk, modRel, feedAmp,
 			modFollow, modNum, modDenum,
@@ -60,13 +61,13 @@ KildareCB {
 
 			voice_1 = Compander.ar(in:voice_1,control:voice_1, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 			mainSend = Pan2.ar(voice_1,pan);
-			mainSend = mainSend * amp;
+			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
 			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
 			Out.ar(out, mainSend);
-			Out.ar(delayAuxL, (voice_1 * amp * delayEnv));
-			Out.ar(delayAuxR, (voice_1 * amp * delayEnv));
+			Out.ar(delayAuxL, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxR, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(reverbAux, (mainSend * reverbSend));
 
 			FreeSelf.kr(Done.kr(carEnv) * Done.kr(modEnv));

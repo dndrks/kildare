@@ -11,6 +11,7 @@ KildareRS {
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
 			reverbAux,reverbSend,
+			velocity,
 			carHz, carDetune,
 			modHz, modAmp,
 			modFollow, modNum, modDenum,
@@ -91,23 +92,23 @@ KildareRS {
 			car = car.softclip;
 			car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 			mainSendCar = Pan2.ar(car,pan);
-			mainSendCar = mainSendCar * amp;
+			mainSendCar = mainSendCar * amp * LinLin.kr(velocity,0,127,0.0,1.0);
 
 			sd_mix = sd_mix.softclip;
 			sd_mix = Compander.ar(in:sd_mix,control:sd_mix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 			mainSendSnare = Pan2.ar(sd_mix,pan);
-			mainSendSnare = mainSendSnare * amp;
+			mainSendSnare = mainSendSnare * amp * LinLin.kr(velocity,0,127,0.0,1.0);
 
 			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
 			Out.ar(out, mainSendCar);
-			Out.ar(delayAuxL, (car * amp * delayEnv));
-			Out.ar(delayAuxR, (car * amp * delayEnv));
+			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(reverbAux, (mainSendCar * reverbSend));
 
 			Out.ar(out, mainSendSnare);
-			Out.ar(delayAuxL, (sd_mix * amp * delayEnv));
-			Out.ar(delayAuxR, (sd_mix * amp * delayEnv));
+			Out.ar(delayAuxL, (sd_mix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxR, (sd_mix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(reverbAux, (mainSendSnare * reverbSend));
 
 			FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(carEnv));

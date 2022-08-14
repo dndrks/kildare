@@ -73,8 +73,8 @@ KildareBD {
 			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1), gate: stopGate));
 
 			Out.ar(out, mainSend);
-			Out.ar(delayAuxL, (car * amp * delayEnv));
-			Out.ar(delayAuxR, (car * amp * delayEnv));
+			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(reverbAux, (mainSend * reverbSend));
 		}).send;
 	}

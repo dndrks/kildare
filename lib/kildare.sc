@@ -36,9 +36,46 @@ Kildare {
 				synthDefs[\softcut] = SynthDef(\softcut, {
 					arg out = 1,
 					delayAuxL, delayAuxR, delaySend = 1,
-					reverbAux, reverbSend = 1;
+					reverbAux, reverbSend = 1,
+					tremDepth, tremHz,
+					amDepth, amHz,
+					eqHz, eqAmp,
+					bitRate, bitCount,
+					lpHz, hpHz, filterQ,
+					lpAtk, lpRel, lpDepth,
+					pan,
+					squishPitch, squishChunk;
 
-					var input = SoundIn.ar([0,1]);
+					var input = SoundIn.ar([0,1]),
+					tremolo, tremod,
+					ampMod;
+
+					eqHz = eqHz.lag3(0.1);
+					lpHz = lpHz.lag3(0.1);
+					hpHz = hpHz.lag3(0.1);
+					delaySend = delaySend.lag3(0.1);
+					reverbSend = reverbSend.lag3(0.1);
+
+					filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
+					eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
+					tremDepth = LinLin.kr(tremDepth,0.0,100,0.0,1.0);
+					amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
+
+					ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
+					input = input * ampMod;
+
+					tremolo = SinOsc.ar(tremHz, 0, tremDepth);
+					tremod = (1.0 - tremDepth) + tremolo;
+					input = input * tremod;
+					input = Squiz.ar(in:input, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
+					input = Decimator.ar(input,bitRate,bitCount,1.0);
+					input = BPeakEQ.ar(in:input,freq:eqHz,rq:1,db:eqAmp,mul:1);
+					input = RLPF.ar(in:input,freq:lpHz, rq: filterQ, mul:1);
+					input = RHPF.ar(in:input,freq:hpHz, rq: filterQ, mul:1);
+
+					input = Compander.ar(in:input,control:input, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+					input = Pan2.ar(input,pan);
+
 					Out.ar(out, input);
 					Out.ar(delayAuxL, input * delaySend);
 					Out.ar(delayAuxR, input * delaySend);
@@ -400,6 +437,20 @@ Kildare {
 				\reverbAux,busses[\reverbSend],
 				\delaySend,0,
 				\reverbSend,0,
+				\tremDepth,1,
+				\tremHz,1000,
+				\squishPitch,1,
+				\squishChunk,1,
+				\amDepth,0,
+				\amHz,8175.08,
+				\eqHz,6000,
+				\eqAmp,0,
+				\bitRate,24000,
+				\bitCount,24,
+				\lpHz,19000,
+				\hpHz,20,
+				\filterQ,50,
+				\pan,0,
 			]),
 		]);
 
