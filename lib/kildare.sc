@@ -45,7 +45,7 @@ Kildare {
 	}
 
 	init {
-		var s = Server.default;
+		var s = Server.default, sample_iterator = 1;
 
 		outputSynths = Dictionary.new;
 
@@ -384,7 +384,7 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
-			\sample1, Dictionary.newFrom([
+			/*\sample1, Dictionary.newFrom([
 				\bufnum,nil,
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
@@ -406,8 +406,44 @@ Kildare {
 				\lpf,10000,
 				\hpf,20,
 				\t_trig,1,
-			]),
+			]),*/
 		]);
+
+		while ( { sample_iterator < 4 }, {
+			paramProtos.put((\sample++sample_iterator).asSymbol, Dictionary.newFrom([
+				\bufnum,nil,
+				\out,busses[\mainOut],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
+				\reverbAux,busses[\reverbSend],
+				\delayAtk,0,
+				\delayRel,2,
+				\delaySend,0,
+				\reverbSend,0,
+				\poly,0,
+				\amp,1,
+				\sampleAtk,0,
+				\sampleRel,1,
+				\sampleStart,0,
+				\sampleEnd,1,
+				\loop,0,
+				\rate,1,
+				\squishPitch,1,
+				\squishChunk,1,
+				\amDepth,0,
+				\amHz,8175.08,
+				\eqHz,6000,
+				\eqAmp,0,
+				\bitRate,24000,
+				\bitCount,24,
+				\lpHz,19000,
+				\hpHz,20,
+				\filterQ,50,
+				\pan,0,
+				\t_trig,1,
+			]));
+			sample_iterator = sample_iterator + 1;
+		});
 
 		// Synth.new(\softcut, paramProtos[\softcut].getPairs, groups[\softcut]);
 
