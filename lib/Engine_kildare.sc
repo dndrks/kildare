@@ -21,12 +21,6 @@ Engine_Kildare : CroneEngine {
 			kernel.setVoiceParam(voiceKey, paramKey, paramValue);
 		});
 
-		this.addCommand(\set_softcut_param, "sf", { arg msg;
-			var paramKey = msg[1].asSymbol;
-			var paramValue = msg[2].asFloat;
-			kernel.setSoftcutParam(paramKey, paramValue);
-		});
-
 		this.addCommand(\set_delay_param, "sf", {arg msg;
 			var paramKey = msg[1].asSymbol;
 			var paramValue = msg[2].asFloat;
@@ -43,6 +37,10 @@ Engine_Kildare : CroneEngine {
 			var paramKey = msg[1].asSymbol;
 			var paramValue = msg[2].asFloat;
 			kernel.setMainParam(paramKey, paramValue);
+		});
+
+		this.addCommand(\load_sample, "ss", { arg msg;
+			kernel.loadsample(msg);
 		});
 
 		// debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;
