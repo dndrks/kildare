@@ -9,9 +9,11 @@ KildareSample {
 		SynthDef(\kildare_sample, {
 			arg bufnum, out = 0, amp = 0, t_trig = 1,
 			sampleStart = 0, sampleEnd = 1, loop = 0,
-			pan = 0, sampleAtk = 0.01, sampleRel = 0.05,
-			delayAuxL, delayAuxR, delaySend = 1,
-			reverbAux, reverbSend = 1,
+			pan = 0,
+			sampleEnv = 0, sampleAtk = 0.01, sampleRel = 0.05,
+			delayAuxL, delayAuxR, delaySend = 0,
+			delayEnv, delayAtk, delayRel,
+			reverbAux, reverbSend = 0,
 			rate = 1, stopGate = 1,
 			amDepth, amHz,
 			eqHz, eqAmp,
@@ -20,15 +22,18 @@ KildareSample {
 			velocity = 127,
 			squishPitch, squishChunk;
 
-			var snd,snd2,pos,pos2,frames,duration,loop_env, sampleEnv, mainSend;
-			var startA,endA,startB,endB,crossfade,aOrB;
+			var snd, snd2, pos, pos2, frames, duration, loop_env, arEnv, ampMod, delEnv, mainSend;
+			var startA, endA, startB, endB, crossfade, aOrB;
 
 			eqHz = eqHz.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
 			hpHz = hpHz.lag3(0.1);
+			delaySend = delaySend.lag3(0.1);
+			reverbSend = reverbSend.lag3(0.1);
 
 			filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
 			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
+			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
 			// latch to change trigger between the two
 			aOrB = ToggleFF.kr(t_trig);
@@ -43,7 +48,7 @@ KildareSample {
 
 			duration = Select.kr(loop > 0, [frames*(sampleEnd-sampleStart)/rate.abs/Server.default.sampleRate, inf]);
 
-			loop_env=EnvGen.ar(
+			loop_env = EnvGen.ar(
 				Env.new(
 					levels: [0,1,1,0],
 					times: [0,duration-0.05,0.05],
@@ -52,7 +57,13 @@ KildareSample {
 				doneAction: 2
 			);
 
-			sampleEnv = EnvGen.kr(Env.linen(attackTime: sampleAtk, sustainTime: 0.05, releaseTime: sampleRel, curve: 'sin'),gate: stopGate, doneAction: 2);
+			arEnv = Select.kr(
+				sampleEnv > 0, [
+					1,
+					EnvGen.kr(Env.linen(attackTime: sampleAtk, sustainTime: 0.05, releaseTime: sampleRel, curve: 'sin'),gate: stopGate, doneAction: sampleEnv * 2)
+				]
+			);
+			// sampleEnv = EnvGen.kr(Env.linen(attackTime: sampleAtk, sustainTime: 0.05, releaseTime: sampleRel, curve: 'sin'),gate: stopGate, doneAction: 2);
 
 			pos=Phasor.ar(
 				trig:aOrB,
@@ -83,7 +94,9 @@ KildareSample {
 				interpolation:4,
 			);
 
-			mainSend = ((((crossfade*snd)+((1-crossfade)*snd2)) * loop_env) * sampleEnv);
+			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
+
+			mainSend = ( ((((crossfade*snd)+((1-crossfade)*snd2)) * loop_env)*ampMod) * arEnv );
 
 			mainSend = Squiz.ar(in:mainSend, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 			mainSend = Decimator.ar(mainSend,bitRate,bitCount,1.0);
@@ -95,12 +108,12 @@ KildareSample {
 			mainSend = Pan2.ar(mainSend,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			// delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate))]);
 
 			Out.ar(out, mainSend);
-			// Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			// Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			// Out.ar(reverbAux, (mainSend * reverbSend));
+			Out.ar(delayAuxL, (mainSend * delEnv));
+			Out.ar(delayAuxR, (mainSend * delEnv));
+			Out.ar(reverbAux, (mainSend * reverbSend));
 
 
 		}).send;

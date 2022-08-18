@@ -15,6 +15,7 @@ Kildare {
 	var <mainOutParams;
 
 	var <voiceTracker;
+	var <folderedSamples;
 	classvar <indexTracker;
 
 	*initClass {
@@ -51,6 +52,8 @@ Kildare {
 
 		voiceTracker = Dictionary.new;
 		indexTracker = Dictionary.new;
+
+		folderedSamples = Dictionary.new;
 
 		topGroup = Group.new(s);
 		groups = Dictionary.new;
@@ -384,29 +387,6 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
-			/*\sample1, Dictionary.newFrom([
-				\bufnum,nil,
-				\out,busses[\mainOut],
-				\delayAuxL,busses[\delayLSend],
-				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
-				\delayAtk,0,
-				\delayRel,2,
-				\delaySend,0,
-				\reverbSend,0,
-				\poly,0,
-				\amp,1,
-				\pan,0,
-				\sampleAtk,0.3,
-				\sampleRel,1,
-				\sampleStart,0,
-				\sampleEnd,0.02,
-				\loop,1,
-				\rate,2,
-				\lpf,10000,
-				\hpf,20,
-				\t_trig,1,
-			]),*/
 		]);
 
 		while ( { sample_iterator < 4 }, {
@@ -416,12 +396,14 @@ Kildare {
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
 				\reverbAux,busses[\reverbSend],
+				\delayEnv,0,
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
 				\reverbSend,0,
 				\poly,0,
 				\amp,1,
+				\sampleEnv,0,
 				\sampleAtk,0,
 				\sampleRel,1,
 				\sampleStart,0,
@@ -697,6 +679,19 @@ Kildare {
 	loadsample { arg msg;
 		var voice = msg[1], filename = msg[2];
 		Buffer.read(Server.default, filename ,action:{
+			arg bufnum;
+			var synName = "kildare_sample";
+			if (bufnum.numChannels>1,{
+				synName = "kildare_sample"; // todo: make mono option
+			});
+			paramProtos[voice][\bufnum] = bufnum;
+		});
+	}
+
+	loadfolder { arg msg;
+		var voice = msg[1], filepath = msg[2];
+		folderedSamples[voice] = SoundFile.collect(filepath++"/*");
+		Buffer.read(Server.default, folderedSamples[voice][0].path, action:{
 			arg bufnum;
 			var synName = "kildare_sample";
 			if (bufnum.numChannels>1,{

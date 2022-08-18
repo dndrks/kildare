@@ -43,6 +43,10 @@ Engine_Kildare : CroneEngine {
 			kernel.loadsample(msg);
 		});
 
+		this.addCommand(\load_folder, "ss", { arg msg;
+			kernel.loadfolder(msg);
+		});
+
 		// debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;
 	}
 
