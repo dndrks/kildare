@@ -13,6 +13,15 @@ function round_form(param,quant,form)
   return(util.round(param,quant)..form)
 end
 
+function Kildare.folder_callback()
+end
+
+function Kildare.file_callback()
+end
+
+function Kildare.clear_callback()
+end
+
 function Kildare.init(poly)
 
   function percent_formatter(param)
@@ -21,11 +30,17 @@ function Kildare.init(poly)
 
   local sample_params = {
     {type = 'separator', name = 'sample management'},
+    {lfo_exclude = true, type = 'option', id = 'sampleMode', name = 'play mode', options = {"chop", "playthrough", "distribute"}, default = 1},
+    {lfo_exclude = true, type = 'file', id = 'sampleFile', name = 'load', default = _path.audio},
+    {lfo_exclude = true, type = 'binary', id = 'sampleClear', name = 'clear', behavior = 'trigger'},
     {id = 'poly', name = 'polyphony', type = 'control', min = 1, max = 2, warp = "lin", default = 1, quantum = 1, formatter = function(param) local modes = {"mono","poly"} return modes[param:get()] end},
     {id = 'amp', name = 'amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     {id = 'sampleEnv', name = 'amp envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[param:get()+1] end},
     {id = 'sampleAtk', name = 'amp attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
     {id = 'sampleRel', name = 'amp release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
+    {id = 'playbackRateBase', name = 'rate', type = 'control', min = 1, max = 11, warp = 'lin', default = 9, quantum = 1/10, formatter = function(param) local rate_options = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 4} return rate_options[param:get()..'x'] end},
+    {id = 'playbackRateOffset', name = 'offset', type = 'control', min = -24, max = 24, warp = 'lin', default = 0, quantum = 1/48, formatter = function(param) return (round_form(param:get(),1," semitones")) end},
+    {id = 'playbackPitchControl', name = 'pitch control', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, quantum = 1/240, formatter = function(param) return (round_form(param:get(),0.01,"%")) end},
     {id = 'loop', name = 'loop', type = 'control', min = 0, max = 1, warp = "lin", default = 0, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[param:get()+1] end},
     {type = 'separator', name = 'additional processing'},
     {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
@@ -396,6 +411,8 @@ function Kildare.init(poly)
   if engine.name ~= "Kildare" then
     params:add_option("no_kildare","----- kildare not loaded -----",{" "})
   end
+
+  local custom_actions = {'carHz', 'poly', 'sampleMode', 'sampleFile', 'sampleClear', 'playbackRateBase', 'playbackRateOffset', 'playbackPitchControl'}
   
   for j = 1,#Kildare.drums do
     local k = Kildare.drums[j]
@@ -434,9 +451,13 @@ function Kildare.init(poly)
         )
       elseif d.type == 'separator' then
         params:add_separator('kildare_voice_params_'..k.."_"..d.name, d.name)
+      elseif d.type == 'file' then
+        params:add_file(k.."_"..d.id, d.name, d.default)
+      elseif d.type == 'binary' then
+        params:add_binary(k.."_"..d.id, d.name, d.behavior)
       end
       if d.type ~= 'separator' then
-        if d.id ~= "carHz" and d.id ~= "poly" then
+        if not tab.contains(custom_actions,d.id) then
           params:set_action(k.."_"..d.id, function(x)
             if engine.name == "Kildare" then
               engine.set_voice_param(k, d.id, x)
@@ -457,6 +478,31 @@ function Kildare.init(poly)
           if not poly then
             params:hide(k.."_"..d.id) -- avoid exposing poly for performance management
           end
+        elseif d.id == "sampleMode" then
+        elseif d.id == "sampleFile" then
+          params:set_action(k.."_"..d.id,
+            function(file)
+              if file ~= _path.audio then
+                if params:string(k.."_sampleMode") == "distribute" then
+                  local split_at = string.match(file, "^.*()/")
+                  local folder = string.sub(file, 1, split_at)
+                  engine.load_folder(k,folder)
+                  Kildare.folder_callback(k,folder)
+                else
+                  engine.load_file(k,file)
+                  Kildare.file_callback(k,file)
+                end
+              end
+            end
+          )
+        elseif d.id == "sampleClear" then
+          params:set_action(k.."_"..d.id,
+            function(x)
+              engine.clear_samples(k)
+              params:set(k.."_sampleFile", _path.audio, silent)
+              Kildare.clear_callback(k)
+            end
+          )
         end
       end
     end

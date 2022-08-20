@@ -16,6 +16,7 @@ Kildare {
 
 	var <voiceTracker;
 	var <folderedSamples;
+	classvar <sampleInfo;
 	classvar <indexTracker;
 
 	*initClass {
@@ -54,6 +55,26 @@ Kildare {
 		indexTracker = Dictionary.new;
 
 		folderedSamples = Dictionary.new;
+		sampleInfo = Dictionary.newFrom([
+			\sample1, Dictionary.newFrom(
+				[
+					\samples, Dictionary.new(),
+					\pointers, Dictionary.new(),
+					\samplerates, Dictionary.new()
+			]),
+			\sample2, Dictionary.newFrom(
+				[
+					\samples, Dictionary.new(),
+					\pointers, Dictionary.new(),
+					\samplerates, Dictionary.new()
+			]),
+			\sample3, Dictionary.newFrom(
+				[
+					\samples, Dictionary.new(),
+					\pointers, Dictionary.new(),
+					\samplerates, Dictionary.new()
+			]),
+		]);
 
 		topGroup = Group.new(s);
 		groups = Dictionary.new;
@@ -423,6 +444,10 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 				\t_trig,1,
+				\startA, 0,
+				\startB, 0,
+				\crossfade, 0,
+				\aOrB, 0
 			]));
 			sample_iterator = sample_iterator + 1;
 		});
@@ -633,8 +658,11 @@ Kildare {
 			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
 			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isNil.not, {
 				if (voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying, {
-					voiceTracker[voiceKey][indexTracker[voiceKey]].set(\stopGate, -1.05);
-					// ("stopping previous iteration of  "++indexTracker[voiceKey]++voiceKey).postln;
+					if ((""++voiceKey++"").contains("sample"), {
+						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\t_trig, -1.05);
+					},{
+						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\stopGate, -1.05);
+					});
 				});
 			});
 			if ((""++voiceKey++"").contains("sample"),{
@@ -676,30 +704,70 @@ Kildare {
 		topGroup.set(\stopGate, 0);
 	}
 
-	loadsample { arg msg;
-		var voice = msg[1], filename = msg[2];
-		Buffer.read(Server.default, filename ,action:{
-			arg bufnum;
-			var synName = "kildare_sample";
-			if (bufnum.numChannels>1,{
-				synName = "kildare_sample"; // todo: make mono option
+	clearSamples { arg voice;
+		if ( sampleInfo[voice][\samples].size > 0, {
+			for ( 0, sampleInfo[voice][\samples].size-1, {
+				arg i;
+				sampleInfo[voice][\samples][i].free;
+				sampleInfo[voice][\samples][i] = nil;
+				("freeing buffer "++i).postln;
 			});
-			paramProtos[voice][\bufnum] = bufnum;
 		});
 	}
 
-	loadfolder { arg msg;
-		var voice = msg[1], filepath = msg[2];
-		folderedSamples[voice] = SoundFile.collect(filepath++"/*");
-		Buffer.read(Server.default, folderedSamples[voice][0].path, action:{
+	loadFile { arg msg;
+		var voice = msg[1], filename = msg[2];
+		groups[voice].set(\t_trig, -1);
+		groups[voice].set(\stopGate, -1);
+		this.clearSamples(voice);
+		sampleInfo[voice][\samples][0] = Buffer.read(Server.default, filename ,action:{
 			arg bufnum;
-			var synName = "kildare_sample";
-			if (bufnum.numChannels>1,{
-				synName = "kildare_sample"; // todo: make mono option
-			});
-			paramProtos[voice][\bufnum] = bufnum;
+			sampleInfo[voice][\pointers][0] = bufnum;
+			this.setFile(voice,1);
 		});
 	}
+
+	setFile { arg voice, samplenum;
+		if ( sampleInfo[voice][\samples].size > 0, {
+			samplenum = samplenum - 1;
+			samplenum = samplenum.wrap(0,sampleInfo[voice][\samples].size-1);
+			paramProtos[voice][\bufnum] = sampleInfo[voice][\pointers][samplenum];
+			sampleInfo[voice][\samplerates][samplenum] = sampleInfo[voice][\samples][samplenum].sampleRate;
+		});
+	}
+
+	loadFileIntoContainer { arg voice, index, path;
+		sampleInfo[voice][\samples][index] = Buffer.read(Server.default, path, action:{
+			arg bufnum;
+			sampleInfo[voice][\pointers][index] = bufnum;
+			sampleInfo[voice][\pointers][index].postln;
+			if (index == 0, {
+				this.setFile(voice,1);
+			});
+		});
+	}
+
+	loadFolder { arg voice, filepath;
+		this.clearSamples(voice);
+		folderedSamples[voice] = SoundFile.collect(filepath++"*");
+		for ( 0, folderedSamples[voice].size-1, {
+			arg i;
+			this.loadFileIntoContainer(voice,i,folderedSamples[voice][i].path);
+		});
+	}
+
+	stopSample { arg voice;
+		groups[voice].set(\t_trig, -1.1);
+		groups[voice].set(\stopGate, -1.1);
+	}
+
+	/*changesamplestart { arg msg;
+		var voice = msg[1], new_start = msg[2], t_trig = 1;
+		paramProtos[voice][\aOrB] = ToggleFF.kr(t_trig);
+		groups[voice].set(\startA, Latch.kr(new_start,paramProtos[voice][\aOrB]));
+		groups[voice].set(\startB, Latch.kr(new_start,1 - paramProtos[voice][\aOrB]));
+		groups[voice].set(\crossfade, Lag.ar(K2A.ar(paramProtos[voice][\aOrB]),0.05));
+	}*/
 
 	free {
 		topGroup.free;
@@ -719,6 +787,7 @@ Kildare {
 		delayBufs.do({arg buf;
 			buf.free;
 		});
+		Buffer.freeAll(Crone.server);
 	}
 
 }

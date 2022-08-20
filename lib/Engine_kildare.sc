@@ -39,12 +39,34 @@ Engine_Kildare : CroneEngine {
 			kernel.setMainParam(paramKey, paramValue);
 		});
 
-		this.addCommand(\load_sample, "ss", { arg msg;
-			kernel.loadsample(msg);
+		this.addCommand(\load_file, "ss", { arg msg;
+			kernel.loadFile(msg);
 		});
 
 		this.addCommand(\load_folder, "ss", { arg msg;
-			kernel.loadfolder(msg);
+			var voiceKey = msg[1].asSymbol;
+			var filepath = msg[2].asSymbol;
+			kernel.loadFolder(voiceKey, filepath);
+		});
+
+		/*this.addCommand(\change_sample_start, "sf", { arg msg;
+			kernel.changesamplestart(msg);
+		});*/
+
+		this.addCommand(\change_sample, "si", {arg msg;
+			var voiceKey = msg[1].asSymbol;
+			var sample = msg[2].asInteger;
+			kernel.setFile(voiceKey, sample);
+		});
+
+		this.addCommand(\stop_sample, "s", {arg msg;
+			var voiceKey = msg[1].asSymbol;
+			kernel.stopSample(voiceKey);
+		});
+
+		this.addCommand(\clear_samples, "s", {arg msg;
+			var voiceKey = msg[1].asSymbol;
+			kernel.clearSamples(voiceKey);
 		});
 
 		// debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;

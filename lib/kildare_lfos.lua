@@ -67,24 +67,26 @@ function lfos.add_params(drum_names, fx_names, poly)
     local param_group = (k ~= "delay" and k ~= "reverb" and k ~= "main") and kildare_drum_params or kildare_fx_params
     for key,val in pairs(param_group[k]) do
       if param_group[k][key].type ~= "separator" then
-        if (poly == nil and val.id ~= "poly") or (poly == true) then
-          local system_id = params.lookup[k.."_"..param_group[k][key].id]
-          local quantum_size;
-          if params.params[system_id].controlspec ~= nil then
-            quantum_size = params.params[system_id].controlspec.quantum
-          else
-            quantum_size = param_group[k][key].quantum ~= nil and param_group[k][key].quantum or 0.01
+        if param_group[k][key].lfo_exclude == nil then
+          if (poly == nil and val.id ~= "poly") or (poly == true) then
+            local system_id = params.lookup[k.."_"..param_group[k][key].id]
+            local quantum_size;
+            if params.params[system_id].controlspec ~= nil then
+              quantum_size = params.params[system_id].controlspec.quantum
+            else
+              quantum_size = param_group[k][key].quantum ~= nil and param_group[k][key].quantum or 0.01
+            end
+            lfos.specs[k][i] = {
+              min = param_group[k][key].min,
+              max = param_group[k][key].max,
+              warp = param_group[k][key].warp,
+              step = 0,
+              default = param_group[k][key].default,
+              quantum = quantum_size,
+              formatter = param_group[k][key].formatter
+            }
+            i = i+1 -- do not increment by the separators' gaps...
           end
-          lfos.specs[k][i] = {
-            min = param_group[k][key].min,
-            max = param_group[k][key].max,
-            warp = param_group[k][key].warp,
-            step = 0,
-            default = param_group[k][key].default,
-            quantum = quantum_size,
-            formatter = param_group[k][key].formatter
-          }
-          i = i+1 -- do not increment by the separators' gaps...
         end
       end
     end
@@ -100,6 +102,10 @@ function lfos.add_params(drum_names, fx_names, poly)
       lfos.last_param[i] = "decay"
     elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "main" then
       lfos.last_param[i] = "lSHz"
+    elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "sample1" or
+    lfos.targets[util.wrap(i,1,#lfos.targets)] == "sample2" or
+    lfos.targets[util.wrap(i,1,#lfos.targets)] == "sample3" then
+      lfos.last_param[i] = "poly"
     else
       if poly then
         lfos.last_param[i] = "poly"
@@ -286,8 +292,9 @@ function lfos.return_to_baseline(i,silent,poly)
   local drum_target = params:get("lfo_target_track_"..i)
   local parent = lfos.targets[drum_target]
   local param_name = parent.."_"..(lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
-  if parent ~= "delay" and parent ~= "reverb" and parent ~= "main" then
-    if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" then
+  local param_exclusions = {'delay','reverb','main','sample1','sample2','sample3'}
+  if not tab.contains(param_exclusions, parent) then
+    if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" or lfos.last_param[i] == "sampleMode" then
       if poly then
         lfos.last_param[i] = "poly"
       else
@@ -311,6 +318,8 @@ function lfos.return_to_baseline(i,silent,poly)
     else
       engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
     end
+  elseif (parant == "sample1" or parent == "sampel2" or parent == "sample3") and engine.name == "Kildare" then
+    lfos.last_param[i] = "poly"
   end
   if not silent then
     lfos.last_param[i] = (lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
@@ -354,7 +363,7 @@ function lfos.build_params_static(poly)
     lfos.params_list[style] = {ids = {}, names = {}}
     local parent = (style ~= "delay" and style ~= "reverb" and style ~= "main") and kildare_drum_params[style] or kildare_fx_params[style]
     for j = 1,#parent do
-      if parent[j].type ~= "separator" then
+      if parent[j].type ~= "separator" and parent[j].lfo_exclude == nil then
         if (parent[j].id == "poly" and poly) or (parent[j].id ~= "poly") then
           table.insert(lfos.params_list[style].ids, parent[j].id)
           table.insert(lfos.params_list[style].names, parent[j].name)

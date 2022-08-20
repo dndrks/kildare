@@ -63,7 +63,6 @@ KildareSample {
 					EnvGen.kr(Env.linen(attackTime: sampleAtk, sustainTime: 0.05, releaseTime: sampleRel, curve: 'sin'),gate: stopGate, doneAction: sampleEnv * 2)
 				]
 			);
-			// sampleEnv = EnvGen.kr(Env.linen(attackTime: sampleAtk, sustainTime: 0.05, releaseTime: sampleRel, curve: 'sin'),gate: stopGate, doneAction: 2);
 
 			pos=Phasor.ar(
 				trig:aOrB,
@@ -105,7 +104,7 @@ KildareSample {
 			mainSend = RHPF.ar(in:mainSend,freq:hpHz, rq: filterQ, mul:1);
 
 			mainSend = Compander.ar(in:mainSend,control:mainSend, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-			mainSend = Pan2.ar(mainSend,pan);
+			mainSend = Balance2.ar(mainSend[0],mainSend[1],pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
 			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate))]);
