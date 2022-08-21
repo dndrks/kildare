@@ -21,6 +21,7 @@ Kildare {
 
 	*initClass {
 		voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh, \sample1, \sample2, \sample3];
+
 		StartUp.add {
 			var s = Server.default;
 
@@ -774,7 +775,6 @@ Kildare {
 		synthDefs.do({arg def;
 			def.free;
 		});
-		synthDefs[\softcut].free;
 		voiceTracker.do({arg voice;
 			voice.free;
 		});

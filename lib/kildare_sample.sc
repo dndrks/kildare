@@ -75,6 +75,7 @@ KildareSample {
 				numChannels:2,
 				bufnum:bufnum,
 				phase:pos,
+				loop:1,
 				interpolation:4,
 			);
 
@@ -90,6 +91,7 @@ KildareSample {
 				numChannels:2,
 				bufnum:bufnum,
 				phase:pos2,
+				loop:1,
 				interpolation:4,
 			);
 

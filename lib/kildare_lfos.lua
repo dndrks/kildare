@@ -318,8 +318,19 @@ function lfos.return_to_baseline(i,silent,poly)
     else
       engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
     end
-  elseif (parant == "sample1" or parent == "sampel2" or parent == "sample3") and engine.name == "Kildare" then
-    lfos.last_param[i] = "poly"
+  elseif (parent == "sample1" or parent == "sample2" or parent == "sample3") and engine.name == "Kildare" then
+    if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" or lfos.last_param[i] == "sampleMode" then
+      if poly then
+        lfos.last_param[i] = "poly"
+      else
+        lfos.last_param[i] = "amp"
+      end
+    end
+    if lfos.last_param[i] == "poly" then
+      engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]) == 1 and 0 or 1)
+    else
+      engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
+    end
   end
   if not silent then
     lfos.last_param[i] = (lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
