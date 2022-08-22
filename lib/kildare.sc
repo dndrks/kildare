@@ -107,6 +107,7 @@ Kildare {
 			\level, 1,
 			\feedback, 0.7,
 			\spread, 1,
+			\pan, 0,
 			\lpHz, 20000,
 			\hpHz, 20,
 			\filterQ, 50,
@@ -126,19 +127,21 @@ Kildare {
 			\lowCut, 10,
 			\thresh, 0,
 			\slopeBelow, 1,
-			\slopeAbove, 1
+			\slopeAbove, 1,
+			\clampTime, 0.01,
+			\relaxTime,0.1
 		]);
 
 		mainOutParams = Dictionary.newFrom([
-			\lSHz, 20,
+			\lSHz, 600,
 			\lSdb, 0,
-			\lSQ, 1,
+			\lSQ, 50,
 			\hSHz, 19000,
 			\hSdb, 0,
-			\hSQ, 1,
-			\eqHz, 5000,
+			\hSQ, 50,
+			\eqHz, 6000,
 			\eqdb, 0,
-			\eqQ, 1,
+			\eqQ, 50,
 			\level, 1
 		]);
 
@@ -457,9 +460,9 @@ Kildare {
 
 		outputSynths[\delay] = SynthDef.new(\delay, {
 
-			arg time = 0.3, level = 0.5, feedback = 0.8,
-			lpHz = 19000, hpHz = 20, filterQ = 50,
-			spread = 1, pan = 1,
+			arg time = 0.3, level = 1.0, feedback = 0.7,
+			lpHz = 20000, hpHz = 20, filterQ = 50,
+			spread = 1, pan = 0,
 			reverbSend = 0,
 			inputL, inputR,
 			mainOutput, reverbOutput;
@@ -486,7 +489,7 @@ Kildare {
 			startHit = BufCombC.ar(delayBufs[\initHit].bufnum,leftInput,time/2,0,level);
 			delayL = BufCombC.ar(delayBufs[\left1].bufnum,leftInput,time/2,0,level);
 			delayL = BufCombC.ar(delayBufs[\left2].bufnum,delayL,time,feedbackDecayTime,level);
-			delayR = BufCombC.ar(delayBufs[\right].bufnum,rightInput,time,feedbackDecayTime,level);
+			delayR = BufCombC.ar(delayBufs[\right].bufnum,rightInput,time,feedbackDecayTime*0.9,level);
 
 			startHit = RLPF.ar(in:startHit, freq:lpHz, rq: filterQ, mul:1);
 			delayL = RLPF.ar(in:delayL, freq:lpHz, rq: filterQ, mul:1);
@@ -516,9 +519,9 @@ Kildare {
 
         outputSynths[\reverb] = SynthDef.new(\reverb, {
 
-			arg preDelay = 0.048, level = 0.5, decay = 6,
-			refAmp = 0.707, refDiv = 10, refOffset = 0, modDepth = 0.2, modFreq = 0.1,
-			highCut = 8000, lowCut = 20,
+			arg preDelay = 0.0, level = 1, decay = 2,
+			refAmp = 0.0, refDiv = 10, refOffset = 0, modDepth = 0.0, modFreq = 0.1,
+			highCut = 8000, lowCut = 10,
 			thresh = 0, slopeBelow = 1, slopeAbove = 1,
 			clampTime = 0.01, relaxTime = 0.1,
 			in, out;
@@ -613,9 +616,9 @@ Kildare {
 
         outputSynths[\main] = SynthDef.new(\main, {
             arg in, out,
-			lSHz, lSdb, lSQ,
-			hSHz, hSdb, hSQ,
-			eqHz, eqdb, eqQ,
+			lSHz = 600, lSdb = 0.0, lSQ = 50,
+			hSHz = 19000, hSdb = 0.0, hSQ = 50,
+			eqHz = 6000, eqdb = 0.0, eqQ = 0.0,
 			level = 1.0;
 			var src = In.ar(in, 2);
 

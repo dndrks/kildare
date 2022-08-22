@@ -381,7 +381,7 @@ function Kildare.init(poly)
       {id = 'refOffset', name = 'reflections offset', type = 'control', min = -1.0, max = 1.0, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'refDiv', name = 'reflections divison', type = 'number', min = 8, max = 100, default = 10, formatter = function(param) return ("1/"..param:get()) end},
       {id = 'modFreq', name = 'mod freq', type = 'control', min = 0.1, max = 30, warp = 'exp', default = 0.1, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modDepth', name = 'mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'modDepth', name = 'mod depth', type = 'control', min = 0, max = 1, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'highCut', name = 'highcut freq', type = 'control', min = 100, max = 10000, warp = 'exp', default = 8000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'lowCut', name = 'lowcut freq', type = 'control', min = 10, max = 6000, warp = 'exp', default = 10, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'level', name = 'level', type = 'control', min = 0, max = 2, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -519,15 +519,19 @@ function Kildare.init(poly)
     params:add_group('kildare_'..k, k, #kildare_fx_params[k])
     for i = 1, #kildare_fx_params[k] do
       local d = kildare_fx_params[k][i]
-      local quantum_size = 0.01
-      if d.quantum ~= nil then
-        quantum_size = d.quantum
-      end
       if d.type == 'control' then
+        local quantum_size = 0.01
+        if d.quantum ~= nil then
+          quantum_size = d.quantum
+        end
+        local step_size = 0
+        if d.step ~= nil then
+          step_size = d.step
+        end
         params:add_control(
           k.."_"..d.id,
           d.name,
-          ControlSpec.new(d.min, d.max, d.warp, 0, d.default, nil, quantum_size),
+          ControlSpec.new(d.min, d.max, d.warp, step_size, d.default, nil, quantum_size),
           d.formatter
         )
       elseif d.type == 'number' then
