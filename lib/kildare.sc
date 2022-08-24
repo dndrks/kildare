@@ -760,9 +760,19 @@ Kildare {
 		});
 	}
 
+	adjustSampleMult { arg voice, mult;
+		if (paramProtos[voice][\rate] != mult, {
+			groups[voice].set(\rate, paramProtos[voice][\rate] * mult);
+		});
+	}
+
+	adjustSampleOffset { arg voice, offset;
+		groups[voice].set(\rate, (paramProtos[voice][\rate]) * (0.5**((offset*-1)/12)));
+	}
+
 	stopSample { arg voice;
-		groups[voice].set(\t_trig, -1.1);
-		groups[voice].set(\stopGate, -1.1);
+		groups[voice].set(\t_trig, -1.08);
+		groups[voice].set(\stopGate, -1.08);
 	}
 
 	/*changesamplestart { arg msg;

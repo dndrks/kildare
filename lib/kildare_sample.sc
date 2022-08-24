@@ -14,6 +14,7 @@ KildareSample {
 			delayAuxL, delayAuxR, delaySend = 0,
 			delayEnv, delayAtk, delayRel,
 			reverbAux, reverbSend = 0,
+			// baseRate = 1, rateOffset = 0, pitchControl = 0,
 			rate = 1, stopGate = 1,
 			amDepth, amHz,
 			eqHz, eqAmp,
@@ -24,6 +25,7 @@ KildareSample {
 
 			var snd, snd2, pos, pos2, frames, duration, loop_env, arEnv, ampMod, delEnv, mainSend;
 			var startA, endA, startB, endB, crossfade, aOrB;
+			var totalOffset;
 
 			eqHz = eqHz.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
@@ -42,6 +44,10 @@ KildareSample {
 			startB = Latch.kr(sampleStart,1-aOrB);
 			endB = Latch.kr(sampleEnd,1-aOrB);
 			crossfade = Lag.ar(K2A.ar(aOrB),0.05);
+
+			// totalOffset = rateOffset;
+			// totalOffset = (0.5**((totalOffset*-1)/12)) * rate;
+			// totalOffset = totalOffset + (totalOffset * (pitchControl/100));
 
 			rate = rate*BufRateScale.kr(bufnum);
 			frames = BufFrames.kr(bufnum);

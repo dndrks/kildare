@@ -507,6 +507,15 @@ function Kildare.init(poly)
               Kildare.clear_callback(k)
             end
           )
+        elseif d.id == 'playbackRateBase' then
+          -- params:set_action(k.."_"..d.id,
+          --   function(x)
+          --     local rate_options = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 4}
+          --     engine.rtSampleMult(k,rate_options[x])
+          --   end
+          -- )
+        elseif d.id == 'playbackRateOffset' or d.id == 'playbackPitchControl' then
+          -- engine.set_voice_param(k,'rate',get_resampled_rate)
         end
       end
     end

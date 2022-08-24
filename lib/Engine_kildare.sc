@@ -59,6 +59,12 @@ Engine_Kildare : CroneEngine {
 			kernel.setFile(voiceKey, sample);
 		});
 
+		/*this.addCommand(\rtSampleMult, "sf", {arg msg;
+			var voiceKey = msg[1].asSymbol;
+			var mult = msg[2].asFloat;
+			kernel.adjustSampleMult(voiceKey, mult);
+		});*/
+
 		this.addCommand(\stop_sample, "s", {arg msg;
 			var voiceKey = msg[1].asSymbol;
 			kernel.stopSample(voiceKey);
