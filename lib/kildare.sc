@@ -771,8 +771,8 @@ Kildare {
 	}
 
 	stopSample { arg voice;
-		groups[voice].set(\t_trig, -1.08);
-		groups[voice].set(\stopGate, -1.08);
+		groups[voice].set(\t_trig, -1.1);
+		groups[voice].set(\stopGate, -1.1);
 	}
 
 	/*changesamplestart { arg msg;

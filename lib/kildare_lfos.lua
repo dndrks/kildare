@@ -3,18 +3,13 @@
 local musicutil = require 'musicutil'
 
 lfos = {}
-lfos.count = 16
-lfos.update_freq = 128
-lfos.freqs = {}
-lfos.progress = {}
-lfos.values = {}
-lfos.rand_values = {}
+lfos.count = 32
 
 lfos.rates = {1/16,1/8,1/4,5/16,1/3,3/8,1/2,3/4,1,1.5,2,3,4,6,8,16,32,64,128,256,512,1024}
 lfos.rates_as_strings = {"1/16","1/8","1/4","5/16","1/3","3/8","1/2","3/4","1","1.5","2","3","4","6","8","16","32","64","128","256","512","1024"}
 
 lfos.targets = {}
-
+lfos.current_baseline = {}
 lfos.specs = {}
 
 lfos.params_list = {}
@@ -23,9 +18,35 @@ for i = 1,lfos.count do
   lfos.last_param[i] = "empty"
 end
 
+_lfo = require 'lfo'
+
+klfo = {}
+
 local ivals = {}
 
 function lfos.add_params(drum_names, fx_names, poly)
+
+  for i = 1,lfos.count do
+    klfo[i] = _lfo:add{
+      action = 
+      function(s,r)
+        local target_track = params:string("lfo_target_track_"..i)
+        local target_param = params:get("lfo_target_param_"..i)
+        local param_name = lfos.params_list[target_track]
+        if not lfos.current_baseline[i] then
+          lfos.send_param_value(target_track, param_name.ids[(target_param)], s)
+        else
+          -- local current_centroid = math.abs(params:get("lfo_min_"..i) - params:get("lfo_max_"..i)) * klfo[i].depth/2
+          local current_centroid = math.abs(params:get("lfo_min_"..i) - params:get("lfo_max_"..i)) * klfo[i].depth
+          local scaled_min = util.clamp(params:get(target_track..'_'..lfos.params_list[target_track].ids[target_param]) - current_centroid, params:get("lfo_min_"..i), params:get("lfo_max_"..i))
+          local scaled_max = util.clamp(params:get(target_track..'_'..lfos.params_list[target_track].ids[target_param]) + current_centroid, params:get("lfo_min_"..i), params:get("lfo_max_"..i))
+          r = util.linlin(0,1,scaled_min, scaled_max,r + klfo[i].offset)
+          lfos.send_param_value(target_track, param_name.ids[(target_param)], r)
+        end
+      end,
+      ppqn = 32
+    }
+  end
 
   for k,v in pairs(drum_names) do
     table.insert(lfos.targets,v)
@@ -94,7 +115,7 @@ function lfos.add_params(drum_names, fx_names, poly)
 
   lfos.build_params_static(poly)
 
-  params:add_group("lfos",lfos.count * 12)
+  params:add_group("lfos",lfos.count * 15)
   for i = 1,lfos.count do
     if lfos.targets[util.wrap(i,1,#lfos.targets)] == "delay" then
       lfos.last_param[i] = "time"
@@ -113,40 +134,50 @@ function lfos.add_params(drum_names, fx_names, poly)
         lfos.last_param[i] = "amp"
       end
     end
-    params:add_separator("lfo "..i)
+    
+    params:add_separator('lfo_'..i..'_separator', "lfo "..i)
+    
     params:add_option("lfo_"..i,"state",{"off","on"},1)
     params:set_action("lfo_"..i,function(x)
-      lfos.sync_lfos(i)
       if x == 1 then
-        lfos.return_to_baseline(i,true,poly)
+        klfo[i]:stop()
+        lfos.return_to_baseline(i,true,true)
         params:hide("lfo_target_track_"..i)
         params:hide("lfo_target_param_"..i)
+        params:hide("lfo_shape_"..i)
+        params:hide("lfo_beats_"..i)
+        params:hide("lfo_free_"..i)
+        params:hide("lfo_offset_"..i)
         params:hide("lfo_depth_"..i)
         params:hide("lfo_min_"..i)
         params:hide("lfo_max_"..i)
         params:hide("lfo_mode_"..i)
-        params:hide("lfo_beats_"..i)
-        params:hide("lfo_free_"..i)
-        params:hide("lfo_shape_"..i)
+        params:hide("lfo_baseline_"..i)
         params:hide("lfo_reset_"..i)
+        params:hide("lfo_reset_target_"..i)
         _menu.rebuild_params()
       elseif x == 2 then
+        klfo[i]:start()
         params:show("lfo_target_track_"..i)
         params:show("lfo_target_param_"..i)
-        params:show("lfo_depth_"..i)
-        params:show("lfo_min_"..i)
-        params:show("lfo_max_"..i)
-        params:show("lfo_mode_"..i)
+        params:show("lfo_shape_"..i)
         if params:get("lfo_mode_"..i) == 1 then
           params:show("lfo_beats_"..i)
         else
           params:show("lfo_free_"..i)
         end
-        params:show("lfo_shape_"..i)
+        params:show("lfo_offset_"..i)
+        params:show("lfo_depth_"..i)
+        params:show("lfo_min_"..i)
+        params:show("lfo_max_"..i)
+        params:show("lfo_mode_"..i)
+        params:show("lfo_baseline_"..i)
         params:show("lfo_reset_"..i)
+        params:show("lfo_reset_target_"..i)
         _menu.rebuild_params()
       end
     end)
+
     params:add_option("lfo_target_track_"..i, "track", lfos.targets, 1)
     params:set_action("lfo_target_track_"..i,
       function(x)
@@ -155,24 +186,63 @@ function lfos.add_params(drum_names, fx_names, poly)
         params.params[param_id].count = tab.count(params.params[param_id].options)
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
-        lfos.return_to_baseline(i,nil,poly)
+        lfos.return_to_baseline(i,nil,true)
         params:set("lfo_target_param_"..i,1)
         params:set("lfo_depth_"..i,0)
         lfos.reset_bounds_in_menu(i)
-
       end
     )
+
     params:add_option("lfo_target_param_"..i, "param",lfos.params_list[lfos.targets[1]].names,1)
     params:set_action("lfo_target_param_"..i,
       function(x)
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
-        lfos.return_to_baseline(i,nil,poly)
+        lfos.return_to_baseline(i,nil,true)
         lfos.reset_bounds_in_menu(i)
       end
     )
+
+    params:add_option("lfo_shape_"..i, "shape", {"sine","saw","square","random"},1)
+    params:set_action('lfo_shape_'..i, function(x)
+      klfo[i]:set('shape', params:lookup_param("lfo_shape_"..i).options[x])
+    end)
+
+    params:add_option("lfo_beats_"..i, "rate", lfos.rates_as_strings, tab.key(lfos.rates_as_strings,"1"))
+    params:set_action("lfo_beats_"..i,
+      function(x)
+        if params:string("lfo_mode_"..i) == "clocked bars" then
+          klfo[i]:set('period',lfos.rates[x] * 4)
+        end
+      end
+    )
+
+    params:add{
+      type = 'control',
+      id = "lfo_free_"..i,
+      name = "rate",
+      controlspec = controlspec.new(0.1,300,'exp',0.1,1,'sec')
+    }
+    params:set_action("lfo_free_"..i,
+      function(x)
+        if params:string("lfo_mode_"..i) == "free" then
+          klfo[i]:set('period',x)
+        end
+      end
+    )
+
     params:add_number("lfo_depth_"..i,"depth",0,100,0,function(param) return (param:get().."%") end)
-    params:set_action("lfo_depth_"..i, function(x) if x == 0 then lfos.return_to_baseline(i,true,poly) end end)
+    params:set_action("lfo_depth_"..i, function(x)
+      klfo[i]:set('depth',x/100)
+      if x == 0 then
+        lfos.return_to_baseline(i,true,true)
+      end
+    end)
+
+    params:add_number('lfo_offset_'..i, 'lfo offset', -100, 100, 0, function(param) return (param:get().."%") end)
+    params:set_action("lfo_offset_"..i, function(x)
+      klfo[i]:set('offset',x/100)
+    end)
 
     local target_track = params:string("lfo_target_track_"..i)
     local target_param = params:get("lfo_target_param_"..i)
@@ -190,6 +260,10 @@ function lfos.add_params(drum_names, fx_names, poly)
         lfos.specs[target_track][target_param].quantum
       )
     }
+    params:set_action('lfo_min_'..i, function(x)
+      klfo[i]:set('min',x)
+    end)
+
     params:add{
       type='control',
       id="lfo_max_"..i,
@@ -204,73 +278,53 @@ function lfos.add_params(drum_names, fx_names, poly)
         lfos.specs[target_track][target_param].quantum
       )
     }
+    params:set_action('lfo_max_'..i, function(x)
+      klfo[i]:set('max',x)
+    end)
+
     params:add_option("lfo_mode_"..i, "update mode", {"clocked bars","free"},1)
     params:set_action("lfo_mode_"..i,
       function(x)
         if x == 1 and params:string("lfo_"..i) == "on" then
           params:hide("lfo_free_"..i)
           params:show("lfo_beats_"..i)
-          lfos.freqs[i] = 1/(lfos.get_the_beats() * lfos.rates[params:get("lfo_beats_"..i)] * 4)
+          klfo[i]:set('mode', 'clocked')
         elseif x == 2 then
           params:hide("lfo_beats_"..i)
           params:show("lfo_free_"..i)
-          lfos.freqs[i] = params:get("lfo_free_"..i)
+          klfo[i]:set('mode', 'free')
         end
         _menu.rebuild_params()
       end
-      )
-    params:add_option("lfo_beats_"..i, "rate", lfos.rates_as_strings, tab.key(lfos.rates_as_strings,"1"))
-    params:set_action("lfo_beats_"..i,
-      function(x)
-        if params:string("lfo_mode_"..i) == "clocked bars" then
-          lfos.freqs[i] = 1/(lfos.get_the_beats() * lfos.rates[x] * 4)
-        end
-      end
     )
-    params:add{
-      type='control',
-      id="lfo_free_"..i,
-      name="rate",
-      controlspec=controlspec.new(0.001,24,'exp',0.001,0.05,'hz',0.001)
-    }
-    params:set_action("lfo_free_"..i,
-      function(x)
-        if params:string("lfo_mode_"..i) == "free" then
-          lfos.freqs[i] = x
-        end
+
+    local baseline_options;
+    baseline_options = {"from min", "from center", "from max", 'from current'}
+    params:add_option("lfo_baseline_"..i, "lfo baseline", baseline_options, 1)
+    params:set_action("lfo_baseline_"..i, function(x)
+      if x ~= 4 then
+        lfos.current_baseline[i] = false
+        klfo[i]:set('baseline',string.gsub(params:lookup_param("lfo_baseline_"..i).options[x],"from ",""))
+      else
+        lfos.current_baseline[i] = true
+        klfo[i]:set('baseline','min')
       end
-    )
-    params:add_option("lfo_shape_"..i, "shape", {"sine","square","random"},1)
+    end)
 
     params:add_trigger("lfo_reset_"..i, "reset lfo")
-    params:set_action("lfo_reset_"..i, function(x) lfos.reset_phase(i) end)
+    params:set_action("lfo_reset_"..i, function() klfo[i]:reset_phase() end)
 
-    params:hide("lfo_free_"..i)
+    params:add_option("lfo_reset_target_"..i, "reset lfo to", {"floor","ceiling"}, 1)
+    params:set_action("lfo_reset_target_"..i, function(x)
+      klfo[i]:set('reset_target', params:lookup_param("lfo_reset_target_"..i).options[x])
+    end)
+
+    -- params:hide("lfo_free_"..i)
+    -- params:hide("lfo_beats_"..i)
+    _menu.rebuild_params()
+
   end
 
-  lfos.reset_phase()
-  lfos.update_freqs()
-  lfos.lfo_update()
-  metro.init(lfos.lfo_update, 1 / lfos.update_freq):start()
-  
-  local system_tempo_change_handler = params:lookup_param("clock_tempo").action
-  
-  local new_tempo_change_handler = function(bpm)
-    system_tempo_change_handler(bpm)
-    if lfos.tempo_updater_clock then
-      clock.cancel(lfos.tempo_updater_clock)
-    end
-    lfos.tempo_updater_clock = clock.run(function() clock.sleep(0.05) lfos.update_tempo() end)
-  end
-
-  params:set_action("clock_tempo", new_tempo_change_handler)
-
-end
-
-function lfos.update_tempo()
-  for i = 1,lfos.count do
-    lfos.sync_lfos(i)
-  end
 end
 
 function lfos.reset_bounds_in_menu(i)
@@ -329,7 +383,7 @@ function lfos.return_to_baseline(i,silent,poly)
     if lfos.last_param[i] == "poly" then
       engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]) == 1 and 0 or 1)
     else
-      engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
+      engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
     end
   end
   if not silent then
@@ -366,6 +420,7 @@ function lfos.rebuild_param(param,i)
   if lfos.specs[target_track][target_param].formatter ~= nil then
     params.params[param_id].formatter = lfos.specs[target_track][target_param].formatter
   end
+  klfo[i]:set(param,lfos.specs[target_track][target_param][param])
 end
 
 function lfos.build_params_static(poly)
@@ -382,34 +437,6 @@ function lfos.build_params_static(poly)
       end
     end
 
-  end
-end
-
-function lfos.update_freqs()
-  for i = 1, lfos.count do
-    lfos.freqs[i] = 1 / util.linexp(1, lfos.count, 1, 1, i)
-  end
-end
-
-function lfos.reset_phase(which)
-  if which == nil then
-    for i = 1, lfos.count do
-      lfos.progress[i] = math.pi * 1.5
-    end
-  else
-    lfos.progress[which] = math.pi * 1.5
-  end
-end
-
-function lfos.get_the_beats()
-  return 60 / params:get("clock_tempo")
-end
-
-function lfos.sync_lfos(i)
-  if params:get("lfo_mode_"..i) == 1 then
-    lfos.freqs[i] = 1/(lfos.get_the_beats() * lfos.rates[params:get("lfo_beats_"..i)] * 4)
-  else
-    lfos.freqs[i] = params:get("lfo_free_"..i)
   end
 end
 
@@ -432,56 +459,6 @@ function lfos.send_param_value(target_track, target_id, value)
       lfos.set_delay_param(target_id,value)
     else
       engine["set_"..target_track.."_param"](target_id,value)
-    end
-  end
-end
-
-function lfos.lfo_update()
-  local delta = (1 / lfos.update_freq) * 2 * math.pi
-  for i = 1,lfos.count do
-    lfos.progress[i] = lfos.progress[i] + delta * lfos.freqs[i]
-    local min = params:get("lfo_min_"..i)
-    local max = params:get("lfo_max_"..i)
-    if min > max then
-      local old_min = min
-      local old_max = max
-      min = old_max
-      max = old_min
-    end
-
-    local mid = math.abs(min-max)/2 + min
-    local percentage = math.abs(min-max) * (params:get("lfo_depth_"..i)/100)
-    local target_track = params:string("lfo_target_track_"..i)
-    local target_param = params:get("lfo_target_param_"..i)
-    local param_name = lfos.params_list[target_track]
-    local engine_target = params:get(target_track.."_"..param_name.ids[(target_param)])
-    scaled_min = min
-    scaled_max = min + percentage
-    local value = util.linlin(-1,1,scaled_min,scaled_max,math.sin(lfos.progress[i])) -- new
-    mid = util.linlin(min,max,scaled_min,scaled_max,mid) -- new
-    
-    if value ~= lfos.values[i] and (params:get("lfo_depth_"..i)/100 > 0) then
-      lfos.values[i] = value
-      if params:string("lfo_"..i) == "on" then
-        if params:string("lfo_shape_"..i) == "sine" then
-          if param_name.ids[(target_param)] == "poly" then
-            value = util.linlin(-1,1,min,max,math.sin(lfos.progress[i])) < mid and 0 or 1
-          end
-          lfos.send_param_value(target_track, param_name.ids[(target_param)], value)
-        elseif params:string("lfo_shape_"..i) == "square" then
-          local square_value = value >= mid and max or min
-          square_value = util.linlin(min,max,scaled_min,scaled_max,square_value) -- new
-          lfos.send_param_value(target_track, param_name.ids[(target_param)], square_value)
-        elseif params:string("lfo_shape_"..i) == "random" then
-          local prev_value = lfos.rand_values[i]
-          lfos.rand_values[i] = value >= mid and max or min
-          local rand_value;
-          if prev_value ~= lfos.rand_values[i] then
-            rand_value = util.linlin(min,max,scaled_min,scaled_max,math.random(math.floor(min*100),math.floor(max*100))/100) -- new
-            lfos.send_param_value(target_track, param_name.ids[(target_param)], rand_value)
-          end
-        end
-      end
     end
   end
 end

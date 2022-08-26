@@ -22,6 +22,9 @@ end
 function Kildare.clear_callback()
 end
 
+function Kildare.voice_param_callback()
+end
+
 function Kildare.init(poly)
 
   function percent_formatter(param)
@@ -124,7 +127,7 @@ function Kildare.init(poly)
       {id = 'modRel', name = 'modulator release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 1, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'feedAmp', name = 'modulator feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'noise'},
-      {id = 'noiseAmp', name = 'noise amp', type = 'control', min = 0, max = 1, warp = 'lin',  step = 1, default = 0.01, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'noiseAmp', name = 'noise amp', type = 'control', min = 0, max = 1, warp = 'lin',  step = 0.01, default = 0.01, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'noiseAtk', name = 'noise attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'noiseRel', name = 'noise release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.1, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'pitch ramp'},
@@ -204,7 +207,7 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 300, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
+      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, step = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
       {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20,  step = 1, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20,  step = 1, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modRel', name = 'modulator release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.5, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -286,7 +289,7 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'feedAmp', name = 'modulator feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'snap'},
-      {id = 'snap', name = 'snap', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'snap', name = 'snap', type = 'control', min = 0, max = 1, warp = 'lin', step = 0.01, default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'pitch ramp'},
       {id = 'rampDepth', name = 'ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 4, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -323,9 +326,9 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 100, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
-      {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
-      {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, step = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
+      {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20, warp = 'lin', step = 1, default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
+      {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20, warp = 'lin', step = 1, default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modAtk', name = 'modulator attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'modRel', name = 'modulator release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'feedAmp', name = 'modulator feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
@@ -465,18 +468,21 @@ function Kildare.init(poly)
           params:set_action(k.."_"..d.id, function(x)
             if engine.name == "Kildare" then
               engine.set_voice_param(k, d.id, x)
+              Kildare.voice_param_callback(k, d.id, x)
             end
           end)
         elseif d.id == "carHz" then
           params:set_action(k.."_"..d.id, function(x)
             if engine.name == "Kildare" then
               engine.set_voice_param(k, d.id, musicutil.note_num_to_freq(x))
+              Kildare.voice_param_callback(k, d.id, x)
             end
           end)
         elseif d.id == "poly" then
           params:set_action(k.."_"..d.id, function(x)
             if engine.name == "Kildare" then
               engine.set_voice_param(k, d.id, x == 1 and 0 or 1)
+              Kildare.voice_param_callback(k, d.id, x)
             end
           end)
           if not poly then
