@@ -6,6 +6,7 @@ Kildare.lfos = include 'kildare/lib/kildare_lfos'
 local musicutil = require 'musicutil'
 
 Kildare.drums = {"bd","sd","tm","cp","rs","cb","hh","sample1","sample2","sample3"}
+local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh'}
 Kildare.fx = {"delay", "reverb", "main"}
 local fx = {"delay", "reverb", "main"}
 
@@ -23,6 +24,61 @@ function Kildare.clear_callback()
 end
 
 function Kildare.voice_param_callback()
+end
+
+function Kildare.model_change_callback()
+end
+
+function Kildare.rebuild_model_params(i,current_model)
+  for j = 1,#swappable_drums do
+    if swappable_drums[j] ~= current_model then
+      for k,v in pairs(kildare_drum_params[swappable_drums[j]]) do
+        if v.type == 'separator' then
+          params:hide(i..'_separator_'..swappable_drums[j]..'_'..v.name)
+        else
+          params:hide(i..'_'..swappable_drums[j]..'_'..v.id)
+        end
+      end
+    else
+      for k,v in pairs(kildare_drum_params[swappable_drums[j]]) do
+        if v.type == 'separator' then
+          params:show(i..'_separator_'..swappable_drums[j]..'_'..v.name)
+        else
+          params:show(i..'_'..swappable_drums[j]..'_'..v.id)
+        end
+      end
+    end
+  end
+  params.params[params.lookup['kildare_'..i..'_group']].name = i..': '..current_model
+  _menu.rebuild_params()
+  Kildare.push_new_model_params(i,current_model)
+  Kildare.model_change_callback(i,current_model)
+  Kildare.lfos.build_params_static(true)
+  if Kildare.loaded then
+    Kildare.lfos.rebuild_model_spec(i,true)
+    for j = 1,Kildare.lfos.count do
+      if params:get('lfo_target_track_'..j) == i then
+        Kildare.lfos.change_target(j)
+        -- local 
+      end
+    end
+  end
+end
+
+function Kildare.push_new_model_params(i,current_model)
+  for j = 1,#swappable_drums do
+    if swappable_drums[j] == current_model then
+      for k,v in pairs(kildare_drum_params[swappable_drums[j]]) do
+        if v.type ~= 'separator' then
+          params.params[params.lookup[i..'_'..swappable_drums[j]..'_'..v.id]]:bang()
+        end
+      end
+    end
+  end
+end
+
+function Kildare.push_model_to_lfos(i,current_model)
+
 end
 
 function Kildare.init(poly)
@@ -46,14 +102,14 @@ function Kildare.init(poly)
     {id = 'playbackPitchControl', name = 'pitch control', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, step = 1/10, quantum = 1/240, formatter = function(param) return (round_form(param:get(),0.01,"%")) end},
     {id = 'loop', name = 'loop', type = 'control', min = 0, max = 1, warp = "lin", default = 0, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[param:get()+1] end},
     {type = 'separator', name = 'additional processing'},
-    {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin', default = 1, quantum = 1/9, step = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
-    {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin', default = 1, quantum = 1/9, step = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
     {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-    {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-    {id = 'eqAmp', name = 'eq gain', type = 'control', min = -2, max = 2, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+    {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin', default = 1, quantum = 1/9, step = 1, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+    {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin', default = 1, quantum = 1/9, step = 1, formatter = function(param) return (round_form(param:get(),1,'')) end},
     {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." Hz") end},
     {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form(param:get(),1," bit")) end},
+    {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
+    {id = 'eqAmp', name = 'eq gain', type = 'control', min = -2, max = 2, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
     {id = 'hpHz', name = 'hi-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 20, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
     {id = 'filterQ', name = 'filter q', type = 'number', min = 0, max = 100, default = 50, formatter = function(param) return (round_form(param:get(),1,"%")) end},
@@ -78,7 +134,7 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 600, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, default = 0,  step = 1, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
+      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, default = 0,  step = 1, quantum = 1, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
       {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20, warp = 'lin', default = 1,  step = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20, warp = 'lin', default = 1,  step = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modAtk', name = 'modulator attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -88,14 +144,14 @@ function Kildare.init(poly)
       {id = 'rampDepth', name = 'ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.11, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.3, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
-      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqAmp', name = 'eq gain', type = 'control', min = -2, max = 2, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." Hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form(param:get(),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = -2, max = 2, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -120,7 +176,7 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 2770, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1,  step = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
+      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1,  step = 1, quantum = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
       {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20, warp = 'lin',  step = 1, default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20, warp = 'lin',  step = 1, default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modAtk', name = 'modulator attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.2, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -134,14 +190,14 @@ function Kildare.init(poly)
       {id = 'rampDepth', name = 'ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.5, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.06, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
-      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 2698.8, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 12000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." Hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form(param:get(),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 12000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -166,7 +222,7 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.32, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 180, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1,  step = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
+      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1,  step = 1, quantum = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
       {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20,  step = 1, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20,  step = 1, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modAtk', name = 'modulator attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -176,14 +232,14 @@ function Kildare.init(poly)
       {id = 'rampDepth', name = 'ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.3, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.06, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
-      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 2698.8, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." Hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form(param:get(),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -207,7 +263,7 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 300, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, step = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
+      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, step = 1, quantum = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
       {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20,  step = 1, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20,  step = 1, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modRel', name = 'modulator release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.5, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -215,14 +271,14 @@ function Kildare.init(poly)
       {type = 'separator', name = 'click'},
       {id = 'click', name = 'click', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
-      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 2698.8, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." Hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form(param:get(),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -247,7 +303,7 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 4000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1,  step = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
+      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1,  step = 1, quantum = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
       {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20,  step = 1, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20,  step = 1, warp = 'lin', default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {type = 'separator', name = 'snare drum'},
@@ -257,14 +313,14 @@ function Kildare.init(poly)
       {id = 'rampDepth', name = 'snare ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'rampDec', name = 'snare ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.06, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
-      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." Hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form(param:get(),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -294,14 +350,14 @@ function Kildare.init(poly)
       {id = 'rampDepth', name = 'ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 4, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
-      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 2698.8, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 12000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10,  step = 1, warp = 'lin', default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." Hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form(param:get(),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 12000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -326,7 +382,7 @@ function Kildare.init(poly)
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 100, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, step = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
+      {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, step = 1, quantum = 1, default = 0, formatter = function(param) if param:get() == 0 then return ("no") else return ("yes") end end},
       {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20, warp = 'lin', step = 1, default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20, warp = 'lin', step = 1, default = 1, quantum = 1/40, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'modAtk', name = 'modulator attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -336,14 +392,14 @@ function Kildare.init(poly)
       {id = 'tremDepth', name = 'tremolo depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form(param:get(),1,"%")) end},
       {id = 'tremHz', name = 'tremolo rate', type = 'control', min = 0.01, max = 8000, warp = 'exp', default = 1000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {type = 'separator', name = 'additional processing'},
-      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
-      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
-      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if param:get() == 1 then return ("off") else return (round_form(param:get(),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form(param:get(),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round(param:get(),0.1).." Hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form(param:get(),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form(param:get(),0.01," Hz")) end},
       {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form(param:get(),0.01," s")) end},
@@ -415,11 +471,115 @@ function Kildare.init(poly)
     params:add_option("no_kildare","----- kildare not loaded -----",{" "})
   end
 
+  params:add_group('kildare_model_management', 'models', 7)
+  local models = {'bd','sd','tm','cp','rs','cb','hh'}
+  for i = 1,7 do
+    params:add_option('voice_model_'..i, 'voice '..i, models, i)
+    params:set_action('voice_model_'..i, function(x)
+      Kildare.rebuild_model_params(i, models[x])
+      engine.set_model(i, 'kildare_'..models[x])
+    end)
+  end
+
   local custom_actions = {'carHz', 'poly', 'sampleMode', 'sampleFile', 'sampleClear', 'playbackRateBase', 'playbackRateOffset', 'playbackPitchControl'}
   
-  for j = 1,#Kildare.drums do
-    local k = Kildare.drums[j]
-    params:add_group('kilare_'..k, k, #kildare_drum_params[k])
+  local how_many_params = 0
+  for i = 1,7 do
+    how_many_params = tab.count(kildare_drum_params[swappable_drums[i]]) + how_many_params
+  end
+
+  for i = 1,7 do
+    local shown_set = params:string('voice_model_'..i)
+    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params)
+    
+    for k,v in pairs(swappable_drums) do
+      for prms,d in pairs(kildare_drum_params[v]) do
+        if d.type == 'control' then
+          local quantum_size = 0.01
+          if d.quantum ~= nil then
+            quantum_size = d.quantum
+          end
+          local step_size = 0
+          if d.step ~= nil then
+            step_size = d.step
+          end
+          if d.id == "carHz" then
+            quantum_size = 1/math.abs(d.max-d.min)
+          end
+          params:add_control(
+            i..'_'..v..'_'..d.id,
+            d.name,
+            ControlSpec.new(d.min, d.max, d.warp, step_size, d.default, nil, quantum_size),
+            d.formatter
+          )
+        elseif d.type == 'number' then
+          params:add_number(
+            i..'_'..v..'_'..d.id,
+            d.name,
+            d.min,
+            d.max,
+            d.default,
+            d.formatter
+          )
+        elseif d.type == "option" then
+          params:add_option(
+            i..'_'..v..'_'..d.id,
+            d.name,
+            d.options,
+            d.default
+          )
+        elseif d.type == 'separator' then
+          params:add_separator(i..'_separator_'..v..'_'..d.name, d.name)
+        elseif d.type == 'file' then
+          params:add_file(i.."_"..v..'_'..d.id, d.name, d.default)
+        elseif d.type == 'binary' then
+          params:add_binary(i.."_"..v..'_'..d.id, d.name, d.behavior)
+        end
+        if d.type ~= 'separator' then
+          if not tab.contains(custom_actions,d.id) then
+            params:set_action(i.."_"..v..'_'..d.id, function(x)
+              if engine.name == "Kildare" then
+                if v == params:string('voice_model_'..i) then
+                  engine.set_voice_param(i, d.id, x)
+                  Kildare.voice_param_callback(i, d.id, x)
+                end
+              end
+            end)
+          elseif d.id == "carHz" then
+            params:set_action(i.."_"..v..'_'..d.id, function(x)
+              if engine.name == "Kildare" then
+                if v == params:string('voice_model_'..i) then
+                  engine.set_voice_param(i, d.id, musicutil.note_num_to_freq(x))
+                  Kildare.voice_param_callback(i, d.id, x)
+                end
+              end
+            end)
+          elseif d.id == "poly" then
+            params:set_action(i.."_"..v..'_'..d.id, function(x)
+              if engine.name == "Kildare" then
+                if v == params:string('voice_model_'..i) then
+                  engine.set_voice_param(i, d.id, x == 1 and 0 or 1)
+                  Kildare.voice_param_callback(i, d.id, x)
+                end
+              end
+            end)
+            if not poly then
+              params:hide(i.."_"..v..'_'..d.id) -- avoid exposing poly for performance management
+            end
+          end
+        end
+      end
+    end
+
+    Kildare.rebuild_model_params(i,shown_set)
+
+  end
+
+  for j = 8,10 do
+    local k = 'sample'..(j-7)
+    j = 'sample'..(j-7)
+    params:add_group('kildare_'..j..'_group', j, #kildare_drum_params[k])
+    
     for i = 1, #kildare_drum_params[k] do
       local d = kildare_drum_params[k][i]
       if d.type == 'control' then
@@ -435,14 +595,14 @@ function Kildare.init(poly)
           quantum_size = 1/math.abs(d.max-d.min)
         end
         params:add_control(
-          k.."_"..d.id,
+          j.."_"..d.id,
           d.name,
           ControlSpec.new(d.min, d.max, d.warp, step_size, d.default, nil, quantum_size),
           d.formatter
         )
       elseif d.type == 'number' then
         params:add_number(
-          k.."_"..d.id,
+          j.."_"..d.id,
           d.name,
           d.min,
           d.max,
@@ -451,66 +611,66 @@ function Kildare.init(poly)
         )
       elseif d.type == "option" then
         params:add_option(
-          k.."_"..d.id,
+          j.."_"..d.id,
           d.name,
           d.options,
           d.default
         )
       elseif d.type == 'separator' then
-        params:add_separator('kildare_voice_params_'..k.."_"..d.name, d.name)
+        params:add_separator(j..'_separator_'..d.name, d.name)
       elseif d.type == 'file' then
-        params:add_file(k.."_"..d.id, d.name, d.default)
+        params:add_file(j.."_"..d.id, d.name, d.default)
       elseif d.type == 'binary' then
-        params:add_binary(k.."_"..d.id, d.name, d.behavior)
+        params:add_binary(j.."_"..d.id, d.name, d.behavior)
       end
       if d.type ~= 'separator' then
         if not tab.contains(custom_actions,d.id) then
-          params:set_action(k.."_"..d.id, function(x)
+          params:set_action(j.."_"..d.id, function(x)
             if engine.name == "Kildare" then
-              engine.set_voice_param(k, d.id, x)
-              Kildare.voice_param_callback(k, d.id, x)
+              engine.set_voice_param(j, d.id, x)
+              Kildare.voice_param_callback(j, d.id, x)
             end
           end)
         elseif d.id == "carHz" then
-          params:set_action(k.."_"..d.id, function(x)
+          params:set_action(j.."_"..d.id, function(x)
             if engine.name == "Kildare" then
-              engine.set_voice_param(k, d.id, musicutil.note_num_to_freq(x))
-              Kildare.voice_param_callback(k, d.id, x)
+              engine.set_voice_param(j, d.id, musicutil.note_num_to_freq(x))
+              Kildare.voice_param_callback(j, d.id, x)
             end
           end)
         elseif d.id == "poly" then
-          params:set_action(k.."_"..d.id, function(x)
+          params:set_action(j.."_"..d.id, function(x)
             if engine.name == "Kildare" then
-              engine.set_voice_param(k, d.id, x == 1 and 0 or 1)
-              Kildare.voice_param_callback(k, d.id, x)
+              engine.set_voice_param(j, d.id, x == 1 and 0 or 1)
+              Kildare.voice_param_callback(j, d.id, x)
             end
           end)
           if not poly then
-            params:hide(k.."_"..d.id) -- avoid exposing poly for performance management
+            params:hide(j.."_"..d.id) -- avoid exposing poly for performance management
           end
         elseif d.id == "sampleMode" then
         elseif d.id == "sampleFile" then
-          params:set_action(k.."_"..d.id,
+          params:set_action(j.."_"..d.id,
             function(file)
               if file ~= _path.audio then
-                if params:string(k.."_sampleMode") == "distribute" then
+                if params:string(j.."_sampleMode") == "distribute" then
                   local split_at = string.match(file, "^.*()/")
                   local folder = string.sub(file, 1, split_at)
-                  engine.load_folder(k,folder)
-                  Kildare.folder_callback(k,folder)
+                  engine.load_folder(j,folder)
+                  Kildare.folder_callback(j,folder)
                 else
-                  engine.load_file(k,file)
-                  Kildare.file_callback(k,file)
+                  engine.load_file(j,file)
+                  Kildare.file_callback(j,file)
                 end
               end
             end
           )
         elseif d.id == "sampleClear" then
-          params:set_action(k.."_"..d.id,
+          params:set_action(j.."_"..d.id,
             function(x)
-              engine.clear_samples(k)
-              params:set(k.."_sampleFile", _path.audio, silent)
-              Kildare.clear_callback(k)
+              engine.clear_samples(j)
+              params:set(j.."_sampleFile", _path.audio, silent)
+              Kildare.clear_callback(j)
             end
           )
         elseif d.id == 'playbackRateBase' then
@@ -586,6 +746,8 @@ function Kildare.init(poly)
   Kildare.lfos.add_params(Kildare.drums, Kildare.fx ,poly)
   
   params:bang()
+
+  Kildare.loaded = true
   
 end
 

@@ -57,7 +57,7 @@ KildareSample {
 			loop_env = EnvGen.ar(
 				Env.new(
 					levels: [0,1,1,0],
-					times: [0,duration-0.05,0.05],
+					times: [0,duration-0.08,0.08],
 				),
 				gate:t_trig,
 				doneAction: 2
@@ -66,7 +66,7 @@ KildareSample {
 			arEnv = Select.kr(
 				sampleEnv > 0, [
 					1,
-					EnvGen.kr(Env.linen(attackTime: sampleAtk, sustainTime: 0.05, releaseTime: sampleRel, curve: 'sin'),gate: stopGate, doneAction: sampleEnv * 2)
+					EnvGen.kr(Env.linen(attackTime: sampleAtk, sustainTime: 0.08, releaseTime: sampleRel, curve: 'sin'),gate: stopGate, doneAction: sampleEnv * 2)
 				]
 			);
 
@@ -109,7 +109,6 @@ KildareSample {
 			mainSend = RLPF.ar(in:mainSend,freq:Clip.kr(lpHz, 20, 20000), rq: filterQ, mul:1);
 			mainSend = RHPF.ar(in:mainSend,freq:hpHz, rq: filterQ, mul:1);
 
-			mainSend = Compander.ar(in:mainSend,control:mainSend, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 			mainSend = Balance2.ar(mainSend[0],mainSend[1],pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 

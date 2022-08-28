@@ -75,6 +75,12 @@ Engine_Kildare : CroneEngine {
 			kernel.clearSamples(voiceKey);
 		});
 
+		this.addCommand(\set_model, "ss", {arg msg;
+			var voiceKey = msg[1].asSymbol;
+			var synthKey = msg[2].asSymbol;
+			kernel.setModel(voiceKey,synthKey);
+		});
+
 		// debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;
 	}
 

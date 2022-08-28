@@ -22,7 +22,7 @@ _lfo = require 'lfo'
 
 klfo = {}
 
-local ivals = {}
+ivals = {}
 
 function lfos.add_params(drum_names, fx_names, poly)
 
@@ -49,7 +49,7 @@ function lfos.add_params(drum_names, fx_names, poly)
   end
 
   for k,v in pairs(drum_names) do
-    table.insert(lfos.targets,v)
+    table.insert(lfos.targets,k <= 7 and k or v)
   end
 
   for k,v in pairs(fx_names) do
@@ -70,47 +70,7 @@ function lfos.add_params(drum_names, fx_names, poly)
   end
 
   for k,v in pairs(ivals) do
-    lfos.specs[k] = {}
-    local i = 1
-
-    -- t values:
-    -- 0: separator
-    -- 1: number
-    -- 2: option
-    -- 3: control
-    -- 4: file
-    -- 5: taper
-    -- 6: trigger
-    -- 7: group
-    -- 8: text
-    -- 9: binary
-
-    local param_group = (k ~= "delay" and k ~= "reverb" and k ~= "main") and kildare_drum_params or kildare_fx_params
-    for key,val in pairs(param_group[k]) do
-      if param_group[k][key].type ~= "separator" then
-        if param_group[k][key].lfo_exclude == nil then
-          if (poly == nil and val.id ~= "poly") or (poly == true) then
-            local system_id = params.lookup[k.."_"..param_group[k][key].id]
-            local quantum_size;
-            if params.params[system_id].controlspec ~= nil then
-              quantum_size = params.params[system_id].controlspec.quantum
-            else
-              quantum_size = param_group[k][key].quantum ~= nil and param_group[k][key].quantum or 0.01
-            end
-            lfos.specs[k][i] = {
-              min = param_group[k][key].min,
-              max = param_group[k][key].max,
-              warp = param_group[k][key].warp,
-              step = 0,
-              default = param_group[k][key].default,
-              quantum = quantum_size,
-              formatter = param_group[k][key].formatter
-            }
-            i = i+1 -- do not increment by the separators' gaps...
-          end
-        end
-      end
-    end
+    lfos.rebuild_model_spec(k,poly)
   end
 
   lfos.build_params_static(poly)
@@ -181,15 +141,7 @@ function lfos.add_params(drum_names, fx_names, poly)
     params:add_option("lfo_target_track_"..i, "track", lfos.targets, 1)
     params:set_action("lfo_target_track_"..i,
       function(x)
-        local param_id = params.lookup["lfo_target_param_"..i]
-        params.params[param_id].options = lfos.params_list[lfos.targets[x]].names
-        params.params[param_id].count = tab.count(params.params[param_id].options)
-        lfos.rebuild_param("min",i)
-        lfos.rebuild_param("max",i)
-        lfos.return_to_baseline(i,nil,true)
-        params:set("lfo_target_param_"..i,1)
-        params:set("lfo_depth_"..i,0)
-        lfos.reset_bounds_in_menu(i)
+        lfos.change_target(i)
       end
     )
 
@@ -331,7 +283,12 @@ function lfos.reset_bounds_in_menu(i)
   local target_track = params:string("lfo_target_track_"..i)
   local target_param = params:get("lfo_target_param_"..i)
   local restore_min = lfos.specs[target_track][target_param].min
-  local restore_max = params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
+  local restore_max;
+  if params:get("lfo_target_track_"..i) <= 7 then
+    restore_max = params:get(target_track.."_"..params:string('voice_model_'..params:get("lfo_target_track_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
+  else
+    restore_max = params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
+  end
   if restore_min == restore_max then
     restore_max = lfos.specs[target_track][target_param].max
   end
@@ -340,6 +297,18 @@ function lfos.reset_bounds_in_menu(i)
   end
   params:set("lfo_min_"..i, restore_min)
   params:set("lfo_max_"..i, restore_max)
+end
+
+function lfos.change_target(i)
+  local param_id = params.lookup["lfo_target_param_"..i]
+  params.params[param_id].options = lfos.params_list[lfos.targets[params:get("lfo_target_track_"..i)]].names
+  params.params[param_id].count = tab.count(params.params[param_id].options)
+  lfos.rebuild_param("min",i)
+  lfos.rebuild_param("max",i)
+  lfos.return_to_baseline(i,nil,true)
+  params:set("lfo_target_param_"..i,1)
+  params:set("lfo_depth_"..i,0)
+  lfos.reset_bounds_in_menu(i)
 end
 
 function lfos.return_to_baseline(i,silent,poly)
@@ -355,12 +324,13 @@ function lfos.return_to_baseline(i,silent,poly)
         lfos.last_param[i] = "amp"
       end
     end
+    local focus_voice = params:string('voice_model_'..parent)
     if lfos.last_param[i] ~= "carHz" and lfos.last_param[i] ~= "poly" and engine.name == "Kildare" then
-      engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
+      engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
     elseif lfos.last_param[i] == "carHz" and engine.name == "Kildare" then
-      engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..lfos.last_param[i])))
+      engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])))
     elseif lfos.last_param[i] == "poly" and engine.name == "Kildare" then
-      engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]) == 1 and 0 or 1)
+      engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]) == 1 and 0 or 1)
     end
   elseif (parent == "delay" or parent == "reverb" or parent == "main") and engine.name == "Kildare" then
     local sources = {delay = lfos.delay_params, reverb = lfos.reverb_params, main = lfos.main_params}
@@ -395,8 +365,14 @@ function lfos.rebuild_param(param,i)
   local param_id = params.lookup["lfo_"..param.."_"..i]
   local target_track = params:string("lfo_target_track_"..i)
   local target_param = params:get("lfo_target_param_"..i)
-  local default_value = param == "min" and lfos.specs[target_track][target_param].min
+  local default_value;
+  if params:get("lfo_target_track_"..i) <= 7 then
+    default_value = param == "min" and lfos.specs[target_track][target_param].min
+    or params:get(target_track.."_"..params:string('voice_model_'..params:string("lfo_target_track_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
+  else
+    default_value = param == "min" and lfos.specs[target_track][target_param].min
     or params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
+  end
   if param == "max" then
     if lfos.specs[target_track][target_param].min == default_value then
       default_value = lfos.specs[target_track][target_param].max
@@ -420,14 +396,24 @@ function lfos.rebuild_param(param,i)
   if lfos.specs[target_track][target_param].formatter ~= nil then
     params.params[param_id].formatter = lfos.specs[target_track][target_param].formatter
   end
-  klfo[i]:set(param,lfos.specs[target_track][target_param][param])
+  if param == 'min' then
+    klfo[i]:set(param,lfos.specs[target_track][target_param][param])
+  else
+    klfo[i]:set(param,default_value)
+  end
 end
 
 function lfos.build_params_static(poly)
   for i = 1,#lfos.targets do
     local style = lfos.targets[i]
     lfos.params_list[style] = {ids = {}, names = {}}
-    local parent = (style ~= "delay" and style ~= "reverb" and style ~= "main") and kildare_drum_params[style] or kildare_fx_params[style]
+    local focus_voice;
+    if type(style) == 'number' then
+      focus_voice = params:string('voice_model_'..style)
+    else
+      focus_voice = style
+    end
+    local parent = (style ~= "delay" and style ~= "reverb" and style ~= "main") and kildare_drum_params[focus_voice] or kildare_fx_params[focus_voice]
     for j = 1,#parent do
       if parent[j].type ~= "separator" and parent[j].lfo_exclude == nil then
         if (parent[j].id == "poly" and poly) or (parent[j].id ~= "poly") then
@@ -459,6 +445,57 @@ function lfos.send_param_value(target_track, target_id, value)
       lfos.set_delay_param(target_id,value)
     else
       engine["set_"..target_track.."_param"](target_id,value)
+    end
+  end
+end
+
+function lfos.rebuild_model_spec(k,poly)
+  lfos.specs[k] = {}
+  local i = 1
+
+  -- t values:
+  -- 0: separator
+  -- 1: number
+  -- 2: option
+  -- 3: control
+  -- 4: file
+  -- 5: taper
+  -- 6: trigger
+  -- 7: group
+  -- 8: text
+  -- 9: binary
+
+  local focus_voice;
+  if type(k) == 'number' then
+    focus_voice = params:string('voice_model_'..k)
+  else
+    focus_voice = k
+  end
+  local param_group = (k ~= "delay" and k ~= "reverb" and k ~= "main") and kildare_drum_params or kildare_fx_params
+  for key,val in pairs(param_group[focus_voice]) do
+    if param_group[focus_voice][key].type ~= "separator" then
+      if param_group[focus_voice][key].lfo_exclude == nil then
+        if (poly == nil and val.id ~= "poly") or (poly == true) then
+          local concat_name = type(k) == 'number' and (k.."_"..focus_voice..'_'..param_group[focus_voice][key].id) or (k.."_"..param_group[focus_voice][key].id)
+          local system_id = params.lookup[concat_name]
+          local quantum_size;
+          if params.params[system_id].controlspec ~= nil then
+            quantum_size = params.params[system_id].controlspec.quantum
+          else
+            quantum_size = param_group[focus_voice][key].quantum ~= nil and param_group[focus_voice][key].quantum or 0.01
+          end
+          lfos.specs[k][i] = {
+            min = param_group[focus_voice][key].min,
+            max = param_group[focus_voice][key].max,
+            warp = param_group[focus_voice][key].warp,
+            step = 0,
+            default = param_group[focus_voice][key].default,
+            quantum = quantum_size,
+            formatter = param_group[focus_voice][key].formatter
+          }
+          i = i+1 -- do not increment by the separators' gaps...
+        end
+      end
     end
   end
 end

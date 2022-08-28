@@ -1,9 +1,11 @@
 Kildare {
 	classvar <voiceKeys;
 	classvar <synthDefs;
+	classvar <synthKeys;
 	const <numVoices = 3;
 
 	var <paramProtos;
+	var <generalizedParams;
 	var <groups;
 	var <topGroup;
 
@@ -20,7 +22,8 @@ Kildare {
 	classvar <indexTracker;
 
 	*initClass {
-		voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh, \sample1, \sample2, \sample3];
+		// voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh, \sample1, \sample2, \sample3];
+		voiceKeys = [ \1, \2, \3, \4, \5, \6, \7, \sample1, \sample2, \sample3];
 
 		StartUp.add {
 			var s = Server.default;
@@ -28,13 +31,26 @@ Kildare {
 			s.waitForBoot {
 				synthDefs = Dictionary.new;
 
-				synthDefs[\bd] = KildareBD.new(Crone.server);
-				synthDefs[\sd] = KildareSD.new(Crone.server);
-				synthDefs[\tm] = KildareTM.new(Crone.server);
-				synthDefs[\cp] = KildareCP.new(Crone.server);
-				synthDefs[\rs] = KildareRS.new(Crone.server);
-				synthDefs[\cb] = KildareCB.new(Crone.server);
-				synthDefs[\hh] = KildareHH.new(Crone.server);
+				synthKeys = Dictionary.newFrom([
+					\1, \kildare_bd,
+					\2, \kildare_sd,
+					\3, \kildare_tm,
+					\4, \kildare_cp,
+					\5, \kildare_rs,
+					\6, \kildare_cb,
+					\7, \kildare_hh,
+					\sample1, \kildare_sample,
+					\sample2, \kildare_sample,
+					\sample3, \kildare_sample,
+				]);
+
+				synthDefs[\1] = KildareBD.new(Crone.server);
+				synthDefs[\2] = KildareSD.new(Crone.server);
+				synthDefs[\3] = KildareTM.new(Crone.server);
+				synthDefs[\4] = KildareCP.new(Crone.server);
+				synthDefs[\5] = KildareRS.new(Crone.server);
+				synthDefs[\6] = KildareCB.new(Crone.server);
+				synthDefs[\7] = KildareHH.new(Crone.server);
 				synthDefs[\sample1] = KildareSample.new(Crone.server);
 				synthDefs[\sample2] = KildareSample.new(Crone.server);
 				synthDefs[\sample3] = KildareSample.new(Crone.server);
@@ -145,8 +161,8 @@ Kildare {
 			\level, 1
 		]);
 
-		paramProtos = Dictionary.newFrom([
-			\bd, Dictionary.newFrom([
+		generalizedParams = Dictionary.newFrom([
+			\kildare_bd, Dictionary.newFrom([
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
@@ -188,7 +204,7 @@ Kildare {
 				\lpDepth,1,
 				\pan,0,
 			]),
-			\sd, Dictionary.newFrom([
+			\kildare_sd, Dictionary.newFrom([
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
@@ -229,7 +245,7 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
-			\tm, Dictionary.newFrom([
+			\kildare_tm, Dictionary.newFrom([
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
@@ -268,7 +284,7 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
-			\cp, Dictionary.newFrom([
+			\kildare_cp, Dictionary.newFrom([
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
@@ -304,7 +320,7 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
-			\rs, Dictionary.newFrom([
+			\kildare_rs, Dictionary.newFrom([
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
@@ -342,7 +358,7 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
-			\cb, Dictionary.newFrom([
+			\kildare_cb, Dictionary.newFrom([
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
@@ -374,7 +390,7 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
-			\hh, Dictionary.newFrom([
+			\kildare_hh, Dictionary.newFrom([
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
@@ -412,10 +428,7 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 			]),
-		]);
-
-		while ( { sample_iterator < 4 }, {
-			paramProtos.put((\sample++sample_iterator).asSymbol, Dictionary.newFrom([
+			\kildare_sample, Dictionary.newFrom([
 				\bufnum,nil,
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
@@ -452,11 +465,26 @@ Kildare {
 				\startB, 0,
 				\crossfade, 0,
 				\aOrB, 0
-			]));
-			sample_iterator = sample_iterator + 1;
-		});
+			])
+		]);
 
-		// Synth.new(\softcut, paramProtos[\softcut].getPairs, groups[\softcut]);
+		paramProtos = Dictionary.newFrom([
+			\1, Dictionary.newFrom(generalizedParams[\kildare_bd]),
+			\2, Dictionary.newFrom(generalizedParams[\kildare_sd]),
+			\3, Dictionary.newFrom(generalizedParams[\kildare_tm]),
+			\4, Dictionary.newFrom(generalizedParams[\kildare_cp]),
+			\5, Dictionary.newFrom(generalizedParams[\kildare_rs]),
+			\6, Dictionary.newFrom(generalizedParams[\kildare_cb]),
+			\7, Dictionary.newFrom(generalizedParams[\kildare_hh]),
+			\sample1, Dictionary.newFrom(generalizedParams[\kildare_sample]),
+			\sample2, Dictionary.newFrom(generalizedParams[\kildare_sample]),
+			\sample3, Dictionary.newFrom(generalizedParams[\kildare_sample]),
+		]);
+
+		/*while ( { sample_iterator < 4 }, {
+			paramProtos.put((\sample++sample_iterator).asSymbol, Dictionary.newFrom(generalizedParams[\kildare_sample]));
+			sample_iterator = sample_iterator + 1;
+		});*/
 
 		outputSynths[\delay] = SynthDef.new(\delay, {
 
@@ -652,27 +680,27 @@ Kildare {
 		if( paramProtos[voiceKey][\poly] == 0,{
 			indexTracker[voiceKey] = numVoices;
 			groups[voiceKey].set(\stopGate, -1.05);
-			if ((""++voiceKey++"").contains("sample"), {
+			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
 				groups[voiceKey].set(\t_trig, -1.05);
 				Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
 			},{
-				Synth.new(\kildare_++voiceKey, paramProtos[voiceKey].getPairs, groups[voiceKey]);
+				Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
 			});
 		},{
 			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
 			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isNil.not, {
 				if (voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying, {
-					if ((""++voiceKey++"").contains("sample"), {
+					if ((""++synthKeys[voiceKey]++"").contains("sample"), {
 						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\t_trig, -1.05);
 					},{
 						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\stopGate, -1.05);
 					});
 				});
 			});
-			if ((""++voiceKey++"").contains("sample"),{
+			if ((""++synthKeys[voiceKey]++"").contains("sample"),{
 				voiceTracker[voiceKey][indexTracker[voiceKey]] = Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
 			},{
-				voiceTracker[voiceKey][indexTracker[voiceKey]] = Synth.new(\kildare_++voiceKey, paramProtos[voiceKey].getPairs, groups[voiceKey]);
+				voiceTracker[voiceKey][indexTracker[voiceKey]] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
 			});
 
 			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isNil.not, {
@@ -773,6 +801,11 @@ Kildare {
 	stopSample { arg voice;
 		groups[voice].set(\t_trig, -1.1);
 		groups[voice].set(\stopGate, -1.1);
+	}
+
+	setModel { arg voice, model;
+		synthKeys[voice] = model;
+		paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
 	}
 
 	/*changesamplestart { arg msg;
