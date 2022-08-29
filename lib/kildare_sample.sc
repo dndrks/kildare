@@ -37,6 +37,8 @@ KildareSample {
 			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
+			// sample handling all adapted from Zack Scholl: https://schollz.com/blog/sampler/
+
 			// latch to change trigger between the two
 			aOrB = ToggleFF.kr(t_trig);
 			startA = Latch.kr(sampleStart,aOrB);
@@ -44,10 +46,6 @@ KildareSample {
 			startB = Latch.kr(sampleStart,1-aOrB);
 			endB = Latch.kr(sampleEnd,1-aOrB);
 			crossfade = Lag.ar(K2A.ar(aOrB),0.05);
-
-			// totalOffset = rateOffset;
-			// totalOffset = (0.5**((totalOffset*-1)/12)) * rate;
-			// totalOffset = totalOffset + (totalOffset * (pitchControl/100));
 
 			rate = rate*BufRateScale.kr(bufnum);
 			frames = BufFrames.kr(bufnum);
@@ -98,6 +96,8 @@ KildareSample {
 				phase:pos2,
 				interpolation:4,
 			);
+
+			// ^^ sample handling all adapted from Zack Scholl: https://schollz.com/blog/sampler/ ^^
 
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 

@@ -10,6 +10,8 @@ local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh'}
 Kildare.fx = {"delay", "reverb", "main"}
 local fx = {"delay", "reverb", "main"}
 
+local sox_installed = os.execute('which sox')
+
 function round_form(param,quant,form)
   return(util.round(param,quant)..form)
 end
@@ -481,7 +483,7 @@ function Kildare.init(poly)
     end)
   end
 
-  local custom_actions = {'carHz', 'poly', 'sampleMode', 'sampleFile', 'sampleClear', 'playbackRateBase', 'playbackRateOffset', 'playbackPitchControl'}
+  local custom_actions = {'carHz', 'poly', 'sampleMode', 'sampleFile', 'sampleClear', 'playbackRateBase', 'playbackRateOffset', 'playbackPitchControl', 'loop'}
   
   local how_many_params = 0
   for i = 1,7 do
@@ -674,17 +676,67 @@ function Kildare.init(poly)
             end
           )
         elseif d.id == 'playbackRateBase' then
-          -- params:set_action(k.."_"..d.id,
-          --   function(x)
-          --     local rate_options = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 4}
-          --     engine.rtSampleMult(k,rate_options[x])
-          --   end
-          -- )
         elseif d.id == 'playbackRateOffset' or d.id == 'playbackPitchControl' then
-          -- engine.set_voice_param(k,'rate',get_resampled_rate)
+        elseif d.id == 'loop' then
+          params:set_action(j..'_loop',
+            function(x)
+              if x == 0 then
+                engine.stop_sample(j)
+              end
+            end
+          )
         end
       end
     end
+  end
+
+  local function build_slices(path,slices)
+    local ch, len, smp = audio.file_info(path)
+    local dur = len/smp
+    local per_slice_dur = dur/slices
+    local synced_length = util.round_up((dur) - (dur * ((slices-1)/slices)), clock.get_beat_sec())
+    local split_at = string.match(path, "^.*()/")
+    local folder = string.sub(path, 1, split_at)
+    local filename = path:match("^.+/(.+)$")
+    local filename_raw = filename:match("(.+)%..+")
+
+    if params:string('kildare_st_chop_length') == 'current bpm' then
+      per_slice_dur = synced_length
+    end
+
+    if per_slice_dur > 0.02 then
+      print(folder, filename_raw)
+      os.execute('rm -r '.._path.audio..'kildare/'..filename_raw..'/')
+      os.execute("mkdir -p ".._path.audio..'kildare/'..filename_raw..'/')
+      local new_name = _path.audio..'kildare/'..filename_raw..'/'..filename_raw..'%2n.aif'
+      os.execute('sox '..path..' '..new_name..' trim 0 '..per_slice_dur..' fade 0:00.01 -0 0:00.01 : newfile : restart')
+      clock.run(function()
+        clock.sleep(0.3)
+        local total_slice_count = #util.scandir(_path.audio..'kildare/'..filename_raw..'/')
+        if total_slice_count > slices then
+          total_slice_count = string.format('%02d',total_slice_count)
+          os.execute('rm '.._path.audio..'kildare/'..filename_raw..'/'..filename_raw..total_slice_count..'.aif')
+          print('removing extra slice')
+        end
+      end)
+    else
+      print('kildare: sample duration too small to fade')
+    end
+  end
+
+  if sox_installed then
+    params:add_group('kildare_st_header','kildare sample tools',4)
+    params:add_separator('kildare_st_notice', "for 'distribute' sample mode")
+    params:add_file('kildare_st_chop','chop w/ fade', _path.audio)
+    params:set_action('kildare_st_chop',
+    function(file)
+      if file ~= _path.audio then
+        build_slices(file, params:get('kildare_st_chop_count'))
+        params:set('kildare_st_chop', '', true)
+      end
+    end)
+    params:add_number('kildare_st_chop_count', '   chop count', 2, 48, 16)
+    params:add_option('kildare_st_chop_length', '   length factor', {'even chops', 'current bpm'})
   end
 
   params:add_separator("kildare_fx_header","kildare fx")

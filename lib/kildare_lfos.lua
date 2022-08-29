@@ -439,7 +439,11 @@ function lfos.send_param_value(target_track, target_id, value)
     if target_id == "carHz" then
       value = musicutil.note_num_to_freq(value)
     end
-    engine.set_voice_param(target_track,target_id,value)
+    if string.find(target_track,'sample') and (target_id == 'playbackRateBase' or target_id == 'loop') then
+      params:set(target_track..'_'..target_id,util.round(value))
+    else
+      engine.set_voice_param(target_track,target_id,value)
+    end
   else
     if target_track == "delay" then
       lfos.set_delay_param(target_id,value)

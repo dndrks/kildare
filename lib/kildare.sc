@@ -22,7 +22,6 @@ Kildare {
 	classvar <indexTracker;
 
 	*initClass {
-		// voiceKeys = [ \bd, \sd, \tm, \cp, \rs, \cb, \hh, \sample1, \sample2, \sample3];
 		voiceKeys = [ \1, \2, \3, \4, \5, \6, \7, \sample1, \sample2, \sample3];
 
 		StartUp.add {
@@ -481,11 +480,6 @@ Kildare {
 			\sample3, Dictionary.newFrom(generalizedParams[\kildare_sample]),
 		]);
 
-		/*while ( { sample_iterator < 4 }, {
-			paramProtos.put((\sample++sample_iterator).asSymbol, Dictionary.newFrom(generalizedParams[\kildare_sample]));
-			sample_iterator = sample_iterator + 1;
-		});*/
-
 		outputSynths[\delay] = SynthDef.new(\delay, {
 
 			arg time = 0.3, level = 1.0, feedback = 0.7,
@@ -672,7 +666,6 @@ Kildare {
             \in, busses[\mainOut], \out, 0
         ]);
 
-
 	}
 
 	trigger { arg voiceKey, velocity;
@@ -807,14 +800,6 @@ Kildare {
 		synthKeys[voice] = model;
 		paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
 	}
-
-	/*changesamplestart { arg msg;
-		var voice = msg[1], new_start = msg[2], t_trig = 1;
-		paramProtos[voice][\aOrB] = ToggleFF.kr(t_trig);
-		groups[voice].set(\startA, Latch.kr(new_start,paramProtos[voice][\aOrB]));
-		groups[voice].set(\startB, Latch.kr(new_start,1 - paramProtos[voice][\aOrB]));
-		groups[voice].set(\crossfade, Lag.ar(K2A.ar(paramProtos[voice][\aOrB]),0.05));
-	}*/
 
 	free {
 		topGroup.free;
