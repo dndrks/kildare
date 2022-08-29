@@ -61,7 +61,6 @@ function Kildare.rebuild_model_params(i,current_model)
     for j = 1,Kildare.lfos.count do
       if params:get('lfo_target_track_'..j) == i then
         Kildare.lfos.change_target(j)
-        -- local 
       end
     end
   end
@@ -690,17 +689,35 @@ function Kildare.init(poly)
     end
   end
 
-  local function build_slices(path,slices)
+  local function build_slices(path,slices,sample_voice)
     local ch, len, smp = audio.file_info(path)
     local dur = len/smp
     local per_slice_dur = dur/slices
-    local synced_length = util.round_up((dur) - (dur * ((slices-1)/slices)), clock.get_beat_sec())
     local split_at = string.match(path, "^.*()/")
     local folder = string.sub(path, 1, split_at)
     local filename = path:match("^.+/(.+)$")
     local filename_raw = filename:match("(.+)%..+")
 
     if params:string('kildare_st_chop_length') == 'current bpm' then
+      local synced_length = util.round_up((dur) - (dur * ((slices-1)/slices)), clock.get_beat_sec())
+      if clock.get_beat_sec()*slices > dur then
+        if (clock.get_beat_sec()/2)*slices > dur then
+          if (clock.get_beat_sec()/3)*slices > dur then
+            if (clock.get_beat_sec()/4)*slices > dur then
+              synced_length = synced_length / 4
+              -- print('sixteenth notes')
+            end
+          else
+            synced_length = synced_length / 3
+            -- print('twelfth notes')
+          end
+        else
+          synced_length = synced_length / 2
+          -- print('eighth notes')
+        end
+      else
+        -- print('quarter notes')
+      end
       per_slice_dur = synced_length
     end
 
@@ -708,16 +725,14 @@ function Kildare.init(poly)
       print(folder, filename_raw)
       os.execute('rm -r '.._path.audio..'kildare/'..filename_raw..'/')
       os.execute("mkdir -p ".._path.audio..'kildare/'..filename_raw..'/')
-      local new_name = _path.audio..'kildare/'..filename_raw..'/'..filename_raw..'%2n.aif'
+      local new_name = _path.audio..'kildare/'..filename_raw..'/'..filename_raw..'%2n.flac'
       os.execute('sox '..path..' '..new_name..' trim 0 '..per_slice_dur..' fade 0:00.01 -0 0:00.01 : newfile : restart')
       clock.run(function()
         clock.sleep(0.3)
-        local total_slice_count = #util.scandir(_path.audio..'kildare/'..filename_raw..'/')
-        if total_slice_count > slices then
-          total_slice_count = string.format('%02d',total_slice_count)
-          os.execute('rm '.._path.audio..'kildare/'..filename_raw..'/'..filename_raw..total_slice_count..'.aif')
-          print('removing extra slice')
-        end
+        params:set(sample_voice..'_sampleClear',1)
+        params:set(sample_voice..'_sampleClear',0)
+        params:set(sample_voice..'_sampleMode',3)
+        params:set(sample_voice..'_sampleFile',_path.audio..'kildare/'..filename_raw..'/'..filename_raw..'01.flac')
       end)
     else
       print('kildare: sample duration too small to fade')
@@ -725,18 +740,30 @@ function Kildare.init(poly)
   end
 
   if sox_installed then
-    params:add_group('kildare_st_header','kildare sample tools',4)
+    params:add_group('kildare_st_header','kildare sample tools',6)
     params:add_separator('kildare_st_notice', "for 'distribute' sample mode")
+    params:add_text('kildare_st_info', '')
+    params:hide('kildare_st_info')
+    _menu.rebuild_params()
     params:add_file('kildare_st_chop','chop w/ fade', _path.audio)
     params:set_action('kildare_st_chop',
     function(file)
       if file ~= _path.audio then
-        build_slices(file, params:get('kildare_st_chop_count'))
+        build_slices(file, params:get('kildare_st_chop_count'), params:string('kildare_st_preload'))
         params:set('kildare_st_chop', '', true)
+        params:set('kildare_st_info', '~~~ chopped '..file:match("^.+/(.+)$"))
+        params:show('kildare_st_info')
+        _menu.rebuild_params()
+        clock.run(function()
+          clock.sleep(6)
+          params:hide('kildare_st_info')
+          _menu.rebuild_params()
+        end)
       end
     end)
     params:add_number('kildare_st_chop_count', '   chop count', 2, 48, 16)
     params:add_option('kildare_st_chop_length', '   length factor', {'even chops', 'current bpm'})
+    params:add_option('kildare_st_preload', '   preload to ', {'sample1','sample2','sample3'},1)
   end
 
   params:add_separator("kildare_fx_header","kildare fx")
