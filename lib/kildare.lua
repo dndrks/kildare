@@ -10,6 +10,8 @@ local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh'}
 Kildare.fx = {"delay", "reverb", "main"}
 local fx = {"delay", "reverb", "main"}
 
+Kildare.soundfile_append = ''
+
 local sox_installed = os.execute('which sox')
 
 function round_form(param,quant,form)
@@ -29,6 +31,27 @@ function Kildare.voice_param_callback()
 end
 
 function Kildare.model_change_callback()
+end
+
+function Kildare.move_audio_into_perm(new_folder)
+  local parent_folder = _path.audio..'kildare/TEMP/'
+  if util.file_exists(parent_folder) then
+    if not util.file_exists(new_folder) then
+      os.execute('mkdir -p '..new_folder)
+    end
+    for k,v in pairs(util.scandir(parent_folder)) do
+      os.execute('cp -R '..parent_folder..v..' '..new_folder)
+      for i = 1,3 do
+        local split_at = string.match(params:get('sample'..i..'_sampleFile'), "^.*()/")
+        local folder = string.sub(params:get('sample'..i..'_sampleFile'), 1, split_at)
+        if folder == (parent_folder..v) then
+          -- print('sample'..i..' is assigned to '..folder..', reassigning to '..new_folder..v)
+          params:set('sample'..i..'_sampleFile', new_folder..v..util.scandir(new_folder..v)[1])
+        end
+      end
+      os.execute('rm -r '..parent_folder..v)
+    end
+  end
 end
 
 function Kildare.rebuild_model_params(i,current_model)
@@ -53,8 +76,8 @@ function Kildare.rebuild_model_params(i,current_model)
   end
   params.params[params.lookup['kildare_'..i..'_group']].name = i..': '..current_model
   _menu.rebuild_params()
-  Kildare.push_new_model_params(i,current_model)
   Kildare.model_change_callback(i,current_model)
+  Kildare.push_new_model_params(i,current_model)
   Kildare.lfos.build_params_static(true)
   if Kildare.loaded then
     Kildare.lfos.rebuild_model_spec(i,true)
@@ -723,16 +746,19 @@ function Kildare.init(poly)
 
     if per_slice_dur > 0.02 then
       print(folder, filename_raw)
-      os.execute('rm -r '.._path.audio..'kildare/'..filename_raw..'/')
-      os.execute("mkdir -p ".._path.audio..'kildare/'..filename_raw..'/')
-      local new_name = _path.audio..'kildare/'..filename_raw..'/'..filename_raw..'%2n.flac'
+      local parent_folder = _path.audio..'kildare/TEMP/'..filename_raw..'-'..os.date("%Y%m%d_%H-%M-%S")..'/'
+      if util.file_exists(parent_folder) then
+        os.execute('rm -r '..parent_folder)
+      end
+      os.execute('mkdir -p '..parent_folder)
+      local new_name = parent_folder..filename_raw..'%2n.flac'
       os.execute('sox '..path..' '..new_name..' trim 0 '..per_slice_dur..' fade 0:00.01 -0 0:00.01 : newfile : restart')
       clock.run(function()
         clock.sleep(0.3)
         params:set(sample_voice..'_sampleClear',1)
         params:set(sample_voice..'_sampleClear',0)
         params:set(sample_voice..'_sampleMode',3)
-        params:set(sample_voice..'_sampleFile',_path.audio..'kildare/'..filename_raw..'/'..filename_raw..'01.flac')
+        params:set(sample_voice..'_sampleFile',parent_folder..filename_raw..'01.flac')
       end)
     else
       print('kildare: sample duration too small to fade')
