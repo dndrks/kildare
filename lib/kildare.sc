@@ -495,6 +495,8 @@ Kildare {
 			leftPos, rightPos,
 			feedbackDecayTime;
 
+			time = time.lag3(0.2);
+			feedback = feedback.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
 			hpHz = hpHz.lag3(0.1);
 			level = level.lag3(0.1);
@@ -502,7 +504,7 @@ Kildare {
 			leftInput = In.ar(inputL, 1);
 			rightInput = In.ar(inputR, 1);
 
-			filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
+			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			leftPos = LinLin.kr(spread,0,1,0,-1);
 			rightPos = LinLin.kr(spread,0,1,0,1);
 

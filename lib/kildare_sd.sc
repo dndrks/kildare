@@ -38,7 +38,7 @@ KildareSD {
 			carHz = carHz * (2.pow(carDetune/12));
 			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
-			filterQ = LinLin.kr(filterQ,0,100,2.0,0.001);
+			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
 			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 			carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));

@@ -45,10 +45,19 @@ function Kildare.move_audio_into_perm(new_folder)
         local split_at = string.match(params:get('sample'..i..'_sampleFile'), "^.*()/")
         local folder = string.sub(params:get('sample'..i..'_sampleFile'), 1, split_at)
         if folder == (parent_folder..v) then
-          -- print('sample'..i..' is assigned to '..folder..', reassigning to '..new_folder..v)
+          print('sample'..i..' is assigned to '..folder..', reassigning to '..new_folder..v)
           params:set('sample'..i..'_sampleFile', new_folder..v..util.scandir(new_folder..v)[1])
         end
       end
+      os.execute('rm -r '..parent_folder..v)
+    end
+  end
+end
+
+function Kildare.purge_saved_audio()
+  local parent_folder = _path.audio..'kildare/TEMP/'
+  if util.file_exists(parent_folder) then
+    for k,v in pairs(util.scandir(parent_folder)) do
       os.execute('rm -r '..parent_folder..v)
     end
   end
@@ -781,7 +790,7 @@ function Kildare.init(poly)
         params:show('kildare_st_info')
         _menu.rebuild_params()
         clock.run(function()
-          clock.sleep(6)
+          clock.sleep(2)
           params:hide('kildare_st_info')
           _menu.rebuild_params()
         end)
