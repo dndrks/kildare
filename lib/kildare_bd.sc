@@ -35,7 +35,7 @@ KildareBD {
 			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
-			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
+			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127).lag3(0.1);
 			feedAmp = LinLin.kr(feedAmp,0.0,1.0,0.0,10.0);
 			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 			rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);

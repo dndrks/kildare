@@ -48,29 +48,40 @@ function lfos.add_params(drum_names, fx_names, poly)
     }
   end
 
-  for k,v in pairs(drum_names) do
-    table.insert(lfos.targets,k <= 7 and k or v)
+  local lfo_target_iter = 1
+  for i = 1,#drum_names do
+    lfos.targets[lfo_target_iter] = i<=7 and i or drum_names[i]
+    lfo_target_iter = lfo_target_iter + 1
   end
 
-  for k,v in pairs(fx_names) do
-    table.insert(lfos.targets,v)
+  for i = 1,#fx_names do
+    lfos.targets[lfo_target_iter] = fx_names[i]
+    lfo_target_iter = lfo_target_iter + 1
   end
 
-  for k,v in pairs(lfos.targets) do
-    ivals[v] = {1 + (16*(k-1)), (16 * k)}
+  for i = 1,#lfos.targets do
+    local v = lfos.targets[i]
+    ivals[v] = {1 + (16*(i-1)), (16 * i)}
   end
 
-  for fx,parameters in pairs(kildare_fx_params) do
+  local fx_iter = 1
+  for i = 1,#fx_names do -- 3 = number of fx parameters
+    local fx = fx_names[i]
     lfos[fx.."_params"] = {}
-    for inner,prm in pairs(kildare_fx_params[fx]) do
+    for j = 1,#kildare_fx_params[fx] do
+      local prm = kildare_fx_params[fx][j]
+      local prm_iter = 1
       if prm.type ~= "separator" then
-        table.insert(lfos[fx.."_params"], prm.id)
+        lfos[fx.."_params"][prm_iter] = prm.id
+        prm_iter = prm_iter + 1
       end
     end
   end
 
-  for k,v in pairs(ivals) do
-    lfos.rebuild_model_spec(k,poly)
+  local ival_iter = 1
+  for i = 1,#lfos.targets do
+    local spec_target = lfos.targets[i]
+    lfos.rebuild_model_spec(spec_target,poly)
   end
 
   lfos.build_params_static(poly)
@@ -414,11 +425,15 @@ function lfos.build_params_static(poly)
       focus_voice = style
     end
     local parent = (style ~= "delay" and style ~= "reverb" and style ~= "main") and kildare_drum_params[focus_voice] or kildare_fx_params[focus_voice]
+    local style_id_iter = 1
+    local style_name_iter = 1
     for j = 1,#parent do
       if parent[j].type ~= "separator" and parent[j].lfo_exclude == nil then
         if (parent[j].id == "poly" and poly) or (parent[j].id ~= "poly") then
-          table.insert(lfos.params_list[style].ids, parent[j].id)
-          table.insert(lfos.params_list[style].names, parent[j].name)
+          lfos.params_list[style].ids[style_id_iter] = parent[j].id
+          lfos.params_list[style].names[style_name_iter] = parent[j].name
+          style_id_iter = style_id_iter + 1
+          style_name_iter = style_name_iter + 1
         end
       end
     end

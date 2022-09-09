@@ -674,7 +674,7 @@ Kildare {
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
 			indexTracker[voiceKey] = numVoices;
-			groups[voiceKey].set(\stopGate, -1.05);
+			groups[voiceKey].set(\stopGate, -1.1);
 			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
 				groups[voiceKey].set(\t_trig, -1.05);
 				Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
@@ -688,7 +688,7 @@ Kildare {
 					if ((""++synthKeys[voiceKey]++"").contains("sample"), {
 						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\t_trig, -1.05);
 					},{
-						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\stopGate, -1.05);
+						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\stopGate, -1.1);
 					});
 				});
 			});

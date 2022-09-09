@@ -66,6 +66,7 @@ end
 function Kildare.rebuild_model_params(i,current_model)
   for j = 1,#swappable_drums do
     if swappable_drums[j] ~= current_model then
+      -- local swappable_drums_iter = 1
       for k,v in pairs(kildare_drum_params[swappable_drums[j]]) do
         if v.type == 'separator' then
           params:hide(i..'_separator_'..swappable_drums[j]..'_'..v.name)
@@ -125,6 +126,7 @@ function Kildare.init(poly)
     {lfo_exclude = true, type = 'option', id = 'sampleMode', name = 'play mode', options = {"chop", "playthrough", "distribute"}, default = 1},
     {lfo_exclude = true, type = 'file', id = 'sampleFile', name = 'load', default = _path.audio},
     {lfo_exclude = true, type = 'binary', id = 'sampleClear', name = 'clear', behavior = 'trigger'},
+    {type = 'separator', name = 'voice params'},
     {id = 'poly', name = 'polyphony', type = 'control', min = 1, max = 2,  step = 1, warp = "lin", default = 1, quantum = 1, formatter = function(param) local modes = {"mono","poly"} return modes[param:get()] end},
     {id = 'amp', name = 'amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form(param:get()*100,1,"%")) end},
     {id = 'sampleEnv', name = 'amp envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0, quantum = 1, step = 1, formatter = function(param) local modes = {"off","on"} return modes[param:get()+1] end},
@@ -757,11 +759,11 @@ function Kildare.init(poly)
       print(folder, filename_raw)
       local parent_folder = _path.audio..'kildare/TEMP/'..filename_raw..'-'..os.date("%Y%m%d_%H-%M-%S")..'/'
       if util.file_exists(parent_folder) then
-        os.execute('rm -r '..parent_folder)
+        norns.system_cmd('rm -r '..parent_folder)
       end
-      os.execute('mkdir -p '..parent_folder)
+      norns.system_cmd('mkdir -p '..parent_folder)
       local new_name = parent_folder..filename_raw..'%2n.flac'
-      os.execute('sox '..path..' '..new_name..' trim 0 '..per_slice_dur..' fade 0:00.01 -0 0:00.01 : newfile : restart')
+      norns.system_cmd('sox '..path..' '..new_name..' trim 0 '..per_slice_dur..' fade 0:00.01 -0 0:00.01 : newfile : restart')
       clock.run(function()
         clock.sleep(0.3)
         params:set(sample_voice..'_sampleClear',1)
@@ -783,13 +785,15 @@ function Kildare.init(poly)
     params:add_file('kildare_st_chop','chop w/ fade', _path.audio)
     params:set_action('kildare_st_chop',
     function(file)
-      if file ~= _path.audio then
+      if file ~= _path.audio and file ~= '' then
         build_slices(file, params:get('kildare_st_chop_count'), params:string('kildare_st_preload'))
         params:set('kildare_st_chop', '', true)
-        params:set('kildare_st_info', '~~~ chopped '..file:match("^.+/(.+)$"))
+        params:set('kildare_st_info', '~~~ chopping '..file:match("^.+/(.+)$"))
         params:show('kildare_st_info')
         _menu.rebuild_params()
         clock.run(function()
+          clock.sleep(2)
+          params:set('kildare_st_info', '  ~~~ chopped! ~~~')
           clock.sleep(2)
           params:hide('kildare_st_info')
           _menu.rebuild_params()
