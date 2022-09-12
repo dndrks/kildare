@@ -107,8 +107,13 @@ function lfos.add_params(drum_names, fx_names, poly)
     end
     
     params:add_separator('lfo_'..i..'_separator', "lfo "..i)
+    params:add_control(
+      "lfo_"..i,
+      "state",
+      controlspec.new(1,2,'lin',1,1,'',1),
+      function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)] end
+    )
     
-    params:add_option("lfo_"..i,"state",{"off","on"},1)
     params:set_action("lfo_"..i,function(x)
       if x == 1 then
         klfo[i]:stop()
@@ -166,12 +171,25 @@ function lfos.add_params(drum_names, fx_names, poly)
       end
     )
 
-    params:add_option("lfo_shape_"..i, "shape", {"sine","saw","square","random"},1)
+    -- params:add_option("lfo_shape_"..i, "shape", {"sine","saw","square","random"},1)
+    local lfo_shapes = {"sine","saw","square","random"}
+    params:add_control(
+      "lfo_shape_"..i,
+      "shape",
+      controlspec.new(1,#lfo_shapes,'lin',1,1,'',1/(#lfo_shapes)-1),
+      function(param) return lfo_shapes[(type(param) == 'table' and param:get() or param)] end
+    )
     params:set_action('lfo_shape_'..i, function(x)
-      klfo[i]:set('shape', params:lookup_param("lfo_shape_"..i).options[x])
+      klfo[i]:set('shape', lfo_shapes[x])
     end)
 
-    params:add_option("lfo_beats_"..i, "rate", lfos.rates_as_strings, tab.key(lfos.rates_as_strings,"1"))
+    -- params:add_option("lfo_beats_"..i, "rate", lfos.rates_as_strings, tab.key(lfos.rates_as_strings,"1"))
+    params:add_control(
+      "lfo_beats_"..i,
+      "rate",
+      controlspec.new(1,#lfos.rates_as_strings,'lin',1,tab.key(lfos.rates_as_strings,"1"),'',1/(#lfos.rates_as_strings)-1),
+      function(param) return lfos.rates_as_strings[(type(param) == 'table' and param:get() or param)] end
+    )
     params:set_action("lfo_beats_"..i,
       function(x)
         if params:string("lfo_mode_"..i) == "clocked bars" then
@@ -194,7 +212,13 @@ function lfos.add_params(drum_names, fx_names, poly)
       end
     )
 
-    params:add_number("lfo_depth_"..i,"depth",0,100,0,function(param) return (param:get().."%") end)
+    -- params:add_number("lfo_depth_"..i,"depth",0,100,0,function(param) return (param:get().."%") end)
+    params:add_control(
+      "lfo_depth_"..i,
+      "depth",
+      controlspec.new(0,100,'lin',1,0,'',0.01),
+      function(param) return (type(param) == 'table' and (param:get()..'%') or (param..'%')) end
+    )
     params:set_action("lfo_depth_"..i, function(x)
       klfo[i]:set('depth',x/100)
       if x == 0 then
@@ -202,7 +226,13 @@ function lfos.add_params(drum_names, fx_names, poly)
       end
     end)
 
-    params:add_number('lfo_offset_'..i, 'lfo offset', -100, 100, 0, function(param) return (param:get().."%") end)
+    -- params:add_number('lfo_offset_'..i, 'lfo offset', -100, 100, 0, function(param) return (param:get().."%") end)
+    params:add_control(
+      "lfo_offset_"..i,
+      "offset",
+      controlspec.new(-100,100,'lin',1,0,'',0.005),
+      function(param) return (type(param) == 'table' and (param:get()..'%') or (param..'%')) end
+    )
     params:set_action("lfo_offset_"..i, function(x)
       klfo[i]:set('offset',x/100)
     end)
@@ -261,8 +291,7 @@ function lfos.add_params(drum_names, fx_names, poly)
       end
     )
 
-    local baseline_options;
-    baseline_options = {"from min", "from center", "from max", 'from current'}
+    local baseline_options = {"from min", "from center", "from max", 'from current'}
     params:add_option("lfo_baseline_"..i, "lfo baseline", baseline_options, 1)
     params:set_action("lfo_baseline_"..i, function(x)
       if x ~= 4 then
