@@ -176,7 +176,7 @@ function lfos.add_params(drum_names, fx_names, poly)
     params:add_control(
       "lfo_shape_"..i,
       "shape",
-      controlspec.new(1,#lfo_shapes,'lin',1,1,'',1/(#lfo_shapes)-1),
+      controlspec.new(1,#lfo_shapes,'lin',1,1,'',1/(#lfo_shapes-1)),
       function(param) return lfo_shapes[(type(param) == 'table' and param:get() or param)] end
     )
     params:set_action('lfo_shape_'..i, function(x)
@@ -187,7 +187,7 @@ function lfos.add_params(drum_names, fx_names, poly)
     params:add_control(
       "lfo_beats_"..i,
       "rate",
-      controlspec.new(1,#lfos.rates_as_strings,'lin',1,tab.key(lfos.rates_as_strings,"1"),'',1/(#lfos.rates_as_strings)-1),
+      controlspec.new(1,#lfos.rates_as_strings,'lin',1,tab.key(lfos.rates_as_strings,"1"),'',1/(#lfos.rates_as_strings-1)),
       function(param) return lfos.rates_as_strings[(type(param) == 'table' and param:get() or param)] end
     )
     params:set_action("lfo_beats_"..i,
