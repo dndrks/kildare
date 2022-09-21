@@ -12,7 +12,8 @@ KildareSD {
 			delayAtk, delayRel,
 			reverbAux,reverbSend,
 			velocity,
-			carHz, carDetune, carAtk, carRel,
+			carHz, thirdHz, seventhHz,
+			carDetune, carAtk, carRel,
 			modHz, modAmp, modAtk, modRel, feedAmp,
 			modFollow, modNum, modDenum,
 			amp, pan,
@@ -24,7 +25,10 @@ KildareSD {
 			lpAtk, lpRel, lpDepth,
 			amDepth, amHz;
 
-			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar,
+			var car, carThird, carSeventh,
+			modHzThird, modHzSeventh,
+			mod_1, mod_2, mod_3,
+			carEnv, modEnv, carRamp, feedMod, feedCar,
 			noise, noiseEnv, mix, ampMod, filterEnv, delayEnv, mainSendCar, mainSendNoise;
 
 			amp = amp;
@@ -36,7 +40,12 @@ KildareSD {
 			reverbSend = reverbSend.lag3(0.1);
 
 			carHz = carHz * (2.pow(carDetune/12));
+			thirdHz = thirdHz * (2.pow(carDetune/12));
+			seventhHz = seventhHz * (2.pow(carDetune/12));
+
 			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
+			modHzThird = Select.kr(modFollow > 0, [modHz, thirdHz * (modNum / modDenum)]);
+			modHzSeventh = Select.kr(modFollow > 0, [modHz, seventhHz * (modNum / modDenum)]);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
@@ -52,8 +61,15 @@ KildareSD {
 			amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
 
 			feedCar = SinOsc.ar(carHz + feedMod + (carRamp*rampDepth)) * carEnv * (feedAmp/modAmp * 127);
-			mod = SinOsc.ar(modHz + feedCar, mul:modAmp*100) * modEnv;
-			car = SinOsc.ar(carHz + mod + (carRamp*rampDepth)) * carEnv;
+			mod_1 = SinOsc.ar(modHz + feedCar, mul:modAmp*100) * modEnv;
+			mod_2 = SinOsc.ar(modHzThird + feedCar, mul:modAmp*100) * modEnv;
+			mod_3 = SinOsc.ar(modHzSeventh + feedCar, mul:modAmp*100) * modEnv;
+
+			car = SinOsc.ar(carHz + mod_1 + (carRamp*rampDepth)) * carEnv;
+			carThird = SinOsc.ar(thirdHz + mod_2 + (carRamp*rampDepth)) * carEnv;
+			carSeventh = SinOsc.ar(seventhHz + mod_3 + (carRamp*rampDepth)) * carEnv;
+
+			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
 			noiseEnv = EnvGen.kr(Env.perc(noiseAtk,noiseRel),gate: stopGate);
 			noise = BPF.ar(WhiteNoise.ar(0.24),8000,1.3) * (noiseAmp*noiseEnv);

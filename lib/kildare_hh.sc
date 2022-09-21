@@ -11,8 +11,9 @@ KildareHH {
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
 			reverbAux,reverbSend,
-			velocity,
-			amp, carHz, carDetune, carAtk, carRel,
+			velocity, amp,
+			carHz, thirdHz, seventhHz,
+			carDetune, carAtk, carRel,
 			tremDepth, tremHz,
 			modAmp, modHz, modAtk, modRel,
 			modFollow, modNum, modDenum,
@@ -25,7 +26,10 @@ KildareHH {
 			pan,
 			squishPitch, squishChunk;
 
-			var car, mod, carEnv, modEnv, carRamp, tremolo, tremod,
+			var car, carThird, carSeventh,
+			modHzThird, modHzSeventh,
+			mod_1, mod_2, mod_3,
+			carEnv, modEnv, carRamp, tremolo, tremod,
 			ampMod, filterEnv, delayEnv, mainSend;
 
 			amp = amp*0.85;
@@ -41,16 +45,31 @@ KildareHH {
 			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 			tremDepth = LinLin.kr(tremDepth,0.0,100,0.0,1.0);
 			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
+
 			carHz = carHz * (2.pow(carDetune/12));
+			thirdHz = thirdHz * (2.pow(carDetune/12));
+			seventhHz = seventhHz * (2.pow(carDetune/12));
+
 			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
+			modHzThird = Select.kr(modFollow > 0, [modHz, thirdHz * (modNum / modDenum)]);
+			modHzSeventh = Select.kr(modFollow > 0, [modHz, seventhHz * (modNum / modDenum)]);
 
 			modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
 			carRamp = EnvGen.kr(Env([1000, 0.000001], [tremHz], curve: \exp));
 			carEnv = EnvGen.kr(Env.perc(carAtk, carRel), gate: stopGate, doneAction:2);
 			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
-			mod = SinOsc.ar(modHz, mul:modAmp) * modEnv;
-			car = SinOscFB.ar(carHz + mod, feedAmp) * carEnv * amp;
+
+			mod_1 = SinOsc.ar(modHz, mul:modAmp) * modEnv;
+			mod_2 = SinOsc.ar(modHzThird, mul:modAmp) * modEnv;
+			mod_3 = SinOsc.ar(modHzSeventh, mul:modAmp) * modEnv;
+
+			car = SinOscFB.ar(carHz + mod_1, feedAmp) * carEnv * amp;
+			carThird = SinOscFB.ar(thirdHz + mod_2, feedAmp) * carEnv * amp;
+			carSeventh = SinOscFB.ar(seventhHz + mod_3, feedAmp) * carEnv * amp;
+
+			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
+
 			car = HPF.ar(car,1100,1);
 			car = car*ampMod;
 			tremolo = SinOsc.ar(tremHz, 0, tremDepth);

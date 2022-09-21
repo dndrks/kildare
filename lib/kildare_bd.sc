@@ -12,8 +12,9 @@ KildareBD {
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
 			reverbAux, reverbSend,
-			velocity,
-			amp, carHz, carDetune, carAtk, carRel,
+			velocity, amp,
+			carHz, thirdHz, seventhHz,
+			carDetune, carAtk, carRel,
 			modHz, modAmp, modAtk, modRel, feedAmp,
 			modFollow, modNum, modDenum,
 			pan, rampDepth, rampDec,
@@ -23,9 +24,12 @@ KildareBD {
 			lpHz, hpHz, filterQ,
 			lpAtk, lpRel, lpDepth;
 
-			var car, mod, carEnv, modEnv, carRamp,
+			var car, carThird, carSeventh,
+			mod, modHzThird, modHzSeventh,
+			carEnv, modEnv, carRamp,
 			feedMod, feedCar, ampMod, click, clicksound,
-			mod_1, filterEnv, delayEnv, mainSend;
+			mod_1, mod_2, mod_3,
+			filterEnv, delayEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
@@ -33,6 +37,8 @@ KildareBD {
 			delaySend = delaySend.lag3(0.1);
 			reverbSend = reverbSend.lag3(0.1);
 			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
+			modHzThird = Select.kr(modFollow > 0, [modHz, thirdHz * (modNum / modDenum)]);
+			modHzSeventh = Select.kr(modFollow > 0, [modHz, seventhHz * (modNum / modDenum)]);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127).lag3(0.1);
@@ -41,6 +47,8 @@ KildareBD {
 			rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 			amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
 			carHz = carHz * (2.pow(carDetune/12));
+			thirdHz = thirdHz * (2.pow(carDetune/12));
+			seventhHz = seventhHz * (2.pow(carDetune/12));
 
 			modEnv = EnvGen.kr(Env.perc(modAtk, modRel),gate: stopGate);
 			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
@@ -48,12 +56,28 @@ KildareBD {
 			carEnv = EnvGen.kr(envelope: Env.perc(carAtk, carRel), gate: stopGate, doneAction:2);
 
 			mod_1 = SinOscFB.ar(
-				modHz+ ((carRamp*3)*rampDepth),
+				modHz + ((carRamp*3)*rampDepth),
+				feedAmp,
+				modAmp*10
+			)* modEnv;
+
+			mod_2 = SinOscFB.ar(
+				modHzThird + ((carRamp*3)*rampDepth),
+				feedAmp,
+				modAmp*10
+			)* modEnv;
+
+			mod_3 = SinOscFB.ar(
+				modHzSeventh + ((carRamp*3)*rampDepth),
 				feedAmp,
 				modAmp*10
 			)* modEnv;
 
 			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv;
+			carThird = SinOsc.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
+			carSeventh = SinOsc.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
+
+			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
 			click = amp/4;
