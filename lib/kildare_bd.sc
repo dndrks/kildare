@@ -36,9 +36,9 @@ KildareBD {
 			hpHz = hpHz.lag3(0.1);
 			delaySend = delaySend.lag3(0.1);
 			reverbSend = reverbSend.lag3(0.1);
-			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
-			modHzThird = Select.kr(modFollow > 0, [modHz, thirdHz * (modNum / modDenum)]);
-			modHzSeventh = Select.kr(modFollow > 0, [modHz, seventhHz * (modNum / modDenum)]);
+			modHz = (modHz * (1 - modFollow)) + (carHz * modFollow * modDenum);
+			modHzThird = (modHz * (1 - modFollow)) + (thirdHz * modFollow * modDenum);
+			modHzSeventh = (modHz * (1 - modFollow)) + (seventhHz * modFollow * modDenum);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127).lag3(0.1);
@@ -46,6 +46,9 @@ KildareBD {
 			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 			rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 			amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
+			carHz = (carHz * (1 - modFollow)) + (carHz * modFollow * modNum);
+			thirdHz = (thirdHz * (1 - modFollow)) + (thirdHz * modFollow * modNum);
+			seventhHz = (seventhHz * (1 - modFollow)) + (seventhHz * modFollow * modNum);
 			carHz = carHz * (2.pow(carDetune/12));
 			thirdHz = thirdHz * (2.pow(carDetune/12));
 			seventhHz = seventhHz * (2.pow(carDetune/12));

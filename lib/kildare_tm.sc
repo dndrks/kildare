@@ -6,13 +6,15 @@ KildareTM {
 	}
 
 	init {
+
 		SynthDef(\kildare_tm, {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
 			reverbAux,reverbSend,
 			velocity,
-			carHz, carDetune, modHz, modAmp, modAtk, modRel, feedAmp,
+			carHz, thirdHz, seventhHz,
+			carDetune, modHz, modAmp, modAtk, modRel, feedAmp,
 			modFollow, modNum, modDenum,
 			carAtk, carRel, amp,
 			click = 1,
@@ -22,9 +24,12 @@ KildareTM {
 			lpHz, hpHz, filterQ,
 			lpAtk, lpRel, lpDepth;
 
-			var car, mod, carEnv, modEnv, carRamp, feedMod,
-			feedCar, ampMod, clicksound,
-			mod_1, filterEnv, delayEnv, mainSend;
+			var car, carThird, carSeventh,
+			mod, modHzThird, modHzSeventh,
+			carEnv, modEnv, carRamp,
+			feedMod, feedCar, ampMod, clicksound,
+			mod_1, mod_2, mod_3,
+			filterEnv, delayEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
@@ -32,8 +37,17 @@ KildareTM {
 			delaySend = delaySend.lag3(0.1);
 			reverbSend = reverbSend.lag3(0.1);
 
+			carHz = (carHz * (1 - modFollow)) + (carHz * modFollow * modNum);
+			thirdHz = (thirdHz * (1 - modFollow)) + (thirdHz * modFollow * modNum);
+			seventhHz = (seventhHz * (1 - modFollow)) + (seventhHz * modFollow * modNum);
+
 			carHz = carHz * (2.pow(carDetune/12));
-			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
+			thirdHz = thirdHz * (2.pow(carDetune/12));
+			seventhHz = seventhHz * (2.pow(carDetune/12));
+
+			modHz = (modHz * (1 - modFollow)) + (carHz * modFollow * modDenum);
+			modHzThird = (modHz * (1 - modFollow)) + (thirdHz * modFollow * modDenum);
+			modHzSeventh = (modHz * (1 - modFollow)) + (seventhHz * modFollow * modDenum);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -48,12 +62,28 @@ KildareTM {
 			carEnv = EnvGen.kr(Env.perc(carAtk, carRel), gate: stopGate, doneAction:2);
 
 			mod_1 = SinOscFB.ar(
-				modHz,
+				modHz + ((carRamp*3)*rampDepth),
 				feedAmp,
 				modAmp*10
 			)* modEnv;
 
-			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv * amp;
+			mod_2 = SinOscFB.ar(
+				modHzThird + ((carRamp*3)*rampDepth),
+				feedAmp,
+				modAmp*10
+			)* modEnv;
+
+			mod_3 = SinOscFB.ar(
+				modHzSeventh + ((carRamp*3)*rampDepth),
+				feedAmp,
+				modAmp*10
+			)* modEnv;
+
+			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv;
+			carThird = SinOsc.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
+			carSeventh = SinOsc.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
+
+			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 			clicksound = LPF.ar(Impulse.ar(0.003),16000,click) * EnvGen.kr(envelope: Env.perc(carAtk, 0.2),gate: stopGate);
@@ -66,9 +96,9 @@ KildareTM {
 
 			car = Compander.ar(in:car, control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
 			mainSend = Pan2.ar(car,pan);
-			mainSend = mainSend * amp * LinLin.kr(velocity,0,127,0.0,1.0);
+			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1), gate: stopGate));
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));

@@ -635,6 +635,8 @@ function Kildare.init(poly)
               if engine.name == "Kildare" then
                 if v == params:string('voice_model_'..i) then
                   engine.set_voice_param(i, d.id, musicutil.note_num_to_freq(x))
+                  engine.set_voice_param(i, 'thirdHz', musicutil.note_num_to_freq(x))
+                  engine.set_voice_param(i, 'seventhHz', musicutil.note_num_to_freq(x))
                   Kildare.voice_param_callback(i, d.id, x)
                 end
               end

@@ -12,7 +12,7 @@ KildareCP {
 			delayAtk, delayRel,
 			reverbAux,reverbSend,
 			velocity,
-			carHz, carDetune,
+			carHz, thirdHz, seventhHz, carDetune,
 			modHz, modAmp, modRel, feedAmp,
 			modFollow, modNum, modDenum,
 			carRel, amp, click,
@@ -22,8 +22,10 @@ KildareCP {
 			lpHz, hpHz, filterQ,
 			lpAtk, lpRel, lpDepth;
 
-			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-			mod_1, mod_2, filterEnv, delayEnv, mainSend;
+			var car, carThird, carSeventh,
+			mod, modHzThird, modHzSeventh,
+			carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
+			mod_1, mod_1b, filterEnv, delayEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
@@ -57,7 +59,7 @@ KildareCP {
 				),gate: stopGate
 			);
 
-			mod_2 = SinOscFB.ar(
+			mod_1b = SinOscFB.ar(
 				(modHz*4),
 				feedAmp,
 				0,
@@ -65,7 +67,7 @@ KildareCP {
 			)* modEnv;
 
 			mod_1 = SinOscFB.ar(
-				modHz+mod_2,
+				modHz+mod_1b,
 				feedAmp,
 				modAmp*100
 			)* modEnv;
