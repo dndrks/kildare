@@ -103,9 +103,9 @@ Kildare {
 		});
 
 		delayBufs = Dictionary.new;
-		delayBufs[\initHit] = Buffer.alloc(s, s.sampleRate * 8.0, 2);
+		// delayBufs[\initHit] = Buffer.alloc(s, s.sampleRate * 8.0, 2);
 		delayBufs[\left1] = Buffer.alloc(s, s.sampleRate * 24.0, 2);
-		delayBufs[\left2] = Buffer.alloc(s, s.sampleRate * 24.0, 2);
+		// delayBufs[\left2] = Buffer.alloc(s, s.sampleRate * 24.0, 2);
 		delayBufs[\right] = Buffer.alloc(s, s.sampleRate * 24.0, 2);
 
 		busses = Dictionary.new;
@@ -496,49 +496,35 @@ Kildare {
 			mainOutput, reverbOutput;
 
 			var delayL, delayR,
-			leftBal, rightBal,
-			leftInput, rightInput, startHit,
-			leftPos, rightPos,
-			feedbackDecayTime;
+			localin, del, input;
 
 			time = time.lag3(0.2);
 			feedback = feedback.lag3(0.1);
-			lpHz = lpHz.lag3(0.1);
-			hpHz = hpHz.lag3(0.1);
+			lpHz = lpHz.lag3(0.05);
+			hpHz = hpHz.lag3(0.05);
 			level = level.lag3(0.1);
 
-			leftInput = In.ar(inputL, 1);
-			rightInput = In.ar(inputR, 1);
+			input = In.ar(inputL,2); // TODO GENERALIZE IN SYNTHS, SHOULDN'T MATTER WHICH PANNING...
+/*			leftInput = In.ar(inputL, 1);
+			rightInput = In.ar(inputR, 1);*/
+			localin = LocalIn.ar(2);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
-			leftPos = LinLin.kr(spread,0,1,0,-1);
-			rightPos = LinLin.kr(spread,0,1,0,1);
 
-			feedbackDecayTime = (0.001.log * time) / feedback.log;
+			// thank you ezra for https://github.com/catfact/engine-intro/blob/master/EngineIntro_NoiseSine.sc#L35-L49
+			delayL = BufDelayC.ar(delayBufs[\left1].bufnum, input[0] + (feedback * localin[1]), time, level);
+			delayR = BufDelayC.ar(delayBufs[\right].bufnum, (feedback * localin[0]), time, level);
 
-			startHit = BufCombC.ar(delayBufs[\initHit].bufnum,leftInput,time/2,0,level);
-			delayL = BufCombC.ar(delayBufs[\left1].bufnum,leftInput,time/2,0,level);
-			delayL = BufCombC.ar(delayBufs[\left2].bufnum,delayL,time,feedbackDecayTime,level);
-			delayR = BufCombC.ar(delayBufs[\right].bufnum,rightInput,time,feedbackDecayTime*0.9,level);
+			del = [delayL, delayR];
+			LocalOut.ar(del);
 
-			startHit = RLPF.ar(in:startHit, freq:lpHz, rq: filterQ, mul:1);
-			delayL = RLPF.ar(in:delayL, freq:lpHz, rq: filterQ, mul:1);
-			delayR = RLPF.ar(in:delayR, freq:lpHz, rq: filterQ, mul:1);
-			startHit = RHPF.ar(in:startHit, freq:hpHz, rq: filterQ, mul:1);
-			delayL = RHPF.ar(in:delayL, freq:hpHz, rq: filterQ, mul:1);
-			delayR = RHPF.ar(in:delayR, freq:hpHz, rq: filterQ, mul:1);
+			del = Splay.ar(del,spread,1);
+			del = RLPF.ar(in:del, freq:lpHz, rq: filterQ, mul:1);
+			del = RHPF.ar(in:del, freq:hpHz, rq: filterQ, mul:1);
+			del = Balance2.ar(del[0],del[1],pan);
 
-			leftPos = LinLin.kr(leftPos,0,-1,pan,-1);
-			rightPos = LinLin.kr(rightPos,0,1,pan,1);
-			leftBal = Pan2.ar(delayL+startHit,leftPos,0.5);
-			rightBal = Pan2.ar(delayR,rightPos,0.5);
-
-			leftBal = Compander.ar(in:leftBal,control:leftBal, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-			rightBal = Compander.ar(in:rightBal,control:rightBal, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-
-			leftBal = leftBal + rightBal;
-			Out.ar(mainOutput,leftBal);
-			Out.ar(reverbOutput,leftBal * reverbSend);
+			Out.ar(mainOutput, del);
+			Out.ar(reverbOutput,del * reverbSend);
 
         }).play(target:s, addAction:\addToTail, args:[
 			\inputL, busses[\delayLSend],
@@ -676,13 +662,21 @@ Kildare {
 
 	}
 
-	trigger { arg voiceKey, velocity;
+	trigger { arg voiceKey, velocity, retrigFlag;
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
 			indexTracker[voiceKey] = numVoices;
-			groups[voiceKey].set(\stopGate, -1.1);
+			if( retrigFlag == 'true',{
+				groups[voiceKey].set(\stopGate, -1.05);
+			},{
+				groups[voiceKey].set(\stopGate, -1.1);
+			});
 			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-				groups[voiceKey].set(\t_trig, -1.05);
+				if( retrigFlag == 'true',{
+					groups[voiceKey].set(\t_trig, -1.025);
+				},{
+					groups[voiceKey].set(\t_trig, -1.05);
+				});
 				Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
 			},{
 				Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
@@ -766,6 +760,8 @@ Kildare {
 			samplenum = samplenum.wrap(0,sampleInfo[voice][\samples].size-1);
 			paramProtos[voice][\bufnum] = sampleInfo[voice][\pointers][samplenum];
 			sampleInfo[voice][\samplerates][samplenum] = sampleInfo[voice][\samples][samplenum].sampleRate;
+			paramProtos[voice][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
+			paramProtos[voice][\channels].postln;
 		});
 	}
 

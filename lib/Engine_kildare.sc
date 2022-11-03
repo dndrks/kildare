@@ -8,10 +8,11 @@ Engine_Kildare : CroneEngine {
 	alloc {
 		kernel = Kildare.new(Crone.server);
 
-		this.addCommand(\trig, "sf", { arg msg;
+		this.addCommand(\trig, "sfs", { arg msg;
 			var k = msg[1].asSymbol;
 			var velocity = msg[2].asFloat;
-			kernel.trigger(k,velocity);
+			var retrigFlag = msg[3].asSymbol;
+			kernel.trigger(k,velocity,retrigFlag);
 		});
 
 		this.addCommand(\set_voice_param, "ssf", { arg msg;
