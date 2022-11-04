@@ -103,9 +103,7 @@ Kildare {
 		});
 
 		delayBufs = Dictionary.new;
-		// delayBufs[\initHit] = Buffer.alloc(s, s.sampleRate * 8.0, 2);
 		delayBufs[\left1] = Buffer.alloc(s, s.sampleRate * 24.0, 2);
-		// delayBufs[\left2] = Buffer.alloc(s, s.sampleRate * 24.0, 2);
 		delayBufs[\right] = Buffer.alloc(s, s.sampleRate * 24.0, 2);
 
 		busses = Dictionary.new;
@@ -512,8 +510,8 @@ Kildare {
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 
 			// thank you ezra for https://github.com/catfact/engine-intro/blob/master/EngineIntro_NoiseSine.sc#L35-L49
-			delayL = BufDelayC.ar(delayBufs[\left1].bufnum, input[0] + (feedback * localin[1]), time, level);
-			delayR = BufDelayC.ar(delayBufs[\right].bufnum, (feedback * localin[0]), time, level);
+			delayL = BufDelayC.ar(delayBufs[\left1].bufnum, input[0] + (feedback * localin[1]), time, 1);
+			delayR = BufDelayC.ar(delayBufs[\right].bufnum, (feedback * localin[0]), time, 1);
 
 			del = [delayL, delayR];
 			LocalOut.ar(del);
@@ -523,8 +521,8 @@ Kildare {
 			del = RHPF.ar(in:del, freq:hpHz, rq: filterQ, mul:1);
 			del = Balance2.ar(del[0],del[1],pan);
 
-			Out.ar(mainOutput, del);
-			Out.ar(reverbOutput,del * reverbSend);
+			Out.ar(mainOutput, del * level); // level down here, so the delays continue
+			Out.ar(reverbOutput,del * level * reverbSend);
 
         }).play(target:s, addAction:\addToTail, args:[
 			\inputL, busses[\delayLSend],
@@ -667,17 +665,24 @@ Kildare {
 		if( paramProtos[voiceKey][\poly] == 0,{
 			indexTracker[voiceKey] = numVoices;
 			if( retrigFlag == 'true',{
-				groups[voiceKey].set(\stopGate, -1.05);
+				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+				},{
+					groups[voiceKey].set(\stopGate, -1.05);
+				});
 			},{
 				groups[voiceKey].set(\stopGate, -1.1);
 			});
 			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+				// (retrigFlag).postln;
 				if( retrigFlag == 'true',{
-					groups[voiceKey].set(\t_trig, -1.025);
+					// groups[voiceKey].set(\t_trig, -1.025);
+					// ('re-triggering').postln;
+					groups[voiceKey].set(\t_trig, 1);
 				},{
 					groups[voiceKey].set(\t_trig, -1.05);
+					Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
+					// ('fresh trigger').postln;
 				});
-				Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
 			},{
 				Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
 			});
