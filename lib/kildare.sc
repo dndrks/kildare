@@ -10,6 +10,7 @@ Kildare {
 	var <topGroup;
 
 	var <outputSynths;
+	var <feedbackSynths;
 	var <busses;
 	var <delayBufs;
 	var <delayParams;
@@ -66,6 +67,7 @@ Kildare {
 		var s = Server.default, sample_iterator = 1;
 
 		outputSynths = Dictionary.new;
+		feedbackSynths = Dictionary.new;
 
 		voiceTracker = Dictionary.new;
 		indexTracker = Dictionary.new;
@@ -109,6 +111,231 @@ Kildare {
 		busses = Dictionary.new;
 		busses[\mainOut] = Bus.audio(s, 2);
         busses[\reverbSend] = Bus.audio(s, 2);
+
+		busses[\out1] = Bus.audio(s,2);
+		busses[\out2] = Bus.audio(s,2);
+		busses[\out3] = Bus.audio(s,2);
+		busses[\feedback1] = Bus.audio(s,2);
+		busses[\feedback2] = Bus.audio(s,2);
+		busses[\feedback3] = Bus.audio(s,2);
+		busses[\feedbackSend1] = Bus.audio(s,2);
+		busses[\feedbackSend2] = Bus.audio(s,2);
+		busses[\feedbackSend3] = Bus.audio(s,2);
+		~feedback = Group.new(addAction:'addToTail');
+		~mixer = Group.new(~feedback, \addAfter);
+		~processing = Group.new(~mixer, \addAfter);
+		~main = Group.new(~processing, \addAfter);
+
+		// feedback matrix
+		// based on WazMatrix Mixer V.1, by scacinto
+
+		// ** inFeedback
+		SynthDef("feedback1", {
+			arg freqShift = 0,
+			lSHz = 600, lSdb = 0.0, lSQ = 50,
+			hSHz = 19000, hSdb = 0.0, hSQ = 50,
+			eqHz = 6000, eqdb = 0.0, eqQ = 0.0;
+
+			var in = InFeedback.ar(busses[\feedback1]);
+
+			lSHz = lSHz.lag3(0.1);
+			hSHz = hSHz.lag3(0.1);
+			eqHz = eqHz.lag3(0.1);
+			lSdb = lSdb.lag3(0.1);
+			hSdb = hSdb.lag3(0.1);
+			eqdb = eqdb.lag3(0.1);
+			lSQ = LinLin.kr(lSQ,0,100,1.0,0.3);
+			hSQ = LinLin.kr(hSQ,0,100,1.0,0.3);
+			eqQ = LinLin.kr(eqQ,0,100,1.0,0.1);
+
+			in = FreqShift.ar(in, freqShift);
+
+			in = BLowShelf.ar(in, lSHz, lSQ, lSdb);
+			in = BHiShelf.ar(in, hSHz, hSQ, hSdb);
+			in = BPeakEQ.ar(in, eqHz, eqQ, eqdb);
+
+			in = LeakDC.ar(in);
+			Out.ar(busses[\feedbackSend1], in);
+		}).add;
+
+		SynthDef("feedback2", {
+			arg freqShift = 0,
+			lSHz = 600, lSdb = 0.0, lSQ = 50,
+			hSHz = 19000, hSdb = 0.0, hSQ = 50,
+			eqHz = 6000, eqdb = 0.0, eqQ = 0.0;
+
+			var in = InFeedback.ar(busses[\feedback2]);
+
+			lSHz = lSHz.lag3(0.1);
+			hSHz = hSHz.lag3(0.1);
+			eqHz = eqHz.lag3(0.1);
+			lSdb = lSdb.lag3(0.1);
+			hSdb = hSdb.lag3(0.1);
+			eqdb = eqdb.lag3(0.1);
+			lSQ = LinLin.kr(lSQ,0,100,1.0,0.3);
+			hSQ = LinLin.kr(hSQ,0,100,1.0,0.3);
+			eqQ = LinLin.kr(eqQ,0,100,1.0,0.1);
+
+			in = FreqShift.ar(in, freqShift);
+
+			in = BLowShelf.ar(in, lSHz, lSQ, lSdb);
+			in = BHiShelf.ar(in, hSHz, hSQ, hSdb);
+			in = BPeakEQ.ar(in, eqHz, eqQ, eqdb);
+
+			in = LeakDC.ar(in);
+			Out.ar(busses[\feedbackSend2], in);
+		}).add;
+
+		SynthDef("feedback3", {
+			arg freqShift = 0,
+			lSHz = 600, lSdb = 0.0, lSQ = 50,
+			hSHz = 19000, hSdb = 0.0, hSQ = 50,
+			eqHz = 6000, eqdb = 0.0, eqQ = 0.0;
+
+			var in = InFeedback.ar(busses[\feedback3]);
+
+			lSHz = lSHz.lag3(0.1);
+			hSHz = hSHz.lag3(0.1);
+			eqHz = eqHz.lag3(0.1);
+			lSdb = lSdb.lag3(0.1);
+			hSdb = hSdb.lag3(0.1);
+			eqdb = eqdb.lag3(0.1);
+			lSQ = LinLin.kr(lSQ,0,100,1.0,0.3);
+			hSQ = LinLin.kr(hSQ,0,100,1.0,0.3);
+			eqQ = LinLin.kr(eqQ,0,100,1.0,0.1);
+
+			in = FreqShift.ar(in, freqShift);
+
+			in = BLowShelf.ar(in, lSHz, lSQ, lSdb);
+			in = BHiShelf.ar(in, hSHz, hSQ, hSdb);
+			in = BPeakEQ.ar(in, eqHz, eqQ, eqdb);
+
+			in = LeakDC.ar(in);
+			Out.ar(busses[\feedbackSend3], in);
+		}).add;
+
+		// ** MAIN OUT
+		SynthDef("mainMixer", {
+			var outa, outb, outc, sound;
+
+			outa = In.ar(busses[\feedback1], 1);
+			outb = In.ar(busses[\feedback2], 1);
+			outc = In.ar(busses[\feedback3], 1);
+
+			// sound = Limiter.ar([outa, outb, outc], 0.5); // OH FUCK WAIT IS THIS THREE CHANNELS SENDING TO TWO???
+			sound = Limiter.ar(Splay.ar([outa, outb, outc]), 0.5);
+
+			sound = LeakDC.ar(sound);
+
+			Out.ar(busses[\mainOut], sound);
+		}).add;
+
+		// ** CHANNEL MIXERS
+		SynthDef("input1Mixer", {
+			arg inAmp = 1, outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 0;
+			var in1Src, sound, in1A, in1B, in1C, mix, out1, out2, out3;
+
+			in1Src = In.ar(busses[\reverbSend],2);
+			in1Src = in1Src * inAmp;
+
+			in1A = In.ar(busses[\feedbackSend1], 1);
+			in1B = In.ar(busses[\feedbackSend2], 1);
+			in1C = In.ar(busses[\feedbackSend3], 1);
+
+			in1A = in1A * inA;
+			in1B = in1B * inB;
+			in1C = in1C * inC;
+
+			mix = Mix([in1Src, in1A, in1B, in1C]).clip;
+
+			Out.ar(busses[\out1], mix * outA * outAmp);
+			Out.ar(busses[\out2], mix * outB * outAmp);
+			Out.ar(busses[\out3], mix * outC * outAmp);
+
+		}).add;
+
+		SynthDef("input2Mixer", {
+			arg outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 0;
+			var in2Src, sound, in2A, in2B, in2C, mix, out1, out2, out3;
+
+			in2Src = In.ar(busses[\reverbSend],2);
+
+			in2A = In.ar(busses[\feedbackSend1], 1);
+			in2B = In.ar(busses[\feedbackSend2], 1);
+			in2C = In.ar(busses[\feedbackSend3], 1);
+
+			in2A = in2A * inA;
+			in2B = in2B * inB;
+			in2C = in2C * inC;
+
+			mix = Mix([in2Src, in2A, in2B, in2C]).clip;
+
+			out1 = Out.ar(busses[\out1], mix * outA * outAmp);
+			out2 = Out.ar(busses[\out2], mix * outB * outAmp);
+			out3 = Out.ar(busses[\out3], mix * outC * outAmp);
+
+		}).add;
+
+		SynthDef("input3Mixer", {
+			arg outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 0;
+			var in3Src, sound, in3A, in3B, in3C, mix, out1, out2, out3;
+
+			in3Src = In.ar(busses[\reverbSend],2);
+
+			in3A = In.ar(busses[\feedbackSend1], 1);
+			in3B = In.ar(busses[\feedbackSend2], 1);
+			in3C = In.ar(busses[\feedbackSend3], 1);
+
+			in3A = in3A * inA;
+			in3B = in3B * inB;
+			in3C = in3C * inC;
+
+			mix = Mix([in3Src, in3A, in3B, in3C]).clip;
+
+			out1 = Out.ar(busses[\out1], mix * outA * outAmp);
+			out2 = Out.ar(busses[\out2], mix * outB * outAmp);
+			out3 = Out.ar(busses[\out3], mix * outC * outAmp);
+
+		}).add;
+
+		//** PROCESSORS
+		SynthDef("processA", {
+			arg delayTime = 0.1, delayAmp = 1;
+			var in, sound;
+			in = In.ar(busses[\out1],1);
+			sound = DelayC.ar(in, 3, delayTime, delayAmp);
+			Out.ar(busses[\feedback1], sound.tan);
+		}).add;
+
+		SynthDef("processB", {
+			arg delayTime = 0.04, delayAmp = 1;
+			var in, sound;
+			in = In.ar(busses[\out2],1);
+			sound = DelayC.ar(in, 3, delayTime, delayAmp);
+			Out.ar(busses[\feedback2], sound.tan);
+		}).add;
+
+		SynthDef("processC", {
+			arg delayTime = 0.3, delayAmp = 1;
+			var in, sound;
+			in = In.ar(busses[\out3],1);
+			sound = DelayC.ar(in, 3, delayTime, delayAmp);
+			Out.ar(busses[\feedback3], sound.tan);
+		}).add;
+
+		s.sync;
+
+		feedbackSynths[\aFeedback] = Synth("feedback1", target: ~feedback);
+		feedbackSynths[\bFeedback] = Synth("feedback2", target: ~feedback);
+		feedbackSynths[\cFeedback] = Synth("feedback3", target: ~feedback);
+		feedbackSynths[\aMixer] = Synth(\input1Mixer, target: ~mixer);
+		feedbackSynths[\bMixer] = Synth(\input2Mixer, target: ~mixer);
+		feedbackSynths[\cMixer] = Synth(\input3Mixer, target: ~mixer);
+		feedbackSynths[\aProcess] = Synth(\processA, target: ~processing);
+		feedbackSynths[\bProcess] = Synth(\processB, target: ~processing);
+		feedbackSynths[\cProcess] = Synth(\processC, target: ~processing);
+		feedbackSynths[\mainMixer] = Synth(\mainMixer, target: ~main);
+		// \stuff from feedback
 
 		s.sync;
 
@@ -503,8 +730,6 @@ Kildare {
 			level = level.lag3(0.1);
 
 			input = In.ar(inputL,2); // TODO GENERALIZE IN SYNTHS, SHOULDN'T MATTER WHICH PANNING...
-/*			leftInput = In.ar(inputL, 1);
-			rightInput = In.ar(inputR, 1);*/
 			localin = LocalIn.ar(2);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
@@ -529,103 +754,6 @@ Kildare {
 			\inputR, busses[\delayRSend],
 			\reverbOutput, busses[\reverbSend],
 			\mainOutput, busses[\mainOut]
-        ]);
-
-        outputSynths[\reverb] = SynthDef.new(\reverb, {
-
-			arg preDelay = 0.0, level = 1, decay = 2,
-			refAmp = 0.0, refDiv = 10, refOffset = 0, modDepth = 0.0, modFreq = 0.1,
-			highCut = 8000, lowCut = 10,
-			thresh = 0, slopeBelow = 1, slopeAbove = 1,
-			clampTime = 0.01, relaxTime = 0.1,
-			in, out;
-
-			var final, gated, sig, z, y,
-			delayTimeBase, delayTimeRandVar, delayTimeSeeds,
-			localin, localout, local, earlyReflections;
-
-			highCut = highCut.lag3(0.1);
-			lowCut = lowCut.lag3(0.1);
-
-			// adapted from https://github.com/LMMS/lmms/blob/master/plugins/ReverbSC/revsc.c
-			// Original Author(s): Sean Costello, Istvan Varga
-			// Year: 1999, 2005
-			// Location: Opcodes/reverbsc.c
-			delayTimeBase = Dictionary.newFrom([
-				1, (2473.0 / 48000.0),
-				2, (2767.0 / 48000.0),
-				3, (3217.0 / 48000.0),
-				4, (3557.0 / 48000.0),
-				5, (3907.0 / 48000.0),
-				6, (4127.0 / 48000.0),
-				7, (2143.0 / 48000.0),
-				8, (1933.0 / 48000.0)
-			]);
-			delayTimeRandVar = Dictionary.newFrom([
-				1, 0.0010,
-				2, 0.0011,
-				3, 0.0017,
-				4, 0.0006,
-				5, 0.0010,
-				6, 0.0011,
-				7, 0.0017,
-				8, 0.0006
-			]);
-			delayTimeSeeds = Dictionary.newFrom([
-				1, 1966.0,
-				2, 29491.0,
-				3, 22937.0,
-				4, 9830.0,
-				5, 20643.0,
-				6, 22937.0,
-				7, 29491.0,
-				8, 14417.0
-			]);
-
-			sig = In.ar(in,2);
-			z = DelayL.ar(sig, 0.5, preDelay);
-
-			8.do({
-				arg pass;
-				var lbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0),
-				rbase = delayTimeBase[pass+1] + ((delayTimeRandVar[pass+1] * delayTimeSeeds[pass+1])/32768.0) - (0.0001);
-				local = LocalIn.ar(2) + z;
-				earlyReflections = 0;
-				5.do({
-					arg iter;
-					var voice = iter.asInteger + 1,
-					decTime = lbase/2 + LinLin.kr(SinOsc.kr(freq: modFreq, mul: modDepth),-1,1,0,lbase/2);
-					earlyReflections = earlyReflections + CombL.ar(
-						in: local,
-						maxdelaytime: 0.1,
-						delaytime: (decTime - (decTime*(voice/refDiv))) + (refOffset/100),
-						decaytime: decay,
-						mul: (1/5) * level * refAmp
-					);
-				});
-				local = local + earlyReflections;
-				y = RLPF.ar(
-					AllpassL.ar(
-						in: local,
-						maxdelaytime: 0.5,
-						delaytime: [
-							lbase/2 + LinLin.kr(SinOsc.kr(freq: modFreq, mul: modDepth),-1,1,0,lbase/2),
-							rbase/2 + LinLin.kr(SinOsc.kr(freq: modFreq, mul: modDepth),-1,1,0,rbase/2),
-						],
-						decaytime: decay
-					),
-					highCut);
-				LocalOut.ar([local,local]);
-				[local,local]
-			});
-			final = AllpassN.ar(y, 0.05, [0.05.rand, 0.05.rand], decay);
-			final = RHPF.ar(final,lowCut);
-
-			gated = Compander.ar(final,final,thresh,slopeBelow,slopeAbove,clampTime,relaxTime);
-			Out.ar(out, gated * level);
-
-        }).play(target:s, addAction:\addToTail, args:[
-            \in, busses[\reverbSend], \out, busses[\mainOut]
         ]);
 
         outputSynths[\main] = SynthDef.new(\main, {
@@ -658,6 +786,9 @@ Kildare {
             \in, busses[\mainOut], \out, 0
         ]);
 
+	}
+
+	change_balanceA { arg voiceKey, val;
 	}
 
 	trigger { arg voiceKey, velocity, retrigFlag;
@@ -724,7 +855,11 @@ Kildare {
 
 	setReverbParam { arg paramKey, paramValue;
 		reverbParams[paramKey] = paramValue;
-		outputSynths[\reverb].set(paramKey, paramValue);
+		// outputSynths[\reverb].set(paramKey, paramValue);
+	}
+
+	setFeedbackParam { arg voiceKey, targetKey, paramKey, paramValue;
+		feedbackSynths[(voiceKey++targetKey).asSymbol].set(paramKey, paramValue);
 	}
 
 	setMainParam { arg paramKey, paramValue;
@@ -812,6 +947,11 @@ Kildare {
 
 	free {
 		topGroup.free;
+		~feedback.free;
+		~input.free;
+		~mixer.free;
+		~processing.free;
+		~main.free;
 		synthDefs.do({arg def;
 			def.free;
 		});
@@ -822,6 +962,9 @@ Kildare {
 			bus.free;
 		});
 		outputSynths.do({arg bus;
+			bus.free;
+		});
+		feedbackSynths.do({arg bus;
 			bus.free;
 		});
 		delayBufs.do({arg buf;

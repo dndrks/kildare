@@ -90,7 +90,7 @@ function lfos.add_params(drum_names, fx_names, poly)
   for i = 1,lfos.count do
     if lfos.targets[util.wrap(i,1,#lfos.targets)] == "delay" then
       lfos.last_param[i] = "time"
-    elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "reverb" then
+    elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "feedback" then
       lfos.last_param[i] = "decay"
     elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "main" then
       lfos.last_param[i] = "lSHz"
@@ -355,7 +355,7 @@ function lfos.return_to_baseline(i,silent,poly)
   local drum_target = params:get("lfo_target_track_"..i)
   local parent = lfos.targets[drum_target]
   local param_name = parent.."_"..(lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
-  local param_exclusions = {'delay','reverb','main','sample1','sample2','sample3'}
+  local param_exclusions = {'delay','feedback','main','sample1','sample2','sample3'}
   if not tab.contains(param_exclusions, parent) then
     if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" or lfos.last_param[i] == "sampleMode" then
       if poly then
@@ -372,14 +372,14 @@ function lfos.return_to_baseline(i,silent,poly)
     elseif lfos.last_param[i] == "poly" and engine.name == "Kildare" then
       engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]) == 1 and 0 or 1)
     end
-  elseif (parent == "delay" or parent == "reverb" or parent == "main") and engine.name == "Kildare" then
-    local sources = {delay = lfos.delay_params, reverb = lfos.reverb_params, main = lfos.main_params}
+  elseif (parent == "delay" or parent == "feedback" or parent == "main") and engine.name == "Kildare" then
+    local sources = {delay = lfos.delay_params, feedback = lfos.feedback_params, main = lfos.main_params}
     if not tab.contains(sources[parent],lfos.last_param[i]) then
       lfos.last_param[i] = sources[parent][1]
     end
     if parent == "delay" and lfos.last_param[i] == "time" then
       engine["set_"..parent.."_param"](lfos.last_param[i],clock.get_beat_sec() * params:get(parent.."_"..lfos.last_param[i])/128)
-    else
+    elseif parent ~= 'feedback' then
       engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
     end
   elseif (parent == "sample1" or parent == "sample2" or parent == "sample3") and engine.name == "Kildare" then
@@ -453,7 +453,7 @@ function lfos.build_params_static(poly)
     else
       focus_voice = style
     end
-    local parent = (style ~= "delay" and style ~= "reverb" and style ~= "main") and kildare_drum_params[focus_voice] or kildare_fx_params[focus_voice]
+    local parent = (style ~= "delay" and style ~= "feedback" and style ~= "main") and kildare_drum_params[focus_voice] or kildare_fx_params[focus_voice]
     local style_id_iter = 1
     local style_name_iter = 1
     for j = 1,#parent do
@@ -479,7 +479,7 @@ function lfos.set_delay_param(param_target,value)
 end
 
 function lfos.send_param_value(target_track, target_id, value)
-  if target_track ~= "delay" and target_track ~= "reverb" and target_track ~= "main" then
+  if target_track ~= "delay" and target_track ~= "feedback" and target_track ~= "main" then
     if target_id == "carHz" then
       value = musicutil.note_num_to_freq(value)
     end
@@ -491,7 +491,7 @@ function lfos.send_param_value(target_track, target_id, value)
   else
     if target_track == "delay" then
       lfos.set_delay_param(target_id,value)
-    else
+    elseif target_track ~= 'feedback' then
       engine["set_"..target_track.."_param"](target_id,value)
     end
   end
@@ -519,7 +519,7 @@ function lfos.rebuild_model_spec(k,poly)
   else
     focus_voice = k
   end
-  local param_group = (k ~= "delay" and k ~= "reverb" and k ~= "main") and kildare_drum_params or kildare_fx_params
+  local param_group = (k ~= "delay" and k ~= "feedback" and k ~= "main") and kildare_drum_params or kildare_fx_params
   for key,val in pairs(param_group[focus_voice]) do
     if param_group[focus_voice][key].type ~= "separator" then
       if param_group[focus_voice][key].lfo_exclude == nil then
