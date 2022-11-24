@@ -34,12 +34,11 @@ Engine_Kildare : CroneEngine {
 			kernel.setReverbParam(paramKey, paramValue);
 		});
 
-		this.addCommand(\set_feedback_param, "sssf", {arg msg;
-			var voiceKey = msg[1].asSymbol;
-			var targetKey = msg[2].asSymbol;
-			var paramKey = msg[3].asSymbol;
-			var paramValue = msg[4].asFloat;
-			kernel.setFeedbackParam(voiceKey, targetKey, paramKey, paramValue);
+		this.addCommand(\set_feedback_param, "ssf", {arg msg;
+			var targetKey = msg[1].asSymbol;
+			var paramKey = msg[2].asSymbol;
+			var paramValue = msg[3].asFloat;
+			kernel.setFeedbackParam(targetKey, paramKey, paramValue);
 		});
 
 		this.addCommand(\set_main_param, "sf", {arg msg;

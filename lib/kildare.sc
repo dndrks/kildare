@@ -216,11 +216,12 @@ Kildare {
 
 		// ** MAIN OUT
 		SynthDef("mainMixer", {
+			arg inA = 0, inB = 0, inC = 0;
 			var outa, outb, outc, sound;
 
-			outa = In.ar(busses[\feedback1], 1);
-			outb = In.ar(busses[\feedback2], 1);
-			outc = In.ar(busses[\feedback3], 1);
+			outa = In.ar(busses[\feedback1], 1) * inA;
+			outb = In.ar(busses[\feedback2], 1) * inB;
+			outc = In.ar(busses[\feedback3], 1) * inC;
 
 			// sound = Limiter.ar([outa, outb, outc], 0.5); // OH FUCK WAIT IS THIS THREE CHANNELS SENDING TO TWO???
 			sound = Limiter.ar(Splay.ar([outa, outb, outc]), 0.5);
@@ -235,8 +236,8 @@ Kildare {
 			arg inAmp = 1, outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 1, outB = 0, outC = 0;
 			var in1Src, sound, in1A, in1B, in1C, mix, out1, out2, out3;
 
-			in1Src = In.ar(busses[\feedbackSend],2);
-			in1Src = in1Src * inAmp;
+			in1Src = In.ar(busses[\feedbackSend],2) * inAmp;
+			// in1Src = in1Src * inAmp;
 
 			in1A = In.ar(busses[\feedbackSend1], 1);
 			in1B = In.ar(busses[\feedbackSend2], 1);
@@ -256,10 +257,10 @@ Kildare {
 		}).add;
 
 		SynthDef("input2Mixer", {
-			arg outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 0;
+			arg inAmp = 1, outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 1, outC = 0;
 			var in2Src, sound, in2A, in2B, in2C, mix, out1, out2, out3;
 
-			in2Src = In.ar(busses[\feedbackSend],2);
+			in2Src = In.ar(busses[\feedbackSend],2) * inAmp;
 
 			in2A = In.ar(busses[\feedbackSend1], 1);
 			in2B = In.ar(busses[\feedbackSend2], 1);
@@ -278,10 +279,10 @@ Kildare {
 		}).add;
 
 		SynthDef("input3Mixer", {
-			arg outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 0;
+			arg inAmp = 1, outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 1;
 			var in3Src, sound, in3A, in3B, in3C, mix, out1, out2, out3;
 
-			in3Src = In.ar(busses[\feedbackSend],2);
+			in3Src = In.ar(busses[\feedbackSend],2) * inAmp;
 
 			in3A = In.ar(busses[\feedbackSend1], 1);
 			in3B = In.ar(busses[\feedbackSend2], 1);
@@ -309,7 +310,7 @@ Kildare {
 		}).add;
 
 		SynthDef("processB", {
-			arg delayTime = 0.04, delayAmp = 1;
+			arg delayTime = 0.25, delayAmp = 1;
 			var in, sound;
 			in = In.ar(busses[\out2],1);
 			sound = DelayC.ar(in, 3, delayTime, delayAmp);
@@ -859,9 +860,11 @@ Kildare {
 		// outputSynths[\reverb].set(paramKey, paramValue);
 	}
 
-	setFeedbackParam { arg voiceKey, targetKey, paramKey, paramValue;
-		(voiceKey++targetKey).postln;
-		feedbackSynths[(voiceKey++targetKey).asSymbol].set(paramKey, paramValue);
+	setFeedbackParam { arg targetKey, paramKey, paramValue;
+		(targetKey).postln;
+		(paramKey).postln;
+		(paramValue).postln;
+		feedbackSynths[(targetKey).asSymbol].set(paramKey, paramValue);
 	}
 
 	setMainParam { arg paramKey, paramValue;
