@@ -521,22 +521,28 @@ function Kildare.init(poly)
     },
     ["feedback"] = {
       {type = 'separator', name = 'feedback matrix'},
-      -- {id = 'input1Mixer_', name = 'mod depth', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'decay', name = 'decay', type = 'control', min = 0.1, max = 60, warp = 'exp', default = 2, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.01).."s") end},
-      {id = 'preDelay', name = 'pre delay', type = 'control', min = 0.0, max = 0.5, warp = 'lin', default = 0, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.01).."s") end},
-      {id = 'refAmp', name = 'early reflections', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'refOffset', name = 'reflections offset', type = 'control', min = -1.0, max = 1.0, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'refDiv', name = 'reflections divison', type = 'number', min = 8, max = 100, default = 10, formatter = function(param) return ("1/"..(type(param) == 'table' and param:get() or param)) end},
-      {id = 'modFreq', name = 'mod freq', type = 'control', min = 0.1, max = 30, warp = 'exp', default = 0.1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
-      {id = 'modDepth', name = 'mod depth', type = 'control', min = 0, max = 1, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'highCut', name = 'highcut freq', type = 'control', min = 100, max = 10000, warp = 'exp', default = 8000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
-      {id = 'lowCut', name = 'lowcut freq', type = 'control', min = 10, max = 6000, warp = 'exp', default = 10, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
-      {id = 'level', name = 'level', type = 'control', min = 0, max = 2, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'thresh', name = 'gate threshold', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'slopeBelow', name = 'slope below', type = 'control', min = 0, max = 3, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'slopeAbove', name = 'slope above', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'clampTime', name = 'clamp time', type = 'control', min = 0.002, max = 0.5, warp = 'exp', default = 0.01, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.001).."s") end},
-      {id = 'relaxTime', name = 'relax time', type = 'control', min = 0.005, max = 0.5, warp = 'exp', default = 0.1, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.001).."s") end},
+      {type = 'separator', name = 'A'},
+      {id = 'aMixer_outA', name = 'out A', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'aMixer_outB', name = 'out B', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'aMixer_outC', name = 'out C', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'aMixer_inA', name = 'in A', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'aMixer_inB', name = 'in B', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'aMixer_inC', name = 'in C', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'decay', name = 'decay', type = 'control', min = 0.1, max = 60, warp = 'exp', default = 2, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.01).."s") end},
+      -- {id = 'preDelay', name = 'pre delay', type = 'control', min = 0.0, max = 0.5, warp = 'lin', default = 0, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.01).."s") end},
+      -- {id = 'refAmp', name = 'early reflections', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'refOffset', name = 'reflections offset', type = 'control', min = -1.0, max = 1.0, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'refDiv', name = 'reflections divison', type = 'number', min = 8, max = 100, default = 10, formatter = function(param) return ("1/"..(type(param) == 'table' and param:get() or param)) end},
+      -- {id = 'modFreq', name = 'mod freq', type = 'control', min = 0.1, max = 30, warp = 'exp', default = 0.1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      -- {id = 'modDepth', name = 'mod depth', type = 'control', min = 0, max = 1, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'highCut', name = 'highcut freq', type = 'control', min = 100, max = 10000, warp = 'exp', default = 8000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      -- {id = 'lowCut', name = 'lowcut freq', type = 'control', min = 10, max = 6000, warp = 'exp', default = 10, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      -- {id = 'level', name = 'level', type = 'control', min = 0, max = 2, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'thresh', name = 'gate threshold', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'slopeBelow', name = 'slope below', type = 'control', min = 0, max = 3, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'slopeAbove', name = 'slope above', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'clampTime', name = 'clamp time', type = 'control', min = 0.002, max = 0.5, warp = 'exp', default = 0.01, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.001).."s") end},
+      -- {id = 'relaxTime', name = 'relax time', type = 'control', min = 0.005, max = 0.5, warp = 'exp', default = 0.1, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.001).."s") end},
     },
     ["main"] = {
       {type = 'separator', name = 'main output settings'},
@@ -908,6 +914,17 @@ function Kildare.init(poly)
               engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128)
             elseif k ~= 'feedback' then
               engine["set_"..k.."_param"](d.id, x)
+            elseif k == 'feedback' then
+              local sub = '_'
+              local keys = {}
+              for str in string.gmatch(d.id, "([^"..sub.."]+)") do
+                table.insert(keys,str)
+              end
+              local voiceKey = keys[1]
+              local targetKey = keys[2]
+              local paramKey = keys[3]
+              print(voiceKey, targetKey, paramKey, x)
+              -- engine['set_feedback_param'](voiceKey, targetKey, paramKey, x)
             end
           end
         end)

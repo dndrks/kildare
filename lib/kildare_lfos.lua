@@ -493,6 +493,16 @@ function lfos.send_param_value(target_track, target_id, value)
       lfos.set_delay_param(target_id,value)
     elseif target_track ~= 'feedback' then
       engine["set_"..target_track.."_param"](target_id,value)
+    elseif target_track == 'feedback' then
+      local sub = '_'
+      local keys = {}
+      for str in string.gmatch(target_id, "([^"..sub.."]+)") do
+        table.insert(keys,str)
+      end
+      local voiceKey = keys[1]
+      local targetKey = keys[2]
+      local paramKey = keys[3]
+      engine['set_feedback_param'](voiceKey, targetKey, paramKey, value)
     end
   end
 end

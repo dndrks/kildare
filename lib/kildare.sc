@@ -110,7 +110,7 @@ Kildare {
 
 		busses = Dictionary.new;
 		busses[\mainOut] = Bus.audio(s, 2);
-        busses[\reverbSend] = Bus.audio(s, 2);
+        busses[\feedbackSend] = Bus.audio(s, 2);
 
 		busses[\out1] = Bus.audio(s,2);
 		busses[\out2] = Bus.audio(s,2);
@@ -232,10 +232,10 @@ Kildare {
 
 		// ** CHANNEL MIXERS
 		SynthDef("input1Mixer", {
-			arg inAmp = 1, outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 0;
+			arg inAmp = 1, outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 1, outB = 0, outC = 0;
 			var in1Src, sound, in1A, in1B, in1C, mix, out1, out2, out3;
 
-			in1Src = In.ar(busses[\reverbSend],2);
+			in1Src = In.ar(busses[\feedbackSend],2);
 			in1Src = in1Src * inAmp;
 
 			in1A = In.ar(busses[\feedbackSend1], 1);
@@ -249,6 +249,7 @@ Kildare {
 			mix = Mix([in1Src, in1A, in1B, in1C]).clip;
 
 			Out.ar(busses[\out1], mix * outA * outAmp);
+			// Out.ar(busses[\out1], outA * SinOsc.ar(400) * outAmp);
 			Out.ar(busses[\out2], mix * outB * outAmp);
 			Out.ar(busses[\out3], mix * outC * outAmp);
 
@@ -258,7 +259,7 @@ Kildare {
 			arg outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 0;
 			var in2Src, sound, in2A, in2B, in2C, mix, out1, out2, out3;
 
-			in2Src = In.ar(busses[\reverbSend],2);
+			in2Src = In.ar(busses[\feedbackSend],2);
 
 			in2A = In.ar(busses[\feedbackSend1], 1);
 			in2B = In.ar(busses[\feedbackSend2], 1);
@@ -280,7 +281,7 @@ Kildare {
 			arg outAmp = 1, inA = 0, inB = 0, inC = 0, outA = 0, outB = 0, outC = 0;
 			var in3Src, sound, in3A, in3B, in3C, mix, out1, out2, out3;
 
-			in3Src = In.ar(busses[\reverbSend],2);
+			in3Src = In.ar(busses[\feedbackSend],2);
 
 			in3A = In.ar(busses[\feedbackSend1], 1);
 			in3B = In.ar(busses[\feedbackSend2], 1);
@@ -351,7 +352,7 @@ Kildare {
 			\lpHz, 20000,
 			\hpHz, 20,
 			\filterQ, 50,
-			\reverbSend, 0
+			\feedbackSend, 0
 		]);
 
 		reverbParams = Dictionary.newFrom([
@@ -390,11 +391,11 @@ Kildare {
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
+				\reverbAux,busses[\feedbackSend],
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
-				\reverbSend,0,
+				\feedbackSend,0,
 				\poly,0,
 				\velocity,127,
 				\amp,0.7,
@@ -434,11 +435,11 @@ Kildare {
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
+				\reverbAux,busses[\feedbackSend],
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
-				\reverbSend,0,
+				\feedbackSend,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,282.54,
@@ -477,11 +478,11 @@ Kildare {
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
+				\reverbAux,busses[\feedbackSend],
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
-				\reverbSend,0,
+				\feedbackSend,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,87.3,
@@ -516,11 +517,11 @@ Kildare {
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
+				\reverbAux,busses[\feedbackSend],
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
-				\reverbSend,0,
+				\feedbackSend,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,1600,
@@ -552,11 +553,11 @@ Kildare {
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
+				\reverbAux,busses[\feedbackSend],
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
-				\reverbSend,0,
+				\feedbackSend,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,370,
@@ -590,11 +591,11 @@ Kildare {
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
+				\reverbAux,busses[\feedbackSend],
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
-				\reverbSend,0,
+				\feedbackSend,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,404,
@@ -622,11 +623,11 @@ Kildare {
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
+				\reverbAux,busses[\feedbackSend],
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
-				\reverbSend,0,
+				\feedbackSend,0,
 				\poly,0,
 				\amp,0.7,
 				\carHz,200,
@@ -663,12 +664,12 @@ Kildare {
 				\out,busses[\mainOut],
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
-				\reverbAux,busses[\reverbSend],
+				\reverbAux,busses[\feedbackSend],
 				\delayEnv,0,
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
-				\reverbSend,0,
+				\feedbackSend,0,
 				\poly,0,
 				\amp,1,
 				\sampleEnv,0,
@@ -716,7 +717,7 @@ Kildare {
 			arg time = 0.3, level = 1.0, feedback = 0.7,
 			lpHz = 20000, hpHz = 20, filterQ = 50,
 			spread = 1, pan = 0,
-			reverbSend = 0,
+			feedbackSend = 0,
 			inputL, inputR,
 			mainOutput, reverbOutput;
 
@@ -747,12 +748,12 @@ Kildare {
 			del = Balance2.ar(del[0],del[1],pan);
 
 			Out.ar(mainOutput, del * level); // level down here, so the delays continue
-			Out.ar(reverbOutput,del * level * reverbSend);
+			Out.ar(reverbOutput,del * level * feedbackSend);
 
         }).play(target:s, addAction:\addToTail, args:[
 			\inputL, busses[\delayLSend],
 			\inputR, busses[\delayRSend],
-			\reverbOutput, busses[\reverbSend],
+			\reverbOutput, busses[\feedbackSend],
 			\mainOutput, busses[\mainOut]
         ]);
 
@@ -859,6 +860,7 @@ Kildare {
 	}
 
 	setFeedbackParam { arg voiceKey, targetKey, paramKey, paramValue;
+		(voiceKey++targetKey).postln;
 		feedbackSynths[(voiceKey++targetKey).asSymbol].set(paramKey, paramValue);
 	}
 

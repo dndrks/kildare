@@ -10,7 +10,7 @@ KildareSD {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
-			reverbAux,reverbSend,
+			reverbAux,feedbackSend,
 			velocity,
 			carHz, thirdHz, seventhHz,
 			carDetune, carAtk, carRel,
@@ -37,7 +37,7 @@ KildareSD {
 			lpHz = lpHz.lag3(0.1);
 			hpHz = hpHz.lag3(0.1);
 			delaySend = delaySend.lag3(0.1);
-			reverbSend = reverbSend.lag3(0.1);
+			feedbackSend = feedbackSend.lag3(0.1);
 
 			carHz = (carHz * (1 - modFollow)) + (carHz * modFollow * modNum);
 			thirdHz = (thirdHz * (1 - modFollow)) + (thirdHz * modFollow * modNum);
@@ -103,12 +103,12 @@ KildareSD {
 			Out.ar(out, mainSendCar);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(reverbAux, (mainSendCar * reverbSend));
+			Out.ar(reverbAux, (mainSendCar * feedbackSend));
 
 			Out.ar(out, mainSendNoise);
 			Out.ar(delayAuxL, (noise * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(delayAuxR, (noise * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(reverbAux, (mainSendNoise * reverbSend));
+			Out.ar(reverbAux, (mainSendNoise * feedbackSend));
 
 			FreeSelf.kr(Done.kr(carEnv) * Done.kr(noiseEnv));
 

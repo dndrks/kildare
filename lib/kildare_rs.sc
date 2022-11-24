@@ -10,7 +10,7 @@ KildareRS {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
-			reverbAux,reverbSend,
+			reverbAux,feedbackSend,
 			velocity,
 			carHz, carDetune,
 			modHz, modAmp,
@@ -33,7 +33,7 @@ KildareRS {
 			lpHz = lpHz.lag3(0.1);
 			hpHz = hpHz.lag3(0.1);
 			delaySend = delaySend.lag3(0.1);
-			reverbSend = reverbSend.lag3(0.1);
+			feedbackSend = feedbackSend.lag3(0.1);
 
 			carHz = carHz * (2.pow(carDetune/12));
 			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
@@ -104,12 +104,12 @@ KildareRS {
 			Out.ar(out, mainSendCar);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(reverbAux, (mainSendCar * reverbSend));
+			Out.ar(reverbAux, (mainSendCar * feedbackSend));
 
 			Out.ar(out, mainSendSnare);
 			Out.ar(delayAuxL, (sd_mix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(delayAuxR, (sd_mix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(reverbAux, (mainSendSnare * reverbSend));
+			Out.ar(reverbAux, (mainSendSnare * feedbackSend));
 
 			FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(carEnv));
 
