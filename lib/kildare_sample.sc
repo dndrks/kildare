@@ -13,7 +13,7 @@ KildareSample {
 			sampleEnv = 0, sampleAtk = 0.01, sampleRel = 0.05,
 			delayAuxL, delayAuxR, delaySend = 0,
 			delayEnv, delayAtk, delayRel,
-			reverbAux, feedbackSend = 0,
+			feedbackAux, feedbackSend = 0,
 			// baseRate = 1, rateOffset = 0, pitchControl = 0,
 			rate = 1, stopGate = 1,
 			amDepth, amHz,
@@ -117,7 +117,7 @@ KildareSample {
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (mainSend * delEnv));
 			Out.ar(delayAuxR, (mainSend * delEnv));
-			Out.ar(reverbAux, (mainSend * feedbackSend));
+			Out.ar(feedbackAux, (mainSend * feedbackSend));
 
 
 		}).send;

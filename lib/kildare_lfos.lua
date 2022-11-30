@@ -499,10 +499,19 @@ function lfos.send_param_value(target_track, target_id, value)
       for str in string.gmatch(target_id, "([^"..sub.."]+)") do
         table.insert(keys,str)
       end
-      local voiceKey = keys[1]
-      local targetKey = keys[2]
-      local paramKey = keys[3]
-      engine['set_feedback_param'](voiceKey, targetKey, paramKey, value)
+      local targetKey = keys[1]
+      local paramKey = keys[2]
+      -- print(targetKey, paramKey)
+      local targetLine = string.upper(string.sub(targetKey, 1, 1))
+      if paramKey == 'outA' then
+        engine['set_feedback_param']('aMixer','in'..targetLine, value)
+      elseif paramKey == 'outB' then
+        engine['set_feedback_param']('bMixer','in'..targetLine, value)
+      elseif paramKey == 'outC' then
+        engine['set_feedback_param']('cMixer','in'..targetLine, value)
+      end
+      -- print('todo! send lfos to feedback matrix', target_id)
+      engine['set_feedback_param'](targetKey, paramKey, value)
     end
   end
 end

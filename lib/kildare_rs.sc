@@ -10,7 +10,7 @@ KildareRS {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
-			reverbAux,feedbackSend,
+			feedbackAux,feedbackSend,
 			velocity,
 			carHz, carDetune,
 			modHz, modAmp,
@@ -26,7 +26,7 @@ KildareRS {
 			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 			mod_1,mod_2,feedAmp,feedAMP, sd_modHz,
 			sd_car, sd_mod, sd_carEnv, sd_modEnv, sd_carRamp, sd_feedMod, sd_feedCar, sd_noise, sd_noiseEnv,
-			sd_mix, filterEnv, delayEnv, mainSendCar, mainSendSnare;
+			sd_mix, filterEnv, delayEnv, mainSendMix, delaySendMix;
 
 			amp = amp*0.45;
 			eqHz = eqHz.lag3(0.1);
@@ -66,13 +66,10 @@ KildareRS {
 			car = SinOscFB.ar(carHz + (mod_1+mod_2) + (carRamp*rampDepth),feedAMP) * carEnv * amp;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
+
 			car = (car+(LPF.ar(Impulse.ar(0.003),16000,1)*amp)) * ampMod;
-			car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-			car = Decimator.ar(car,bitRate,bitCount,1.0);
-			car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);
-			car = RLPF.ar(in:car,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
-			car = RHPF.ar(in:car,freq:hpHz, rq: filterQ, mul:1);
 			car = LPF.ar(car,12000,1);
+			car = car.softclip;
 
 			sd_modHz = carHz*2.52;
 			sd_modEnv = EnvGen.kr(Env.perc(carAtk, carRel));
@@ -82,34 +79,26 @@ KildareRS {
 			sd_feedCar = SinOsc.ar(carHz + sd_feedMod + (carRamp*rampDepth)) * sd_carEnv * (feedAmp*10);
 			sd_mod = SinOsc.ar(modHz + sd_feedCar, mul:modAmp) * sd_modEnv;
 			sd_car = SinOsc.ar(carHz + sd_mod + (carRamp*rampDepth)) * sd_carEnv * sdAmp;
-			sd_car = sd_car * ampMod;
-			sd_mix = Squiz.ar(in:sd_car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
-			sd_mix = Decimator.ar(sd_mix,bitRate,bitCount,1.0);
-			sd_mix = BPeakEQ.ar(in:sd_mix,freq:eqHz,rq:1,db:eqAmp,mul:1);
-			sd_mix = RLPF.ar(in:sd_mix,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
-			sd_mix = RHPF.ar(in:sd_mix,freq:hpHz, rq: filterQ, mul:1);
-
-			car = car.softclip;
-			car = Compander.ar(in:car,control:car, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-			mainSendCar = Pan2.ar(car,pan);
-			mainSendCar = mainSendCar * amp * LinLin.kr(velocity,0,127,0.0,1.0);
-
+			sd_mix = sd_car * ampMod;
 			sd_mix = sd_mix.softclip;
-			sd_mix = Compander.ar(in:sd_mix,control:sd_mix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
-			mainSendSnare = Pan2.ar(sd_mix,pan);
-			mainSendSnare = mainSendSnare * amp * LinLin.kr(velocity,0,127,0.0,1.0);
 
 			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
 
-			Out.ar(out, mainSendCar);
-			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(reverbAux, (mainSendCar * feedbackSend));
+			mainSendMix = (car + sd_mix);
+			mainSendMix = Squiz.ar(in:mainSendMix, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
+			mainSendMix = Decimator.ar(mainSendMix,bitRate,bitCount,1.0);
+			mainSendMix = BPeakEQ.ar(in:mainSendMix,freq:eqHz,rq:1,db:eqAmp,mul:1);
+			mainSendMix = RLPF.ar(in:mainSendMix,freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);
+			mainSendMix = RHPF.ar(in:mainSendMix,freq:hpHz, rq: filterQ, mul:1);
+			mainSendMix = Compander.ar(in:mainSendMix,control:mainSendMix, thresh:0.3, slopeBelow:1, slopeAbove:0.1, clampTime:0.01, relaxTime:0.01);
+			delaySendMix = mainSendMix;
+			mainSendMix = Pan2.ar(mainSendMix,pan);
+			mainSendMix = mainSendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0);
 
-			Out.ar(out, mainSendSnare);
-			Out.ar(delayAuxL, (sd_mix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(delayAuxR, (sd_mix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(reverbAux, (mainSendSnare * feedbackSend));
+			Out.ar(out, mainSendMix);
+			Out.ar(delayAuxL, (delaySendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxR, (delaySendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(feedbackAux, (mainSendMix * feedbackSend));
 
 			FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(carEnv));
 

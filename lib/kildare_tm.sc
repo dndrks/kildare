@@ -11,7 +11,7 @@ KildareTM {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
 			delayAtk, delayRel,
-			reverbAux,feedbackSend,
+			feedbackAux,feedbackSend,
 			velocity,
 			carHz, thirdHz, seventhHz,
 			carDetune, modHz, modAmp, modAtk, modRel, feedAmp,
@@ -103,7 +103,7 @@ KildareTM {
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(reverbAux, (mainSend * feedbackSend));
+			Out.ar(feedbackAux, (mainSend * feedbackSend));
 		}).send;
 	}
 }
