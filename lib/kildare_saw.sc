@@ -14,17 +14,19 @@ KildareSaw {
 			feedbackAux, feedbackSend,
 			velocity, amp,
 			carHz, thirdHz, seventhHz,
-			carDetune, carAtk, carRel,
-			modHz, modAmp, modAtk, modRel, feedAmp,
+			subAmp = 1, subPw = 0.5,
+			phaseOff1 = 2/3, phaseOff2 = 4/3,
+			carDetune, carAtk, carRel, carCurve = -4,
+			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
 			pan, rampDepth, rampDec,
 			squishPitch, squishChunk,
 			amDepth, amHz,
 			eqHz, eqAmp, bitRate, bitCount,
 			lpHz, hpHz, filterQ,
-			lpAtk, lpRel, lpDepth;
+			lpAtk, lpRel, lpCurve = -4, lpDepth;
 
-			var car, carThird, carSeventh,
+			var car, carThird, carSeventh, subOsc,
 			mod, modHzThird, modHzSeventh,
 			carEnv, modEnv, carRamp,
 			feedMod, feedCar, ampMod, click, clicksound,
@@ -53,10 +55,10 @@ KildareSaw {
 			thirdHz = thirdHz * (2.pow(carDetune/12));
 			seventhHz = seventhHz * (2.pow(carDetune/12));
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel),gate: stopGate);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
+			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve),gate: stopGate);
+			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
 			carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
-			carEnv = EnvGen.kr(envelope: Env.perc(carAtk, carRel), gate: stopGate, doneAction:2);
+			carEnv = EnvGen.kr(envelope: Env.perc(carAtk, carRel, curve: carCurve), gate: stopGate, doneAction:2);
 
 			mod_1 = SinOscFB.ar(
 				modHz + ((carRamp*3)*rampDepth),
@@ -76,15 +78,13 @@ KildareSaw {
 				modAmp*10
 			)* modEnv;
 
-/*			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv;
-			carThird = SinOsc.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
-			carSeventh = SinOsc.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;*/
-
-			car = LFSaw.ar(carHz + (carRamp*rampDepth),0) * carEnv;
-			carThird = LFSaw.ar(thirdHz + (carRamp*rampDepth),2/3) * carEnv;
-			carSeventh = LFSaw.ar(seventhHz + (carRamp*rampDepth), 4/3) * carEnv;
-
+			car = LFSaw.ar(carHz + (mod_1) + (carRamp*rampDepth),0) * carEnv;
+			carThird = LFSaw.ar(thirdHz + (mod_2) + (carRamp*rampDepth), phaseOff1) * carEnv;
+			carSeventh = LFSaw.ar(seventhHz + (mod_3) + (carRamp*rampDepth), phaseOff2) * carEnv;
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
+
+			subOsc = Pulse.ar(freq: carHz/2, width: subPw, mul: subAmp * amp) * carEnv;
+			car = car + subOsc;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
 			car = car* ampMod;
@@ -101,7 +101,7 @@ KildareSaw {
 
 			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1), gate: stopGate));
 
-			Out.ar(out, mainSend);
+			Out.ar(out, LeakDC.ar(mainSend));
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
 			Out.ar(feedbackAux, (mainSend * feedbackSend));

@@ -14,15 +14,15 @@ KildareBD {
 			feedbackAux, feedbackSend,
 			velocity, amp,
 			carHz, thirdHz, seventhHz,
-			carDetune, carAtk, carRel,
-			modHz, modAmp, modAtk, modRel, feedAmp,
+			carDetune, carAtk, carRel, carCurve = -4,
+			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
 			pan, rampDepth, rampDec,
 			squishPitch, squishChunk,
 			amDepth, amHz,
 			eqHz, eqAmp, bitRate, bitCount,
 			lpHz, hpHz, filterQ,
-			lpAtk, lpRel, lpDepth;
+			lpAtk, lpRel, lpCurve = -4, lpDepth;
 
 			var car, carThird, carSeventh,
 			mod, modHzThird, modHzSeventh,
@@ -53,10 +53,10 @@ KildareBD {
 			thirdHz = thirdHz * (2.pow(carDetune/12));
 			seventhHz = seventhHz * (2.pow(carDetune/12));
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel),gate: stopGate);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
+			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve),gate: stopGate);
+			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
 			carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
-			carEnv = EnvGen.kr(envelope: Env.perc(carAtk, carRel), gate: stopGate, doneAction:2);
+			carEnv = EnvGen.kr(envelope: Env.perc(carAtk, carRel, curve: carCurve), gate: stopGate, doneAction:2);
 
 			mod_1 = SinOscFB.ar(
 				modHz + ((carRamp*3)*rampDepth),
@@ -97,7 +97,7 @@ KildareBD {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1), gate: stopGate));
+			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel), gate: stopGate));
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));

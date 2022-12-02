@@ -13,16 +13,16 @@ KildareSD {
 			feedbackAux,feedbackSend,
 			velocity,
 			carHz, thirdHz, seventhHz,
-			carDetune, carAtk, carRel,
-			modHz, modAmp, modAtk, modRel, feedAmp,
+			carDetune, carAtk, carRel, carCurve = -4,
+			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
 			amp, pan,
 			rampDepth, rampDec, noiseAmp,
-			noiseAtk, noiseRel, bitRate, bitCount,
+			noiseAtk, noiseRel, noiseCurve = -4, bitRate, bitCount,
 			eqHz,eqAmp,
 			squishPitch, squishChunk,
 			lpHz, hpHz, filterQ,
-			lpAtk, lpRel, lpDepth,
+			lpAtk, lpRel, lpCurve = -4, lpDepth,
 			amDepth, amHz;
 
 			var car, carThird, carSeventh,
@@ -52,10 +52,10 @@ KildareSD {
 			modHzSeventh = (modHz * (1 - modFollow)) + (seventhHz * modFollow * modDenum);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
+			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve));
+			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
 			carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
-			carEnv = EnvGen.kr(Env.perc(carAtk, carRel),gate: stopGate);
+			carEnv = EnvGen.kr(Env.perc(carAtk, carRel, curve: carCurve),gate: stopGate);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
 			feedMod = SinOsc.ar(modHz, mul:modAmp*100) * modEnv;
 			feedAmp = LinLin.kr(feedAmp,0,1,0.0,10.0);
@@ -75,7 +75,7 @@ KildareSD {
 
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
-			noiseEnv = EnvGen.kr(Env.perc(noiseAtk,noiseRel),gate: stopGate);
+			noiseEnv = EnvGen.kr(Env.perc(noiseAtk,noiseRel, curve: noiseCurve),gate: stopGate);
 			noise = BPF.ar(WhiteNoise.ar(0.24),8000,1.3) * (noiseAmp*noiseEnv);
 			noise = BPeakEQ.ar(in:noise,freq:eqHz,rq:1,db:eqAmp,mul:1);
 			noise = RLPF.ar(in:noise, freq:Clip.kr(lpHz + ((5*(lpHz * filterEnv)) * lpDepth), 20, 20000), rq: filterQ, mul:1);

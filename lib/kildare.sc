@@ -153,14 +153,15 @@ Kildare {
 
 		// ** MAIN OUT
 		SynthDef("mainMixer", {
-			arg inA = 0, inB = 0, inC = 0;
+			arg inA = 0, inB = 0, inC = 0,
+			mixSpread = 1, mixCenter = 0, mixLevel = 1;
 			var outa, outb, outc, sound;
 
 			outa = Mix.ar(In.ar(busses[\feedback1], 2) * inA);
 			outb = Mix.ar(In.ar(busses[\feedback2], 2) * inB);
 			outc = Mix.ar(In.ar(busses[\feedback3], 2) * inC);
 
-			sound = Limiter.ar(Splay.ar([outa, outb, outc]), 0.25);
+			sound = Limiter.ar(Splay.ar([outa, outb, outc],spread: mixSpread, level: mixLevel, center: mixCenter), 0.25);
 
 			sound = LeakDC.ar(sound);
 
@@ -382,6 +383,7 @@ Kildare {
 				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.3,
+				\carCurve,-4,
 				\modAmp,0,
 				\modHz,600,
 				\modFollow,0,
@@ -389,6 +391,7 @@ Kildare {
 				\modDenum,1,
 				\modAtk,0,
 				\modRel,0.05,
+				\modCurve,-4,
 				\feedAmp,1,
 				\rampDepth,0.11,
 				\rampDec,0.3,
@@ -405,6 +408,7 @@ Kildare {
 				\filterQ,50,
 				\lpAtk,0,
 				\lpRel,0.3,
+				\lpCurve,-4,
 				\lpDepth,1,
 				\pan,0,
 			]),
@@ -425,6 +429,7 @@ Kildare {
 				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.15,
+				\carCurve,-4,
 				\modAmp,0,
 				\modHz,2770,
 				\modFollow,0,
@@ -432,10 +437,12 @@ Kildare {
 				\modDenum,1,
 				\modAtk,0.2,
 				\modRel,1,
+				\modCurve,-4,
 				\feedAmp,0,
 				\noiseAmp,0.01,
 				\noiseAtk,0,
 				\noiseRel,0.1,
+				\noiseCurve,-4,
 				\rampDepth,0.5,
 				\rampDec,0.06,
 				\squishPitch,1,
@@ -449,6 +456,10 @@ Kildare {
 				\lpHz,24000,
 				\hpHz,0,
 				\filterQ,50,
+				\lpAtk,0,
+				\lpRel,0.3,
+				\lpCurve,-4,
+				\lpDepth,1,
 				\pan,0,
 			]),
 			\kildare_tm, Dictionary.newFrom([
@@ -466,6 +477,7 @@ Kildare {
 				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.43,
+				\carCurve,-4,
 				\modAmp,0.32,
 				\modHz,180,
 				\modFollow,0,
@@ -473,6 +485,7 @@ Kildare {
 				\modDenum,1,
 				\modAtk,0,
 				\modRel,0.2,
+				\modCurve,-4,
 				\feedAmp,1,
 				\rampDepth,0.3,
 				\rampDec,0.06,
@@ -689,9 +702,14 @@ Kildare {
 				\carHz,55,
 				\thirdHz,55,
 				\seventhHz,55,
+				\subAmp,1,
+				\subPw,0.5,
+				\phaseOff1,2/3,
+				\phaseOff2,4/3,
 				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.3,
+				\carCurve,-4,
 				\modAmp,0,
 				\modHz,600,
 				\modFollow,0,
@@ -699,6 +717,7 @@ Kildare {
 				\modDenum,1,
 				\modAtk,0,
 				\modRel,0.05,
+				\modCurve,-4,
 				\feedAmp,1,
 				\rampDepth,0.11,
 				\rampDec,0.3,
@@ -710,12 +729,13 @@ Kildare {
 				\eqAmp,0,
 				\bitRate,24000,
 				\bitCount,24,
-				\lpHz,19000,
-				\hpHz,0,
+				\lpHz,20000,
+				\hpHz,10,
 				\filterQ,50,
 				\lpAtk,0,
 				\lpRel,0.3,
-				\lpDepth,1,
+				\lpCurve,-4,
+				\lpDepth,0,
 				\pan,0,
 			]),
 		]);
@@ -873,9 +893,9 @@ Kildare {
 	}
 
 	setFeedbackParam { arg targetKey, paramKey, paramValue;
-		(targetKey).postln;
-		(paramKey).postln;
-		(paramValue).postln;
+		// (targetKey).postln;
+		// (paramKey).postln;
+		// (paramValue).postln;
 		feedbackSynths[(targetKey).asSymbol].set(paramKey, paramValue);
 	}
 

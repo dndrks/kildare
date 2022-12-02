@@ -13,16 +13,16 @@ KildareHH {
 			feedbackAux,feedbackSend,
 			velocity, amp,
 			carHz, thirdHz, seventhHz,
-			carDetune, carAtk, carRel,
+			carDetune, carAtk, carRel, carCurve = -4,
 			tremDepth, tremHz,
-			modAmp, modHz, modAtk, modRel,
+			modAmp, modHz, modAtk, modRel, modCurve = -4,
 			modFollow, modNum, modDenum,
 			feedAmp,
 			amDepth, amHz,
 			eqHz, eqAmp,
 			bitRate, bitCount,
 			lpHz, hpHz, filterQ,
-			lpAtk, lpRel, lpDepth,
+			lpAtk, lpRel, lpCurve = -4, lpDepth,
 			pan,
 			squishPitch, squishChunk;
 
@@ -54,10 +54,10 @@ KildareHH {
 			modHzThird = Select.kr(modFollow > 0, [modHz, thirdHz * (modNum / modDenum)]);
 			modHzSeventh = Select.kr(modFollow > 0, [modHz, seventhHz * (modNum / modDenum)]);
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel));
+			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve));
 			carRamp = EnvGen.kr(Env([1000, 0.000001], [tremHz], curve: \exp));
-			carEnv = EnvGen.kr(Env.perc(carAtk, carRel), gate: stopGate, doneAction:2);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
+			carEnv = EnvGen.kr(Env.perc(carAtk, carRel, curve: carCurve), gate: stopGate, doneAction:2);
+			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 
 			mod_1 = SinOsc.ar(modHz, mul:modAmp) * modEnv;

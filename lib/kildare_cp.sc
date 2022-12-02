@@ -20,7 +20,7 @@ KildareCP {
 			pan, amDepth, amHz,
 			eqHz, eqAmp, bitRate, bitCount,
 			lpHz, hpHz, filterQ,
-			lpAtk, lpRel, lpDepth;
+			lpAtk, lpRel, lpCurve = -4, lpDepth;
 
 			var car, carThird, carSeventh,
 			mod, modHzThird, modHzSeventh,
@@ -87,7 +87,7 @@ KildareCP {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, curve: lpCurve),gate: stopGate));
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));

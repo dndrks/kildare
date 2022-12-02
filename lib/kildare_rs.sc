@@ -15,12 +15,12 @@ KildareRS {
 			carHz, carDetune,
 			modHz, modAmp,
 			modFollow, modNum, modDenum,
-			carAtk, carRel, amp,
+			carAtk, carRel, carCurve = -4, amp,
 			pan, rampDepth, rampDec, amDepth, amHz,
 			eqHz, eqAmp, bitRate, bitCount,
-			sdAmp, sdRel, sdAtk,
+			sdAmp, sdRel, sdAtk, sdCurve = -4,
 			lpHz, hpHz, filterQ,
-			lpAtk, lpRel, lpDepth,
+			lpAtk, lpRel, lpCurve = -4, lpDepth,
 			squishPitch, squishChunk;
 
 			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
@@ -48,8 +48,8 @@ KildareRS {
 			feedAMP = modAmp.linlin(0, 127, 0, 4);
 
 			carRamp = EnvGen.kr(Env([600, 0.000001], [rampDec], curve: \lin));
-			carEnv = EnvGen.kr(Env.perc(carAtk, carRel),gate: stopGate);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
+			carEnv = EnvGen.kr(Env.perc(carAtk, carRel, curve: carCurve),gate: stopGate);
+			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
 
 			mod_2 = SinOscFB.ar(
 				modHz*16,
@@ -72,9 +72,9 @@ KildareRS {
 			car = car.softclip;
 
 			sd_modHz = carHz*2.52;
-			sd_modEnv = EnvGen.kr(Env.perc(carAtk, carRel));
+			sd_modEnv = EnvGen.kr(Env.perc(carAtk, carRel, curve: carCurve));
 			sd_carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
-			sd_carEnv = EnvGen.kr(Env.perc(sdAtk, sdRel),gate:stopGate);
+			sd_carEnv = EnvGen.kr(Env.perc(sdAtk, sdRel, curve: sdCurve),gate:stopGate);
 			sd_feedMod = SinOsc.ar(modHz, mul:modAmp*100) * sd_modEnv;
 			sd_feedCar = SinOsc.ar(carHz + sd_feedMod + (carRamp*rampDepth)) * sd_carEnv * (feedAmp*10);
 			sd_mod = SinOsc.ar(modHz + sd_feedCar, mul:modAmp) * sd_modEnv;

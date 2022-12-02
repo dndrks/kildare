@@ -13,14 +13,14 @@ KildareCB {
 			feedbackAux,feedbackSend,
 			velocity,
 			amp, carHz, carDetune,
-			modHz, modAmp, modAtk, modRel, feedAmp,
+			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
-			carAtk, carRel,
+			carAtk, carRel, carCurve = -4,
 			snap,
 			pan, rampDepth, rampDec, amDepth, amHz,
 			eqHz, eqAmp, bitRate, bitCount,
 			lpHz, hpHz, filterQ,
-			lpAtk, lpRel, lpDepth,
+			lpAtk, lpRel, lpCurve = -4, lpDepth,
 			squishPitch, squishChunk;
 
 			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
@@ -43,10 +43,10 @@ KildareCB {
 			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 			snap = LinLin.kr(snap,0.0,1.0,0.0,10.0);
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel), gate:stopGate);
+			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve), gate:stopGate);
 			carRamp = EnvGen.kr(Env([600, 0.000001], [rampDec], curve: \lin));
-			carEnv = EnvGen.kr(Env.perc(carAtk, carRel),gate: stopGate);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
+			carEnv = EnvGen.kr(Env.perc(carAtk, carRel, curve: carCurve),gate: stopGate);
+			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
 
 			voice_1 = LFPulse.ar((carHz) + (carRamp*rampDepth)) * carEnv * amp;
 			voice_2 = SinOscFB.ar((carHz*1.5085)+ (carRamp*rampDepth),feedAmp) * carEnv * amp;
