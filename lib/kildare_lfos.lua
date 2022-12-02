@@ -546,7 +546,7 @@ function lfos.rebuild_model_spec(k,poly)
           local concat_name = type(k) == 'number' and (k.."_"..focus_voice..'_'..param_group[focus_voice][key].id) or (k.."_"..param_group[focus_voice][key].id)
           local system_id = params.lookup[concat_name]
           local quantum_size;
-          print(system_id, concat_name)
+          -- print(system_id, concat_name)
           if params.params[system_id].controlspec ~= nil then
             quantum_size = params.params[system_id].controlspec.quantum
           else

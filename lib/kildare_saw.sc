@@ -83,7 +83,7 @@ KildareSaw {
 			carSeventh = LFSaw.ar(seventhHz + (mod_3) + (carRamp*rampDepth), phaseOff2) * carEnv;
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
-			subOsc = Pulse.ar(freq: carHz/2, width: subPw, mul: subAmp * amp) * carEnv;
+			subOsc = Pulse.ar(freq: carHz/2, width: subPw, mul: subAmp) * carEnv;
 			car = car + subOsc;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
