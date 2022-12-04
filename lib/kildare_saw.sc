@@ -13,8 +13,10 @@ KildareSaw {
 			delayAtk, delayRel,
 			feedbackAux, feedbackSend,
 			velocity, amp,
+			carAmp = 0.7,
 			carHz, thirdHz, seventhHz,
-			subAmp = 1, subPw = 0.5,
+			subSqAmp = 1, subSqPW = 0.5, subSqPWMRate = 0.03, subSqPWMAmt = 0,
+			subTrAmp = 1, subTrPw = 0.5,
 			phaseOff1 = 2/3, phaseOff2 = 4/3,
 			carDetune, carAtk, carRel, carCurve = -4,
 			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
@@ -26,7 +28,7 @@ KildareSaw {
 			lpHz, hpHz, filterQ,
 			lpAtk, lpRel, lpCurve = -4, lpDepth;
 
-			var car, carThird, carSeventh, subOsc,
+			var car, carThird, carSeventh, subSq,
 			mod, modHzThird, modHzSeventh,
 			carEnv, modEnv, carRamp,
 			feedMod, feedCar, ampMod, click, clicksound,
@@ -83,8 +85,9 @@ KildareSaw {
 			carSeventh = LFSaw.ar(seventhHz + (mod_3) + (carRamp*rampDepth), phaseOff2) * carEnv;
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
-			subOsc = Pulse.ar(freq: carHz/2, width: subPw, mul: subAmp) * carEnv;
-			car = car + subOsc;
+			subSq = Pulse.ar(freq: carHz/2, width: subSqPW + (( SinOsc.kr(subSqPWMRate).range(0, 1)) * subSqPWMAmt), mul: subSqAmp) * carEnv;
+
+			car = (car * carAmp) + subSq;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
 			car = car* ampMod;
