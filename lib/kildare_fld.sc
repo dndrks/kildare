@@ -14,7 +14,6 @@ KildareFLD {
 			feedbackAux, feedbackSend,
 			velocity, amp,
 			carHz, thirdHz, seventhHz,
-			carShape,
 			carDetune, carAtk, carRel, carCurve = -4,
 			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
@@ -78,33 +77,9 @@ KildareFLD {
 				modAmp*10
 			)* modEnv;
 
-			car = SelectXFocus.ar(carShape*5,
-				[
-					SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv,
-					LFPar.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv,
-					LFTri.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv,
-					LFSaw.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv,
-					LFPulse.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv,
-				]
-			);
-			carThird = SelectXFocus.ar(carShape*5,
-				[
-					SinOsc.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
-					LFPar.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
-					LFTri.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
-					LFSaw.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
-					LFPulse.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
-				]
-			);
-			carSeventh = SelectXFocus.ar(carShape*5,
-				[
-					SinOsc.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
-					LFPar.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
-					LFTri.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
-					LFSaw.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
-					LFPulse.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
-				]
-			);
+			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv;
+			carThird = SinOsc.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
+			carSeventh = SinOsc.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
 
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
