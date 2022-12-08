@@ -51,6 +51,7 @@ Kildare {
 				synthDefs[\6] = KildareCB.new(Crone.server);
 				synthDefs[\7] = KildareHH.new(Crone.server);
 				KildareSaw.new(Crone.server);
+				KildareFLD.new(Crone.server);
 				synthDefs[\sample1] = KildareSample.new(Crone.server);
 				synthDefs[\sample2] = KildareSample.new(Crone.server);
 				synthDefs[\sample3] = KildareSample.new(Crone.server);
@@ -361,7 +362,8 @@ Kildare {
 			\eqHz, 6000,
 			\eqdb, 0,
 			\eqQ, 50,
-			\level, 1
+			\level, 1,
+			\limiterLevel, 0.5
 		]);
 
 		generalizedParams = Dictionary.newFrom([
@@ -740,6 +742,54 @@ Kildare {
 				\lpDepth,0,
 				\pan,0,
 			]),
+			\kildare_fld, Dictionary.newFrom([
+				\out,busses[\mainOut],
+				\delayAuxL,busses[\delayLSend],
+				\delayAuxR,busses[\delayRSend],
+				\feedbackAux,busses[\feedbackSend],
+				\delayAtk,0,
+				\delayRel,2,
+				\delaySend,0,
+				\feedbackSend,0,
+				\poly,0,
+				\velocity,127,
+				\amp,0.7,
+				\carHz,55,
+				\thirdHz,55,
+				\seventhHz,55,
+				\carShape,0,
+				\carDetune,0,
+				\carAtk,0,
+				\carRel,0.3,
+				\carCurve,-4,
+				\modAmp,0,
+				\modHz,600,
+				\modFollow,0,
+				\modNum,1,
+				\modDenum,1,
+				\modAtk,0,
+				\modRel,0.05,
+				\modCurve,-4,
+				\feedAmp,1,
+				\rampDepth,0.11,
+				\rampDec,0.3,
+				\squishPitch,1,
+				\squishChunk,1,
+				\amDepth,0,
+				\amHz,8175.08,
+				\eqHz,6000,
+				\eqAmp,0,
+				\bitRate,24000,
+				\bitCount,24,
+				\lpHz,19000,
+				\hpHz,0,
+				\filterQ,50,
+				\lpAtk,0,
+				\lpRel,0.3,
+				\lpCurve,-4,
+				\lpDepth,1,
+				\pan,0,
+			]),
 		]);
 
 		paramProtos = Dictionary.newFrom([
@@ -805,7 +855,7 @@ Kildare {
 			lSHz = 600, lSdb = 0.0, lSQ = 50,
 			hSHz = 19000, hSdb = 0.0, hSQ = 50,
 			eqHz = 6000, eqdb = 0.0, eqQ = 0.0,
-			level = 1.0;
+			level = 1.0, limiterLevel = 0.5;
 			var src = In.ar(in, 2);
 
 			lSHz = lSHz.lag3(0.1);
@@ -823,7 +873,7 @@ Kildare {
 			src = BLowShelf.ar(src, lSHz, lSQ, lSdb);
 			src = BHiShelf.ar(src, hSHz, hSQ, hSdb);
 			src = BPeakEQ.ar(src, eqHz, eqQ, eqdb);
-			src = Limiter.ar(src,0.5);
+			src = Limiter.ar(src, limiterLevel);
 
 			Out.ar(out, src * level);
         }).play(target:s, addAction:\addToTail, args: [

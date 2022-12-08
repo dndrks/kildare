@@ -9,7 +9,7 @@ KildareSD {
 		SynthDef(\kildare_sd, {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
-			delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
 			velocity,
 			carHz, thirdHz, seventhHz,
@@ -29,7 +29,7 @@ KildareSD {
 			modHzThird, modHzSeventh,
 			mod_1, mod_2, mod_3,
 			carEnv, modEnv, carRamp, feedMod, feedCar,
-			noise, noiseEnv, mix, ampMod, filterEnv, delayEnv, mainSendCar, mainSendNoise;
+			noise, noiseEnv, mix, ampMod, filterEnv, delEnv, mainSendCar, mainSendNoise;
 
 			amp = amp;
 			noiseAmp = noiseAmp/2;
@@ -98,16 +98,16 @@ KildareSD {
 			mainSendNoise = Pan2.ar(noise,pan);
 			mainSendNoise = mainSendNoise * amp * LinLin.kr(velocity,0,127,0.0,1.0);
 
-			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
 
 			Out.ar(out, mainSendCar);
-			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
+			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(feedbackAux, (mainSendCar * feedbackSend));
 
 			Out.ar(out, mainSendNoise);
-			Out.ar(delayAuxL, (noise * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(delayAuxR, (noise * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxL, (noise * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
+			Out.ar(delayAuxR, (noise * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(feedbackAux, (mainSendNoise * feedbackSend));
 
 			FreeSelf.kr(Done.kr(carEnv) * Done.kr(noiseEnv));

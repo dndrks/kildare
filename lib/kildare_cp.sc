@@ -9,7 +9,7 @@ KildareCP {
 		SynthDef(\kildare_cp, {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
-			delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
 			velocity,
 			carHz, thirdHz, seventhHz, carDetune,
@@ -25,7 +25,7 @@ KildareCP {
 			var car, carThird, carSeventh,
 			mod, modHzThird, modHzSeventh,
 			carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-			mod_1, mod_1b, filterEnv, delayEnv, mainSend;
+			mod_1, mod_1b, filterEnv, delEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
@@ -49,7 +49,7 @@ KildareCP {
 					curve: \lin
 				),gate: stopGate
 			);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, 1),gate: stopGate);
+			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
 			carRamp = EnvGen.kr(Env([600, 0.000001], [0], curve: \lin));
 			carEnv = EnvGen.ar(
 				Env.new(
@@ -87,11 +87,11 @@ KildareCP {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, curve: lpCurve),gate: stopGate));
+			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
 
 			Out.ar(out, mainSend);
-			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
+			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(feedbackAux, (mainSend * feedbackSend));
 
 			FreeSelf.kr(Done.kr(modEnv) * Done.kr(carEnv));

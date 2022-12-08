@@ -9,7 +9,7 @@ KildareRS {
 		SynthDef(\kildare_rs, {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
-			delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
 			velocity,
 			carHz, carDetune,
@@ -26,7 +26,7 @@ KildareRS {
 			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 			mod_1,mod_2,feedAmp,feedAMP, sd_modHz,
 			sd_car, sd_mod, sd_carEnv, sd_modEnv, sd_carRamp, sd_feedMod, sd_feedCar, sd_noise, sd_noiseEnv,
-			sd_mix, filterEnv, delayEnv, mainSendMix, delaySendMix;
+			sd_mix, filterEnv, delEnv, mainSendMix, delaySendMix;
 
 			amp = amp*0.45;
 			eqHz = eqHz.lag3(0.1);
@@ -82,7 +82,7 @@ KildareRS {
 			sd_mix = sd_car * ampMod;
 			sd_mix = sd_mix.softclip;
 
-			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
 
 			mainSendMix = (car + sd_mix);
 			mainSendMix = Squiz.ar(in:mainSendMix, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
@@ -96,8 +96,8 @@ KildareRS {
 			mainSendMix = mainSendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0);
 
 			Out.ar(out, mainSendMix);
-			Out.ar(delayAuxL, (delaySendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(delayAuxR, (delaySendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxL, (delaySendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
+			Out.ar(delayAuxR, (delaySendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(feedbackAux, (mainSendMix * feedbackSend));
 
 			FreeSelf.kr(Done.kr(sd_carEnv) * Done.kr(carEnv));

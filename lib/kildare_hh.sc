@@ -9,7 +9,7 @@ KildareHH {
 		SynthDef(\kildare_hh, {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
-			delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
 			velocity, amp,
 			carHz, thirdHz, seventhHz,
@@ -30,7 +30,7 @@ KildareHH {
 			modHzThird, modHzSeventh,
 			mod_1, mod_2, mod_3,
 			carEnv, modEnv, carRamp, tremolo, tremod,
-			ampMod, filterEnv, delayEnv, mainSend;
+			ampMod, filterEnv, delEnv, mainSend;
 
 			amp = amp*0.85;
 			eqHz = eqHz.lag3(0.1);
@@ -85,11 +85,11 @@ KildareHH {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
 
 			Out.ar(out, mainSend);
-			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
+			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(feedbackAux, (mainSend * feedbackSend));
 
 		}).send;

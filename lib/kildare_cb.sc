@@ -9,7 +9,7 @@ KildareCB {
 		SynthDef(\kildare_cb, {
 			arg out = 0, stopGate = 1,
 			delayAuxL, delayAuxR, delaySend,
-			delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
 			velocity,
 			amp, carHz, carDetune,
@@ -24,7 +24,7 @@ KildareCB {
 			squishPitch, squishChunk;
 
 			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-			voice_1, voice_2, filterEnv, delayEnv, mainSend;
+			voice_1, voice_2, filterEnv, delEnv, mainSend;
 
 			amp = amp*0.6;
 			eqHz = eqHz.lag3(0.1);
@@ -63,11 +63,11 @@ KildareCB {
 			mainSend = Pan2.ar(voice_1,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delayEnv = (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate));
+			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
 
 			Out.ar(out, mainSend);
-			Out.ar(delayAuxL, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
-			Out.ar(delayAuxR, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delayEnv));
+			Out.ar(delayAuxL, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
+			Out.ar(delayAuxR, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(feedbackAux, (mainSend * feedbackSend));
 
 			FreeSelf.kr(Done.kr(carEnv) * Done.kr(modEnv));

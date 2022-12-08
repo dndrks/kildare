@@ -112,7 +112,7 @@ KildareSample {
 			mainSend = Balance2.ar(mainSend[0],mainSend[1],pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel, 1),gate: stopGate))]);
+			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (mainSend * delEnv));
