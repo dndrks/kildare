@@ -83,6 +83,9 @@ end
 function Kildare.model_change_callback()
 end
 
+function Kildare.restart_needed_callback()
+end
+
 function Kildare.move_audio_into_perm(new_folder)
   local parent_folder = _path.audio..'kildare/TEMP/'
   if util.file_exists(parent_folder) then
@@ -172,12 +175,17 @@ function Kildare.init(poly)
     util.os_capture('mkdir -p '..extensions ..'miSCellaneous_lib/Classes/WaveFolding/')
   end
   local install_these = {'SmoothClip.sc', 'SmoothFold.sc'}
+  local restart_flag = false
   for i = 1,#install_these do
     if not util.file_exists(extensions..'miSCellaneous_lib/Classes/WaveFolding/'..install_these[i]) then
       util.os_capture('mkdir -p '..extensions ..'miSCellaneous_lib/Classes/WaveFolding/')
       util.os_capture('cp ' .. _path.code .. 'kildare/lib/ignore/' .. install_these[i].." " .. extensions..'miSCellaneous_lib/Classes/WaveFolding/'..install_these[i])
       print("installing "..install_these[i])
+      if not restart_flag then restart_flag = true end
     end
+  end
+  if restart_flag then
+    Kildare.restart_needed_callback()
   end
 
 
