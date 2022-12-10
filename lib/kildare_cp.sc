@@ -7,11 +7,11 @@ KildareCP {
 
 	init {
 		SynthDef(\kildare_cp, {
-			arg out = 0, stopGate = 1,
+			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
-			velocity,
+			velocity = 0,
 			carHz, thirdHz, seventhHz, carDetune,
 			modHz, modAmp, modRel, feedAmp,
 			modFollow, modNum, modDenum,
@@ -24,7 +24,7 @@ KildareCP {
 
 			var car, carThird, carSeventh,
 			mod, modHzThird, modHzSeventh,
-			carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
+			carEnv, modEnv, feedMod, feedCar, ampMod,
 			mod_1, mod_1b, filterEnv, delEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
@@ -47,16 +47,18 @@ KildareCP {
 					[0, 1, 0, 0.9, 0, 0.7, 0, 0.5, 0],
 					[0.001, 0.009, 0, 0.008, 0, 0.01, 0, modRel],
 					curve: \lin
-				),gate: stopGate
+				),gate: t_gate
 			);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
-			carRamp = EnvGen.kr(Env([600, 0.000001], [0], curve: \lin));
+			filterEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				gate: t_gate
+			);
 			carEnv = EnvGen.ar(
 				Env.new(
 					[0, 1, 0, 0.9, 0, 0.7, 0, 0.5, 0],
 					[0,0,0,0,0,0,0,carRel/4],
 					[0, -3, 0, -3, 0, -3, 0, -3]
-				),gate: stopGate
+				),gate: t_gate
 			);
 
 			mod_1b = SinOscFB.ar(
@@ -87,14 +89,20 @@ KildareCP {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
+			delEnv = Select.kr(
+				delayEnv > 0, [
+					delaySend,
+					delaySend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						gate: t_gate
+					)
+				]
+			);
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(feedbackAux, (mainSend * feedbackSend));
-
-			FreeSelf.kr(Done.kr(modEnv) * Done.kr(carEnv));
 
 		}).send;
 	}

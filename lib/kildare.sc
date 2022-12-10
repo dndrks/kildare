@@ -1,9 +1,10 @@
 Kildare {
 	classvar <voiceKeys;
 	classvar <synthDefs;
-	classvar <synthKeys;
+	// classvar <synthKeys;
 	const <numVoices = 3;
 
+	var <synthKeys;
 	var <paramProtos;
 	var <generalizedParams;
 	var <groups;
@@ -30,31 +31,16 @@ Kildare {
 			s.waitForBoot {
 				synthDefs = Dictionary.new;
 
-				synthKeys = Dictionary.newFrom([
-					\1, \kildare_bd,
-					\2, \kildare_sd,
-					\3, \kildare_tm,
-					\4, \kildare_cp,
-					\5, \kildare_rs,
-					\6, \kildare_cb,
-					\7, \kildare_hh,
-					\sample1, \kildare_sample,
-					\sample2, \kildare_sample,
-					\sample3, \kildare_sample,
-				]);
-
-				synthDefs[\1] = KildareBD.new(Crone.server);
-				synthDefs[\2] = KildareSD.new(Crone.server);
-				synthDefs[\3] = KildareTM.new(Crone.server);
-				synthDefs[\4] = KildareCP.new(Crone.server);
-				synthDefs[\5] = KildareRS.new(Crone.server);
-				synthDefs[\6] = KildareCB.new(Crone.server);
-				synthDefs[\7] = KildareHH.new(Crone.server);
-				KildareSaw.new(Crone.server);
-				KildareFLD.new(Crone.server);
-				synthDefs[\sample1] = KildareSample.new(Crone.server);
-				synthDefs[\sample2] = KildareSample.new(Crone.server);
-				synthDefs[\sample3] = KildareSample.new(Crone.server);
+				synthDefs[\bd] = KildareBD.new(Crone.server);
+				synthDefs[\sd] = KildareSD.new(Crone.server);
+				synthDefs[\tm] = KildareTM.new(Crone.server);
+				synthDefs[\cp] = KildareCP.new(Crone.server);
+				synthDefs[\rs] = KildareRS.new(Crone.server);
+				synthDefs[\cb] = KildareCB.new(Crone.server);
+				synthDefs[\hh] = KildareHH.new(Crone.server);
+				synthDefs[\saw] = KildareSaw.new(Crone.server);
+				synthDefs[\fld] = KildareFLD.new(Crone.server);
+				synthDefs[\sample] = KildareSample.new(Crone.server);
 
 			} // Server.waitForBoot
 		} // StartUp
@@ -66,6 +52,19 @@ Kildare {
 
 	init {
 		var s = Server.default, sample_iterator = 1;
+
+		synthKeys = Dictionary.newFrom([
+			\1, \none,
+			\2, \none,
+			\3, \none,
+			\4, \none,
+			\5, \none,
+			\6, \none,
+			\7, \none,
+			\sample1, \kildare_sample,
+			\sample2, \kildare_sample,
+			\sample3, \kildare_sample,
+		]);
 
 		outputSynths = Dictionary.new;
 		feedbackSynths = Dictionary.new;
@@ -419,6 +418,7 @@ Kildare {
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
 				\feedbackAux,busses[\feedbackSend],
+				\velocity,127,
 				\delayAtk,0,
 				\delayRel,2,
 				\delaySend,0,
@@ -455,8 +455,8 @@ Kildare {
 				\eqAmp,1,
 				\bitRate,24000,
 				\bitCount,24,
-				\lpHz,24000,
-				\hpHz,0,
+				\lpHz,20000,
+				\hpHz,20,
 				\filterQ,50,
 				\lpAtk,0,
 				\lpRel,0.3,
@@ -551,7 +551,7 @@ Kildare {
 				\delaySend,0,
 				\feedbackSend,0,
 				\poly,0,
-				\amp,0.7,
+				\amp,1.0,
 				\carHz,370,
 				\carDetune,0,
 				\carAtk,0,
@@ -882,6 +882,12 @@ Kildare {
 
 	}
 
+	test_trigger { arg voiceKey, velocity;
+		paramProtos[voiceKey][\velocity] = velocity;
+		groups[voiceKey].set(\velocity, velocity);
+		groups[voiceKey].set(\t_gate, 1);
+	}
+
 	trigger { arg voiceKey, velocity, retrigFlag;
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
@@ -1030,11 +1036,25 @@ Kildare {
 	}
 
 	setModel { arg voice, model;
+		var compileFlag = false;
+		if (synthKeys[voice] != model, {
+			('establishing synth ' ++voice++ ' ' ++model).postln;
+			compileFlag = true;
+			groups[voice].free;
+		});
 		synthKeys[voice] = model;
 		paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
+		if (compileFlag, {
+			('build synth ' ++ voice ++ ' ' ++ model).postln;
+			groups[voice] = Synth.new(model, paramProtos[voice].getPairs);
+			paramProtos[voice].getPairs.postln;
+		});
 	}
 
 	free {
+		groups.do({arg voice;
+			voice.free;
+		});
 		topGroup.free;
 		~feedback.free;
 		~input.free;

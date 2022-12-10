@@ -8,11 +8,11 @@ KildareBD {
 	init {
 
 		SynthDef(\kildare_bd, {
-			arg out = 0, stopGate = 1,
+			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux, feedbackSend,
-			velocity, amp,
+			velocity = 127, amp,
 			carHz, thirdHz, seventhHz,
 			carDetune, carAtk, carRel, carCurve = -4,
 			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
@@ -54,10 +54,22 @@ KildareBD {
 			thirdHz = thirdHz * (2.pow(carDetune/12));
 			seventhHz = seventhHz * (2.pow(carDetune/12));
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve),gate: stopGate);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
-			carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
-			carEnv = EnvGen.kr(envelope: Env.perc(carAtk, carRel, curve: carCurve), gate: stopGate, doneAction:2);
+			modEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
+				gate: t_gate
+			);
+			filterEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				gate: t_gate
+			);
+			carRamp = EnvGen.kr(
+				Env([1000,1000, 0.000001], [0,rampDec], curve: \exp),
+				gate: t_gate
+			);
+			carEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				gate: t_gate
+			);
 
 			mod_1 = SinOscFB.ar(
 				modHz + ((carRamp*3)*rampDepth),
@@ -85,7 +97,10 @@ KildareBD {
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
 			click = amp/4;
-			clicksound = LPF.ar(Impulse.ar(0.003),16000,click) * EnvGen.kr(envelope: Env.perc(carAtk, 0.2), gate: stopGate);
+			clicksound = LPF.ar(Impulse.ar(0.003),16000,click) * EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.0,carAtk,0.2]),
+				gate: t_gate
+			);
 			car = (car + clicksound)* ampMod;
 
 			car = SmoothFoldS.ar(car,foldLo,foldHi,foldRange,foldSmooth);
@@ -99,7 +114,15 @@ KildareBD {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
+			delEnv = Select.kr(
+				delayEnv > 0, [
+					delaySend,
+					delaySend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						gate: t_gate
+					)
+				]
+			);
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));

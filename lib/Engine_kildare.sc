@@ -12,7 +12,7 @@ Engine_Kildare : CroneEngine {
 			var k = msg[1].asSymbol;
 			var velocity = msg[2].asFloat;
 			var retrigFlag = msg[3].asSymbol;
-			kernel.trigger(k,velocity,retrigFlag);
+			kernel.test_trigger(k,velocity);
 		});
 
 		this.addCommand(\set_voice_param, "ssf", { arg msg;
@@ -57,26 +57,31 @@ Engine_Kildare : CroneEngine {
 			kernel.loadFolder(voiceKey, filepath);
 		});
 
-		this.addCommand(\change_sample, "si", {arg msg;
+		this.addCommand(\change_sample, "si", { arg msg;
 			var voiceKey = msg[1].asSymbol;
 			var sample = msg[2].asInteger;
 			kernel.setFile(voiceKey, sample);
 		});
 
-		this.addCommand(\stop_sample, "s", {arg msg;
+		this.addCommand(\stop_sample, "s", { arg msg;
 			var voiceKey = msg[1].asSymbol;
 			kernel.stopSample(voiceKey);
 		});
 
-		this.addCommand(\clear_samples, "s", {arg msg;
+		this.addCommand(\clear_samples, "s", { arg msg;
 			var voiceKey = msg[1].asSymbol;
 			kernel.clearSamples(voiceKey);
 		});
 
-		this.addCommand(\set_model, "ss", {arg msg;
+		this.addCommand(\set_model, "ss", { arg msg;
 			var voiceKey = msg[1].asSymbol;
 			var synthKey = msg[2].asSymbol;
 			kernel.setModel(voiceKey,synthKey);
+		});
+
+		this.addCommand(\test_trig,"s", { arg msg;
+			var k = msg[1].asSymbol;
+			kernel.test_trigger(k);
 		});
 
 		// debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;

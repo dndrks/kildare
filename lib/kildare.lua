@@ -140,6 +140,7 @@ function Kildare.rebuild_model_params(i,current_model)
   params.params[params.lookup['kildare_'..i..'_group']].name = i..': '..current_model
   _menu.rebuild_params()
   Kildare.model_change_callback(i,current_model)
+  print(i,current_model)
   Kildare.push_new_model_params(i,current_model)
   Kildare.lfos.build_params_static(true)
   if Kildare.loaded then
@@ -150,6 +151,7 @@ function Kildare.rebuild_model_params(i,current_model)
       end
     end
   end
+  clock.run(function() clock.sleep(0.25) Kildare.push_new_model_params(i,current_model) end)
 end
 
 function Kildare.push_new_model_params(i,current_model)
@@ -552,6 +554,7 @@ function Kildare.init(poly)
       {id = 'carCurve', name = 'carrier env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
         util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
         1,"%")) end},
+      {id = 'feedAmp', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {type = 'separator', name = 'modulator'},
       {id = 'modAmp', name = 'modulator presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'modHz', name = 'modulator freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
@@ -563,7 +566,6 @@ function Kildare.init(poly)
       {id = 'modCurve', name = 'modulator env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
         util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
         1,"%")) end},
-      {id = 'feedAmp', name = 'modulator feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {type = 'separator', name = 'tremolo'},
       {id = 'tremDepth', name = 'tremolo depth', type = 'number', min = 0, max = 100, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
       {id = 'tremHz', name = 'tremolo rate', type = 'control', min = 0.01, max = 8000, warp = 'exp', default = 1000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},

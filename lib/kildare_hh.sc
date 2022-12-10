@@ -7,11 +7,11 @@ KildareHH {
 
 	init {
 		SynthDef(\kildare_hh, {
-			arg out = 0, stopGate = 1,
+			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
-			velocity, amp,
+			velocity = 127, amp,
 			carHz, thirdHz, seventhHz,
 			carDetune, carAtk, carRel, carCurve = -4,
 			tremDepth, tremHz,
@@ -29,7 +29,8 @@ KildareHH {
 			var car, carThird, carSeventh,
 			modHzThird, modHzSeventh,
 			mod_1, mod_2, mod_3,
-			carEnv, modEnv, carRamp, tremolo, tremod,
+			feedScale,
+			carEnv, modEnv, tremolo, tremod,
 			ampMod, filterEnv, delEnv, mainSend;
 
 			amp = amp*0.85;
@@ -41,7 +42,7 @@ KildareHH {
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
-			feedAmp = LinLin.kr(feedAmp,0.0,1.0,0.0,10.0);
+			feedAmp = LinLin.kr(feedAmp,0.0,1.0,0.0,6.0);
 			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
 			tremDepth = LinLin.kr(tremDepth,0.0,100,0.0,1.0);
 			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
@@ -54,10 +55,19 @@ KildareHH {
 			modHzThird = Select.kr(modFollow > 0, [modHz, thirdHz * (modNum / modDenum)]);
 			modHzSeventh = Select.kr(modFollow > 0, [modHz, seventhHz * (modNum / modDenum)]);
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve));
-			carRamp = EnvGen.kr(Env([1000, 0.000001], [tremHz], curve: \exp));
-			carEnv = EnvGen.kr(Env.perc(carAtk, carRel, curve: carCurve), gate: stopGate, doneAction:2);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
+			modEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.0,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
+				gate: t_gate
+			);
+			carEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.0,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				gate: t_gate
+			);
+			filterEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				gate: t_gate
+			);
+
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 
 			mod_1 = SinOsc.ar(modHz, mul:modAmp) * modEnv;
@@ -70,7 +80,8 @@ KildareHH {
 
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
-			car = HPF.ar(car,1100,1);
+			feedScale = LinLin.kr(feedAmp,0,6,40,6600);
+			car = HPF.ar(car,feedScale);
 			car = car*ampMod;
 			tremolo = SinOsc.ar(tremHz, 0, tremDepth);
 			tremod = (1.0 - tremDepth) + tremolo;
@@ -85,7 +96,15 @@ KildareHH {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
+			delEnv = Select.kr(
+				delayEnv > 0,[
+					delaySend,
+					(delaySend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						gate: t_gate)
+					)
+				]
+			);
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));

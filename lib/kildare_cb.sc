@@ -7,11 +7,11 @@ KildareCB {
 
 	init {
 		SynthDef(\kildare_cb, {
-			arg out = 0, stopGate = 1,
+			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
-			velocity,
+			velocity = 127,
 			amp, carHz, carDetune,
 			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
@@ -43,10 +43,22 @@ KildareCB {
 			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 			snap = LinLin.kr(snap,0.0,1.0,0.0,10.0);
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve), gate:stopGate);
-			carRamp = EnvGen.kr(Env([600, 0.000001], [rampDec], curve: \lin));
-			carEnv = EnvGen.kr(Env.perc(carAtk, carRel, curve: carCurve),gate: stopGate);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
+			modEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
+				gate: t_gate
+			);
+			carRamp = EnvGen.kr(
+				Env([600,600, 0.000001], [0,rampDec], curve: \lin),
+				gate: t_gate
+			);
+			carEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				gate: t_gate
+			);
+			filterEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				gate: t_gate
+			);
 
 			voice_1 = LFPulse.ar((carHz) + (carRamp*rampDepth)) * carEnv * amp;
 			voice_2 = SinOscFB.ar((carHz*1.5085)+ (carRamp*rampDepth),feedAmp) * carEnv * amp;
@@ -63,14 +75,20 @@ KildareCB {
 			mainSend = Pan2.ar(voice_1,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
+			delEnv = Select.kr(
+				delayEnv > 0, [
+					delaySend,
+					delaySend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						gate: t_gate
+					)
+				]
+			);
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(delayAuxR, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(feedbackAux, (mainSend * feedbackSend));
-
-			FreeSelf.kr(Done.kr(carEnv) * Done.kr(modEnv));
 
 		}).send;
 	}
