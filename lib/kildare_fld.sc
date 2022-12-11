@@ -12,7 +12,7 @@ KildareFLD {
 			delayAuxL, delayAuxR, delaySend,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux, feedbackSend,
-			velocity, amp,
+			velocity = 0, amp,
 			carHz, thirdHz, seventhHz,
 			carDetune, carAtk, carRel, carCurve = -4,
 			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
@@ -54,14 +54,21 @@ KildareFLD {
 			thirdHz = thirdHz * (2.pow(carDetune/12));
 			seventhHz = seventhHz * (2.pow(carDetune/12));
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve),gate: t_gate);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: t_gate);
-			carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
+			modEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
+				gate: t_gate
+			);
+			filterEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				gate: t_gate
+			);
+			carRamp = EnvGen.kr(
+				Env([1000,1000, 0.000001], [0,rampDec], curve: \exp),
+				gate: t_gate
+			);
 			carEnv = EnvGen.kr(
-				// envelope: Env.perc(carAtk, carRel, curve: carCurve),
 				envelope: Env.new([0,0,1,0], times: [0.02,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
-				gate: t_gate,
-				doneAction: 0
+				gate: t_gate
 			);
 
 			mod_1 = SinOscFB.ar(
@@ -102,7 +109,15 @@ KildareFLD {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: t_gate))]);
+			delEnv = Select.kr(
+				delayEnv > 0, [
+					delaySend,
+					delaySend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						gate: t_gate
+					)
+				]
+			);
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));

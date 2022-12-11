@@ -7,20 +7,22 @@ KildareSample {
 
 	init {
 		SynthDef(\kildare_sample, {
-			arg bufnum, out = 0, amp = 0, t_trig = 1,
-			sampleStart = 0, sampleEnd = 1, loop = 0,
+			arg bufnum, out = 0, amp = 1,
+			t_trig = 1, t_gate = 0,
+			velocity = 127,
+			sampleStart = 0, sampleEnd = 1,
+			loop = 0, loopFadeIn = 0.01, loopFadeOut = 0.08,
 			pan = 0,
 			sampleEnv = 0, sampleAtk = 0.01, sampleRel = 0.05,
 			delayAuxL, delayAuxR, delaySend = 0,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux, feedbackSend = 0,
 			// baseRate = 1, rateOffset = 0, pitchControl = 0,
-			rate = 1, stopGate = 1,
+			rate = 1,
 			amDepth, amHz,
 			eqHz, eqAmp,
 			bitRate, bitCount,
 			lpHz, hpHz, filterQ,
-			velocity = 127,
 			squishPitch, squishChunk;
 
 			var snd, snd2, pos, pos2, frames, duration, loop_env, arEnv, ampMod, delEnv, mainSend;
@@ -55,16 +57,18 @@ KildareSample {
 			loop_env = EnvGen.ar(
 				Env.new(
 					levels: [0,1,1,0],
-					times: [0,duration-0.08,0.08],
+					times: [loopFadeIn,duration-(loopFadeIn + loopFadeOut),loopFadeOut],
 				),
-				gate:t_trig,
-				doneAction: 2
+				gate:t_trig
 			);
 
 			arEnv = Select.kr(
 				sampleEnv > 0, [
 					1,
-					EnvGen.kr(Env.linen(attackTime: sampleAtk, sustainTime: 0.08, releaseTime: sampleRel, curve: 'sin'),gate: stopGate, doneAction: sampleEnv * 2)
+					EnvGen.kr(
+						Env.linen(attackTime: sampleAtk, sustainTime: 0.08, releaseTime: sampleRel, curve: 'sin'),
+						gate: t_gate
+					)
 				]
 			);
 
@@ -111,8 +115,17 @@ KildareSample {
 
 			mainSend = Balance2.ar(mainSend[0],mainSend[1],pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
+			mainSend = mainSend;
 
-			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
+			delEnv = Select.kr(
+				delayEnv > 0, [
+					delaySend,
+					delaySend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						gate: t_gate
+					)
+				]
+			);
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (mainSend * delEnv));

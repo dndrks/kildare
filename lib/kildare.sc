@@ -1,7 +1,6 @@
 Kildare {
 	classvar <voiceKeys;
 	classvar <synthDefs;
-	// classvar <synthKeys;
 	const <numVoices = 3;
 
 	var <synthKeys;
@@ -74,19 +73,43 @@ Kildare {
 
 		folderedSamples = Dictionary.new;
 		sampleInfo = Dictionary.newFrom([
-			\sample1, Dictionary.newFrom(
+			\1, Dictionary.newFrom(
 				[
 					\samples, Dictionary.new(),
 					\pointers, Dictionary.new(),
 					\samplerates, Dictionary.new()
 			]),
-			\sample2, Dictionary.newFrom(
+			\2, Dictionary.newFrom(
 				[
 					\samples, Dictionary.new(),
 					\pointers, Dictionary.new(),
 					\samplerates, Dictionary.new()
 			]),
-			\sample3, Dictionary.newFrom(
+			\3, Dictionary.newFrom(
+				[
+					\samples, Dictionary.new(),
+					\pointers, Dictionary.new(),
+					\samplerates, Dictionary.new()
+			]),
+			\4, Dictionary.newFrom(
+				[
+					\samples, Dictionary.new(),
+					\pointers, Dictionary.new(),
+					\samplerates, Dictionary.new()
+			]),
+			\5, Dictionary.newFrom(
+				[
+					\samples, Dictionary.new(),
+					\pointers, Dictionary.new(),
+					\samplerates, Dictionary.new()
+			]),
+			\6, Dictionary.newFrom(
+				[
+					\samples, Dictionary.new(),
+					\pointers, Dictionary.new(),
+					\samplerates, Dictionary.new()
+			]),
+			\7, Dictionary.newFrom(
 				[
 					\samples, Dictionary.new(),
 					\pointers, Dictionary.new(),
@@ -884,8 +907,18 @@ Kildare {
 
 	test_trigger { arg voiceKey, velocity;
 		paramProtos[voiceKey][\velocity] = velocity;
-		groups[voiceKey].set(\velocity, velocity);
-		groups[voiceKey].set(\t_gate, 1);
+		if( paramProtos[voiceKey][\poly] == 0,{
+			groups[voiceKey].set(\velocity, velocity);
+			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+				groups[voiceKey].set(\t_trig, 1);
+				('triggering sample').postln;
+			});
+			groups[voiceKey].set(\t_gate, 1);
+		},{
+			voiceTracker[voiceKey][indexTracker[voiceKey]].set(\velocity, velocity);
+			voiceTracker[voiceKey][indexTracker[voiceKey]].set(\t_gate, 1);
+			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
+		});
 	}
 
 	trigger { arg voiceKey, velocity, retrigFlag;
@@ -939,10 +972,58 @@ Kildare {
 	}
 
 	setVoiceParam { arg voiceKey, paramKey, paramValue;
-		if( paramProtos[voiceKey][\poly] == 0,{
-			groups[voiceKey].set(paramKey, paramValue);
-		});
+		var prevPoly = paramProtos[voiceKey][\poly];
 		paramProtos[voiceKey][paramKey] = paramValue;
+		if( paramKey == \poly, {
+			(0..2).do({ arg voiceIndex;
+				if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
+					// voiceTracker[voiceKey][voiceIndex].free;
+					('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
+				});
+			});
+			if( paramValue == 1, {
+				if (groups[voiceKey].isPlaying, {
+					('would want to clear mono voice for poly '++voiceKey).postln;
+					groups[voiceKey].free;
+				});
+				(0..2).do({ arg voiceIndex;
+					if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
+						// voiceTracker[voiceKey][voiceIndex].free;
+						('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
+					});
+					voiceTracker[voiceKey][voiceIndex] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
+					NodeWatcher.register(voiceTracker[voiceKey][voiceIndex],true);
+				});
+			},{
+				if( prevPoly != 0, {
+					(voiceKey++' sending '++paramKey++ ' ' ++paramValue).postln;
+					(0..2).do({ arg voiceIndex;
+						if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
+							('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
+							voiceTracker[voiceKey][voiceIndex].free;
+						});
+					});
+					groups[voiceKey].isPlaying.postln;
+					if (groups[voiceKey].isPlaying, {
+						('clearing mono voice for new mono '++voiceKey).postln;
+						groups[voiceKey].free;
+						groups[voiceKey] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
+						NodeWatcher.register(groups[voiceKey],true);
+					},{
+						('making mono voice '++voiceKey).postln;
+						groups[voiceKey] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
+						NodeWatcher.register(groups[voiceKey],true);
+					});
+					indexTracker[voiceKey] = numVoices;
+				});
+			});
+		},{
+			if( paramProtos[voiceKey][\poly] == 0,{
+				groups[voiceKey].set(paramKey, paramValue);
+			},{
+				voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue);
+			});
+		});
 	}
 
 	setDelayParam { arg paramKey, paramValue;
@@ -966,6 +1047,18 @@ Kildare {
 		topGroup.set(\stopGate, 0);
 	}
 
+	freeVoice { arg voiceKey;
+		if (groups[voiceKey].isPlaying, {
+			('clearing '++voiceKey).postln;
+			groups[voiceKey].free;
+		});
+		(0..2).do({ arg voiceIndex;
+			if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
+				voiceTracker[voiceKey][voiceIndex].free;
+			});
+		});
+	}
+
 	clearSamples { arg voice;
 		if ( sampleInfo[voice][\samples].size > 0, {
 			for ( 0, sampleInfo[voice][\samples].size-1, {
@@ -980,7 +1073,7 @@ Kildare {
 	loadFile { arg msg;
 		var voice = msg[1], filename = msg[2];
 		groups[voice].set(\t_trig, -1);
-		groups[voice].set(\stopGate, -1);
+		groups[voice].set(\t_gate, -1);
 		this.clearSamples(voice);
 		sampleInfo[voice][\samples][0] = Buffer.read(Server.default, filename ,action:{
 			arg bufnum;
@@ -996,7 +1089,10 @@ Kildare {
 			paramProtos[voice][\bufnum] = sampleInfo[voice][\pointers][samplenum];
 			sampleInfo[voice][\samplerates][samplenum] = sampleInfo[voice][\samples][samplenum].sampleRate;
 			paramProtos[voice][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
+			groups[voice].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
+			groups[voice].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
 			paramProtos[voice][\channels].postln;
+			groups[voice].postln;
 		});
 	}
 
@@ -1032,22 +1128,25 @@ Kildare {
 
 	stopSample { arg voice;
 		groups[voice].set(\t_trig, -1.1);
-		groups[voice].set(\stopGate, -1.1);
+		groups[voice].set(\t_gate, -1.1);
 	}
 
 	setModel { arg voice, model;
 		var compileFlag = false;
 		if (synthKeys[voice] != model, {
-			('establishing synth ' ++voice++ ' ' ++model).postln;
 			compileFlag = true;
 			groups[voice].free;
 		});
 		synthKeys[voice] = model;
 		paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
 		if (compileFlag, {
-			('build synth ' ++ voice ++ ' ' ++ model).postln;
+			('building synth ' ++ voice ++ ' ' ++ model).postln;
 			groups[voice] = Synth.new(model, paramProtos[voice].getPairs);
-			paramProtos[voice].getPairs.postln;
+			NodeWatcher.register(groups[voice],true);
+			groups[voice].isPlaying.postln;
+			(0..2).do({ arg voiceIndex;
+				voiceTracker[voice][voiceIndex].isPlaying.postln;
+			});
 		});
 	}
 

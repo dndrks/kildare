@@ -20,6 +20,8 @@ end
 
 _lfo = require 'lfo'
 
+all_loaded = false
+
 klfo = {}
 
 ivals = {}
@@ -117,7 +119,10 @@ function lfos.add_params(drum_names, fx_names, poly)
     params:set_action("lfo_"..i,function(x)
       if x == 1 then
         klfo[i]:stop()
-        lfos.return_to_baseline(i,true,true)
+        if all_loaded then
+          print('lfo state callback',i)
+          lfos.return_to_baseline(i,true,true)
+        end
         params:hide("lfo_target_track_"..i)
         params:hide("lfo_target_param_"..i)
         params:hide("lfo_shape_"..i)
@@ -166,7 +171,10 @@ function lfos.add_params(drum_names, fx_names, poly)
       function(x)
         lfos.rebuild_param("min",i)
         lfos.rebuild_param("max",i)
-        lfos.return_to_baseline(i,nil,true)
+        if params:string('lfo_'..i) ~= 'off' then
+          -- print('lfo param callback',i)
+          lfos.return_to_baseline(i,nil,true)
+        end
         lfos.reset_bounds_in_menu(i)
       end
     )
@@ -222,7 +230,10 @@ function lfos.add_params(drum_names, fx_names, poly)
     params:set_action("lfo_depth_"..i, function(x)
       klfo[i]:set('depth',x/100)
       if x == 0 then
-        lfos.return_to_baseline(i,true,true)
+        if params:string('lfo_'..i) ~= 'off' then
+          -- print('lfo depth callback',i)
+          lfos.return_to_baseline(i,true,true)
+        end
       end
     end)
 
@@ -345,7 +356,10 @@ function lfos.change_target(i)
   params.params[param_id].count = tab.count(params.params[param_id].options)
   lfos.rebuild_param("min",i)
   lfos.rebuild_param("max",i)
-  lfos.return_to_baseline(i,nil,true)
+  if params:string('lfo_'..i) ~= 'off' then
+    -- print('lfo change target callback',i)
+    lfos.return_to_baseline(i,nil,true)
+  end
   params:set("lfo_target_param_"..i,1)
   params:set("lfo_depth_"..i,0)
   lfos.reset_bounds_in_menu(i)

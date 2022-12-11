@@ -8,11 +8,11 @@ KildareSaw {
 	init {
 
 		SynthDef(\kildare_saw, {
-			arg out = 0, stopGate = 1,
+			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux, feedbackSend,
-			velocity, amp,
+			velocity = 0, amp,
 			carAmp = 0.7,
 			carHz, thirdHz, seventhHz,
 			subSqAmp = 1, subSqPW = 0.5, subSqPWMRate = 0.03, subSqPWMAmt = 0,
@@ -57,10 +57,23 @@ KildareSaw {
 			thirdHz = thirdHz * (2.pow(carDetune/12));
 			seventhHz = seventhHz * (2.pow(carDetune/12));
 
-			modEnv = EnvGen.kr(Env.perc(modAtk, modRel, curve: modCurve),gate: stopGate);
-			filterEnv = EnvGen.kr(Env.perc(lpAtk, lpRel, curve: lpCurve),gate: stopGate);
-			carRamp = EnvGen.kr(Env([1000, 0.000001], [rampDec], curve: \exp));
-			carEnv = EnvGen.kr(envelope: Env.perc(carAtk, carRel, curve: carCurve), gate: stopGate, doneAction:2);
+			modEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
+				gate: t_gate
+			);
+			filterEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				gate: t_gate
+			);
+			carRamp = EnvGen.kr(
+				Env([1000,1000, 0.000001], [0,rampDec], curve: \exp),
+				gate: t_gate
+			);
+			carEnv = EnvGen.kr(
+				envelope: Env.new([0,0,1,0], times: [0.02,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				gate: t_gate
+			);
+
 
 			mod_1 = SinOscFB.ar(
 				modHz + ((carRamp*3)*rampDepth),
@@ -102,7 +115,15 @@ KildareSaw {
 			mainSend = Pan2.ar(car,pan);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 
-			delEnv = Select.kr(delayEnv > 0, [delaySend, (delaySend * EnvGen.kr(Env.perc(delayAtk, delayRel),gate: stopGate))]);
+			delEnv = Select.kr(
+				delayEnv > 0, [
+					delaySend,
+					delaySend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						gate: t_gate
+					)
+				]
+			);
 
 			Out.ar(out, LeakDC.ar(mainSend));
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
