@@ -13,7 +13,7 @@ KildareTM {
 			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
 			velocity = 127,
-			carHz, thirdHz, seventhHz,
+			carHz, carHzThird, carHzSeventh,
 			carDetune, modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
 			carAtk, carRel, carCurve = -4, amp,
@@ -38,16 +38,16 @@ KildareTM {
 			feedbackSend = feedbackSend.lag3(0.1);
 
 			carHz = (carHz * (1 - modFollow)) + (carHz * modFollow * modNum);
-			thirdHz = (thirdHz * (1 - modFollow)) + (thirdHz * modFollow * modNum);
-			seventhHz = (seventhHz * (1 - modFollow)) + (seventhHz * modFollow * modNum);
+			carHzThird = (carHzThird * (1 - modFollow)) + (carHzThird * modFollow * modNum);
+			carHzSeventh = (carHzSeventh * (1 - modFollow)) + (carHzSeventh * modFollow * modNum);
 
 			carHz = carHz * (2.pow(carDetune/12));
-			thirdHz = thirdHz * (2.pow(carDetune/12));
-			seventhHz = seventhHz * (2.pow(carDetune/12));
+			carHzThird = carHzThird * (2.pow(carDetune/12));
+			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
 
 			modHz = (modHz * (1 - modFollow)) + (carHz * modFollow * modDenum);
-			modHzThird = (modHz * (1 - modFollow)) + (thirdHz * modFollow * modDenum);
-			modHzSeventh = (modHz * (1 - modFollow)) + (seventhHz * modFollow * modDenum);
+			modHzThird = (modHz * (1 - modFollow)) + (carHzThird * modFollow * modDenum);
+			modHzSeventh = (modHz * (1 - modFollow)) + (carHzSeventh * modFollow * modDenum);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
@@ -92,8 +92,8 @@ KildareTM {
 			)* modEnv;
 
 			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv;
-			carThird = SinOsc.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
-			carSeventh = SinOsc.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
+			carThird = SinOsc.ar(carHzThird + (mod_2) + (carRamp*rampDepth)) * carEnv;
+			carSeventh = SinOsc.ar(carHzSeventh + (mod_3) + (carRamp*rampDepth)) * carEnv;
 
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 

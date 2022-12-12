@@ -14,7 +14,7 @@ KildareSaw {
 			feedbackAux, feedbackSend,
 			velocity = 0, amp,
 			carAmp = 0.7,
-			carHz, thirdHz, seventhHz,
+			carHz, carHzThird, carHzSeventh,
 			subSqAmp = 1, subSqPW = 0.5, subSqPWMRate = 0.03, subSqPWMAmt = 0,
 			subTrAmp = 1, subTrPw = 0.5,
 			phaseOff1 = 2/3, phaseOff2 = 4/3,
@@ -41,8 +41,8 @@ KildareSaw {
 			delaySend = delaySend.lag3(0.1);
 			feedbackSend = feedbackSend.lag3(0.1);
 			modHz = (modHz * (1 - modFollow)) + (carHz * modFollow * modDenum);
-			modHzThird = (modHz * (1 - modFollow)) + (thirdHz * modFollow * modDenum);
-			modHzSeventh = (modHz * (1 - modFollow)) + (seventhHz * modFollow * modDenum);
+			modHzThird = (modHz * (1 - modFollow)) + (carHzThird * modFollow * modDenum);
+			modHzSeventh = (modHz * (1 - modFollow)) + (carHzSeventh * modFollow * modDenum);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127).lag3(0.1);
@@ -51,11 +51,11 @@ KildareSaw {
 			rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 			amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
 			carHz = (carHz * (1 - modFollow)) + (carHz * modFollow * modNum);
-			thirdHz = (thirdHz * (1 - modFollow)) + (thirdHz * modFollow * modNum);
-			seventhHz = (seventhHz * (1 - modFollow)) + (seventhHz * modFollow * modNum);
+			carHzThird = (carHzThird * (1 - modFollow)) + (carHzThird * modFollow * modNum);
+			carHzSeventh = (carHzSeventh * (1 - modFollow)) + (carHzSeventh * modFollow * modNum);
 			carHz = carHz * (2.pow(carDetune/12));
-			thirdHz = thirdHz * (2.pow(carDetune/12));
-			seventhHz = seventhHz * (2.pow(carDetune/12));
+			carHzThird = carHzThird * (2.pow(carDetune/12));
+			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
 
 			modEnv = EnvGen.kr(
 				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
@@ -94,8 +94,8 @@ KildareSaw {
 			)* modEnv;
 
 			car = LFSaw.ar(carHz + (mod_1) + (carRamp*rampDepth),0) * carEnv;
-			carThird = LFSaw.ar(thirdHz + (mod_2) + (carRamp*rampDepth), phaseOff1) * carEnv;
-			carSeventh = LFSaw.ar(seventhHz + (mod_3) + (carRamp*rampDepth), phaseOff2) * carEnv;
+			carThird = LFSaw.ar(carHzThird + (mod_2) + (carRamp*rampDepth), phaseOff1) * carEnv;
+			carSeventh = LFSaw.ar(carHzSeventh + (mod_3) + (carRamp*rampDepth), phaseOff2) * carEnv;
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
 			subSq = Pulse.ar(freq: carHz/2, width: subSqPW + (( SinOsc.kr(subSqPWMRate).range(0, 1)) * subSqPWMAmt), mul: subSqAmp) * carEnv;

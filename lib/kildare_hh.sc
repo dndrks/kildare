@@ -12,7 +12,7 @@ KildareHH {
 			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
 			velocity = 127, amp,
-			carHz, thirdHz, seventhHz,
+			carHz, carHzThird, carHzSeventh,
 			carDetune, carAtk, carRel, carCurve = -4,
 			tremDepth, tremHz,
 			modAmp, modHz, modAtk, modRel, modCurve = -4,
@@ -48,12 +48,12 @@ KildareHH {
 			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
 			carHz = carHz * (2.pow(carDetune/12));
-			thirdHz = thirdHz * (2.pow(carDetune/12));
-			seventhHz = seventhHz * (2.pow(carDetune/12));
+			carHzThird = carHzThird * (2.pow(carDetune/12));
+			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
 
 			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
-			modHzThird = Select.kr(modFollow > 0, [modHz, thirdHz * (modNum / modDenum)]);
-			modHzSeventh = Select.kr(modFollow > 0, [modHz, seventhHz * (modNum / modDenum)]);
+			modHzThird = Select.kr(modFollow > 0, [modHz, carHzThird * (modNum / modDenum)]);
+			modHzSeventh = Select.kr(modFollow > 0, [modHz, carHzSeventh * (modNum / modDenum)]);
 
 			modEnv = EnvGen.kr(
 				envelope: Env.new([0,0,1,0], times: [0.0,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
@@ -75,8 +75,8 @@ KildareHH {
 			mod_3 = SinOsc.ar(modHzSeventh, mul:modAmp) * modEnv;
 
 			car = SinOscFB.ar(carHz + mod_1, feedAmp) * carEnv * amp;
-			carThird = SinOscFB.ar(thirdHz + mod_2, feedAmp) * carEnv * amp;
-			carSeventh = SinOscFB.ar(seventhHz + mod_3, feedAmp) * carEnv * amp;
+			carThird = SinOscFB.ar(carHzThird + mod_2, feedAmp) * carEnv * amp;
+			carSeventh = SinOscFB.ar(carHzSeventh + mod_3, feedAmp) * carEnv * amp;
 
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 

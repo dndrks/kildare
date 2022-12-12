@@ -12,7 +12,7 @@ KildareCP {
 			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
 			velocity = 0,
-			carHz, thirdHz, seventhHz, carDetune,
+			carHz, carHzThird, carHzSeventh, carDetune,
 			modHz, modAmp, modRel, feedAmp,
 			modFollow, modNum, modDenum,
 			carRel, amp, click,

@@ -26,7 +26,7 @@ klfo = {}
 
 ivals = {}
 
-function lfos.add_params(drum_names, fx_names, poly)
+function lfos.add_params(fx_names, poly)
 
   for i = 1,lfos.count do
     klfo[i] = _lfo:add{
@@ -51,8 +51,8 @@ function lfos.add_params(drum_names, fx_names, poly)
   end
 
   local lfo_target_iter = 1
-  for i = 1,#drum_names do
-    lfos.targets[lfo_target_iter] = i<=7 and i or drum_names[i]
+  for i = 1,8 do
+    lfos.targets[lfo_target_iter] = i
     lfo_target_iter = lfo_target_iter + 1
   end
 
@@ -96,16 +96,8 @@ function lfos.add_params(drum_names, fx_names, poly)
       lfos.last_param[i] = "decay"
     elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "main" then
       lfos.last_param[i] = "lSHz"
-    elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "sample1" or
-    lfos.targets[util.wrap(i,1,#lfos.targets)] == "sample2" or
-    lfos.targets[util.wrap(i,1,#lfos.targets)] == "sample3" then
-      lfos.last_param[i] = "poly"
     else
-      if poly then
-        lfos.last_param[i] = "poly"
-      else
-        lfos.last_param[i] = "amp"
-      end
+      lfos.last_param[i] = "amp"
     end
     
     params:add_separator('lfo_'..i..'_separator', "lfo "..i)
@@ -162,7 +154,7 @@ function lfos.add_params(drum_names, fx_names, poly)
     params:add_option("lfo_target_track_"..i, "track", lfos.targets, 1)
     params:set_action("lfo_target_track_"..i,
       function(x)
-        lfos.change_target(i)
+        lfos.change_target(i,x)
       end
     )
 
@@ -335,7 +327,7 @@ function lfos.reset_bounds_in_menu(i)
   local target_param = params:get("lfo_target_param_"..i)
   local restore_min = lfos.specs[target_track][target_param].min
   local restore_max;
-  if params:get("lfo_target_track_"..i) <= 7 then
+  if params:get("lfo_target_track_"..i) <= 8 then
     restore_max = params:get(target_track.."_"..params:string('voice_model_'..params:get("lfo_target_track_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
   else
     restore_max = params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
@@ -350,10 +342,12 @@ function lfos.reset_bounds_in_menu(i)
   params:set("lfo_max_"..i, restore_max)
 end
 
-function lfos.change_target(i)
+function lfos.change_target(i,x)
+  local new_target = x
   local param_id = params.lookup["lfo_target_param_"..i]
   params.params[param_id].options = lfos.params_list[lfos.targets[params:get("lfo_target_track_"..i)]].names
   params.params[param_id].count = tab.count(params.params[param_id].options)
+  -- print(params:get("lfo_target_param_"..i))
   lfos.rebuild_param("min",i)
   lfos.rebuild_param("max",i)
   if params:string('lfo_'..i) ~= 'off' then
@@ -366,25 +360,27 @@ function lfos.change_target(i)
 end
 
 function lfos.return_to_baseline(i,silent,poly)
+  -- print('return to baseline: '..i)
   local drum_target = params:get("lfo_target_track_"..i)
   local parent = lfos.targets[drum_target]
   local param_name = parent.."_"..(lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
-  local param_exclusions = {'delay','feedback','main','sample1','sample2','sample3'}
+  local param_exclusions = {'delay','feedback','main'}
+  print(drum_target,parent,param_name)
   if not tab.contains(param_exclusions, parent) then
     if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" or lfos.last_param[i] == "sampleMode" then
-      if poly then
-        lfos.last_param[i] = "poly"
-      else
-        lfos.last_param[i] = "amp"
-      end
+      lfos.last_param[i] = "amp"
     end
     local focus_voice = params:string('voice_model_'..parent)
-    if lfos.last_param[i] ~= "carHz" and lfos.last_param[i] ~= "poly" and engine.name == "Kildare" then
-      engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
-    elseif lfos.last_param[i] == "carHz" and engine.name == "Kildare" then
-      engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])))
-    elseif lfos.last_param[i] == "poly" and engine.name == "Kildare" then
-      engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]) == 1 and 0 or 1)
+    if focus_voice ~= 'sample' then
+      if lfos.last_param[i] ~= "carHz" and lfos.last_param[i] ~= "amp" and engine.name == "Kildare" then
+        engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
+      elseif lfos.last_param[i] == "carHz" and engine.name == "Kildare" then
+        engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])))
+      elseif lfos.last_param[i] == "amp" and engine.name == "Kildare" then
+        engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]) == 1 and 0 or 1)
+      end
+    else
+      engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
     end
   elseif (parent == "delay" or parent == "feedback" or parent == "main") and engine.name == "Kildare" then
     local sources = {delay = lfos.delay_params, feedback = lfos.feedback_params, main = lfos.main_params}
@@ -395,19 +391,6 @@ function lfos.return_to_baseline(i,silent,poly)
       engine["set_"..parent.."_param"](lfos.last_param[i],clock.get_beat_sec() * params:get(parent.."_"..lfos.last_param[i])/128)
     elseif parent ~= 'feedback' then
       engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
-    end
-  elseif (parent == "sample1" or parent == "sample2" or parent == "sample3") and engine.name == "Kildare" then
-    if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" or lfos.last_param[i] == "sampleMode" then
-      if poly then
-        lfos.last_param[i] = "poly"
-      else
-        lfos.last_param[i] = "amp"
-      end
-    end
-    if lfos.last_param[i] == "poly" then
-      engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]) == 1 and 0 or 1)
-    else
-      engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
     end
   end
   if not silent then
@@ -420,10 +403,11 @@ function lfos.rebuild_param(param,i)
   local target_track = params:string("lfo_target_track_"..i)
   local target_param = params:get("lfo_target_param_"..i)
   local default_value;
-  if params:get("lfo_target_track_"..i) <= 7 then
+  if params:get("lfo_target_track_"..i) <= 8 then
     default_value = param == "min" and lfos.specs[target_track][target_param].min
     or params:get(target_track.."_"..params:string('voice_model_'..params:string("lfo_target_track_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
   else
+    -- print(target_track,target_param,lfos.params_list[target_track].ids[(target_param)])
     default_value = param == "min" and lfos.specs[target_track][target_param].min
     or params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
   end
@@ -472,7 +456,7 @@ function lfos.build_params_static(poly)
     local style_name_iter = 1
     for j = 1,#parent do
       if parent[j].type ~= "separator" and parent[j].lfo_exclude == nil then
-        if (parent[j].id == "poly" and poly) or (parent[j].id ~= "poly") then
+        if (parent[j].id ~= "poly") then
           lfos.params_list[style].ids[style_id_iter] = parent[j].id
           lfos.params_list[style].names[style_name_iter] = parent[j].name
           style_id_iter = style_id_iter + 1
@@ -556,7 +540,7 @@ function lfos.rebuild_model_spec(k,poly)
   for key,val in pairs(param_group[focus_voice]) do
     if param_group[focus_voice][key].type ~= "separator" then
       if param_group[focus_voice][key].lfo_exclude == nil then
-        if (poly == nil and val.id ~= "poly") or (poly == true) then
+        if val.id ~= "poly" then
           local concat_name = type(k) == 'number' and (k.."_"..focus_voice..'_'..param_group[focus_voice][key].id) or (k.."_"..param_group[focus_voice][key].id)
           local system_id = params.lookup[concat_name]
           local quantum_size;

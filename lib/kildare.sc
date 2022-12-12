@@ -1,7 +1,7 @@
 Kildare {
 	classvar <voiceKeys;
 	classvar <synthDefs;
-	const <numVoices = 3;
+	const <numVoices = 2;
 
 	var <synthKeys;
 	var <paramProtos;
@@ -22,7 +22,7 @@ Kildare {
 	classvar <indexTracker;
 
 	*initClass {
-		voiceKeys = [ \1, \2, \3, \4, \5, \6, \7, \sample1, \sample2, \sample3];
+		voiceKeys = [ \1, \2, \3, \4, \5, \6, \7, \8];
 
 		StartUp.add {
 			var s = Server.default;
@@ -60,9 +60,7 @@ Kildare {
 			\5, \none,
 			\6, \none,
 			\7, \none,
-			\sample1, \kildare_sample,
-			\sample2, \kildare_sample,
-			\sample3, \kildare_sample,
+			\8, \none,
 		]);
 
 		outputSynths = Dictionary.new;
@@ -115,13 +113,19 @@ Kildare {
 					\pointers, Dictionary.new(),
 					\samplerates, Dictionary.new()
 			]),
+			\8, Dictionary.newFrom(
+				[
+					\samples, Dictionary.new(),
+					\pointers, Dictionary.new(),
+					\samplerates, Dictionary.new()
+			]),
 		]);
 
 		topGroup = Group.new(s);
 		groups = Dictionary.new;
 		voiceKeys.do({ arg voiceKey;
 			groups[voiceKey] = Group.new(topGroup);
-			indexTracker[voiceKey] = numVoices;
+			indexTracker[voiceKey] = 0;
 			numVoices.do{ arg i;
 				voiceTracker[voiceKey] = Dictionary.new(numVoices);
 			};
@@ -402,8 +406,8 @@ Kildare {
 				\velocity,127,
 				\amp,0.7,
 				\carHz,55,
-				\thirdHz,55,
-				\seventhHz,55,
+				\carHzThird,55,
+				\carHzSeventh,55,
 				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.3,
@@ -449,8 +453,8 @@ Kildare {
 				\poly,0,
 				\amp,0.7,
 				\carHz,282.54,
-				\thirdHz,282.54,
-				\seventhHz,282.54,
+				\carHzThird,282.54,
+				\carHzSeventh,282.54,
 				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.15,
@@ -646,8 +650,8 @@ Kildare {
 				\poly,0,
 				\amp,0.7,
 				\carHz,200,
-				\thirdHz,200,
-				\seventhHz,200,
+				\carHzThird,200,
+				\carHzSeventh,200,
 				\carDetune,0,
 				\carAtk,0,
 				\carRel,0.03,
@@ -725,8 +729,8 @@ Kildare {
 				\velocity,127,
 				\amp,0.7,
 				\carHz,55,
-				\thirdHz,55,
-				\seventhHz,55,
+				\carHzThird,55,
+				\carHzSeventh,55,
 				\subSqAmp,1,
 				\subSqPW,0.5,
 				\subSqPWMRate,0.03,
@@ -779,8 +783,8 @@ Kildare {
 				\velocity,127,
 				\amp,0.7,
 				\carHz,55,
-				\thirdHz,55,
-				\seventhHz,55,
+				\carHzThird,55,
+				\carHzSeventh,55,
 				\carDetune,0,
 				\carAtk,0,
 				\carRel,3.3,
@@ -823,9 +827,7 @@ Kildare {
 			\5, Dictionary.newFrom(generalizedParams[\kildare_rs]),
 			\6, Dictionary.newFrom(generalizedParams[\kildare_cb]),
 			\7, Dictionary.newFrom(generalizedParams[\kildare_hh]),
-			\sample1, Dictionary.newFrom(generalizedParams[\kildare_sample]),
-			\sample2, Dictionary.newFrom(generalizedParams[\kildare_sample]),
-			\sample3, Dictionary.newFrom(generalizedParams[\kildare_sample]),
+			\8, Dictionary.newFrom(generalizedParams[\kildare_saw]),
 		]);
 
 		outputSynths[\delay] = SynthDef.new(\delay, {
@@ -915,9 +917,9 @@ Kildare {
 			});
 			groups[voiceKey].set(\t_gate, 1);
 		},{
+			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
 			voiceTracker[voiceKey][indexTracker[voiceKey]].set(\velocity, velocity);
 			voiceTracker[voiceKey][indexTracker[voiceKey]].set(\t_gate, 1);
-			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
 		});
 	}
 
@@ -975,7 +977,7 @@ Kildare {
 		var prevPoly = paramProtos[voiceKey][\poly];
 		paramProtos[voiceKey][paramKey] = paramValue;
 		if( paramKey == \poly, {
-			(0..2).do({ arg voiceIndex;
+			(0..1).do({ arg voiceIndex;
 				if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 					// voiceTracker[voiceKey][voiceIndex].free;
 					('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
@@ -986,7 +988,7 @@ Kildare {
 					('would want to clear mono voice for poly '++voiceKey).postln;
 					groups[voiceKey].free;
 				});
-				(0..2).do({ arg voiceIndex;
+				(0..1).do({ arg voiceIndex;
 					if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 						// voiceTracker[voiceKey][voiceIndex].free;
 						('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
@@ -997,7 +999,7 @@ Kildare {
 			},{
 				if( prevPoly != 0, {
 					(voiceKey++' sending '++paramKey++ ' ' ++paramValue).postln;
-					(0..2).do({ arg voiceIndex;
+					(0..1).do({ arg voiceIndex;
 						if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 							('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
 							voiceTracker[voiceKey][voiceIndex].free;
@@ -1021,7 +1023,13 @@ Kildare {
 			if( paramProtos[voiceKey][\poly] == 0,{
 				groups[voiceKey].set(paramKey, paramValue);
 			},{
-				voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue);
+				if ( (paramKey.asString).contains("carHz"), {
+					voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue);
+				},{
+					2.do{ arg i;
+						voiceTracker[voiceKey][i].set(paramKey, paramValue);
+					};
+				});
 			});
 		});
 	}
@@ -1052,7 +1060,7 @@ Kildare {
 			('clearing '++voiceKey).postln;
 			groups[voiceKey].free;
 		});
-		(0..2).do({ arg voiceIndex;
+		(0..1).do({ arg voiceIndex;
 			if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 				voiceTracker[voiceKey][voiceIndex].free;
 			});
@@ -1144,7 +1152,7 @@ Kildare {
 			groups[voice] = Synth.new(model, paramProtos[voice].getPairs);
 			NodeWatcher.register(groups[voice],true);
 			groups[voice].isPlaying.postln;
-			(0..2).do({ arg voiceIndex;
+			(0..1).do({ arg voiceIndex;
 				voiceTracker[voice][voiceIndex].isPlaying.postln;
 			});
 		});
@@ -1155,24 +1163,28 @@ Kildare {
 			voice.free;
 		});
 		topGroup.free;
-		~feedback.free;
-		~input.free;
-		~mixer.free;
-		~processing.free;
-		~main.free;
+		feedbackSynths.do({arg bus;
+			bus.free;
+		});
+		// ~feedback.free;
+		// ~mixer.free;
+		// ~processing.free;
+		// ~main.free;
 		synthDefs.do({arg def;
 			def.free;
 		});
 		voiceTracker.do({arg voice;
-			voice.free;
+			(0..1).do({ arg voiceIndex;
+				if (voice[voiceIndex].isPlaying, {
+					('freeing poly ').postln;
+					voice[voiceIndex].free;
+				});
+			});
 		});
 		busses.do({arg bus;
 			bus.free;
 		});
 		outputSynths.do({arg bus;
-			bus.free;
-		});
-		feedbackSynths.do({arg bus;
 			bus.free;
 		});
 		delayBufs.do({arg buf;

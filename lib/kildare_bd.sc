@@ -13,12 +13,11 @@ KildareBD {
 			delayEnv, delayAtk, delayRel,
 			feedbackAux, feedbackSend,
 			velocity = 127, amp,
-			carHz, thirdHz, seventhHz,
+			carHz, carHzThird, carHzSeventh,
 			carDetune, carAtk, carRel, carCurve = -4,
 			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
 			pan, rampDepth, rampDec,
-			foldLo = -1, foldHi = 1, foldRange = 0, foldSmooth = 0, foldAmount = 0,
 			squishPitch, squishChunk,
 			amDepth, amHz,
 			eqHz, eqAmp, bitRate, bitCount,
@@ -38,8 +37,8 @@ KildareBD {
 			delaySend = delaySend.lag3(0.1);
 			feedbackSend = feedbackSend.lag3(0.1);
 			modHz = (modHz * (1 - modFollow)) + (carHz * modFollow * modDenum);
-			modHzThird = (modHz * (1 - modFollow)) + (thirdHz * modFollow * modDenum);
-			modHzSeventh = (modHz * (1 - modFollow)) + (seventhHz * modFollow * modDenum);
+			modHzThird = (modHz * (1 - modFollow)) + (carHzThird * modFollow * modDenum);
+			modHzSeventh = (modHz * (1 - modFollow)) + (carHzSeventh * modFollow * modDenum);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127).lag3(0.1);
@@ -48,11 +47,11 @@ KildareBD {
 			rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 			amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
 			carHz = (carHz * (1 - modFollow)) + (carHz * modFollow * modNum);
-			thirdHz = (thirdHz * (1 - modFollow)) + (thirdHz * modFollow * modNum);
-			seventhHz = (seventhHz * (1 - modFollow)) + (seventhHz * modFollow * modNum);
+			carHzThird = (carHzThird * (1 - modFollow)) + (carHzThird * modFollow * modNum);
+			carHzSeventh = (carHzSeventh * (1 - modFollow)) + (carHzSeventh * modFollow * modNum);
 			carHz = carHz * (2.pow(carDetune/12));
-			thirdHz = thirdHz * (2.pow(carDetune/12));
-			seventhHz = seventhHz * (2.pow(carDetune/12));
+			carHzThird = carHzThird * (2.pow(carDetune/12));
+			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
 
 			modEnv = EnvGen.kr(
 				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
@@ -90,8 +89,8 @@ KildareBD {
 			)* modEnv;
 
 			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv;
-			carThird = SinOsc.ar(thirdHz + (mod_2) + (carRamp*rampDepth)) * carEnv;
-			carSeventh = SinOsc.ar(seventhHz + (mod_3) + (carRamp*rampDepth)) * carEnv;
+			carThird = SinOsc.ar(carHzThird + (mod_2) + (carRamp*rampDepth)) * carEnv;
+			carSeventh = SinOsc.ar(carHzSeventh + (mod_3) + (carRamp*rampDepth)) * carEnv;
 
 			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
@@ -103,7 +102,6 @@ KildareBD {
 			);
 			car = (car + clicksound)* ampMod;
 
-			car = SmoothFoldS.ar(car,foldLo,foldHi,foldRange,foldSmooth);
 			car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 			car = Decimator.ar(car,bitRate,bitCount,1.0);
 			car = BPeakEQ.ar(in:car,freq:eqHz,rq:1,db:eqAmp,mul:1);

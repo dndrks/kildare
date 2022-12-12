@@ -3,9 +3,10 @@ local specs = {}
 local ControlSpec = require 'controlspec'
 local frm = require 'formatters'
 Kildare.lfos = include 'kildare/lib/kildare_lfos'
+Kildare.json = include 'kildare/lib/kildare_json'
 local musicutil = require 'musicutil'
 
-Kildare.drums = {"bd","sd","tm","cp","rs","cb","hh","sample1","sample2","sample3"}
+Kildare.drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','sample'}
 local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','sample'}
 Kildare.fx = {"delay", "feedback", "main"}
 local fx = {"delay", "feedback", "main"}
@@ -262,11 +263,6 @@ function Kildare.init(poly)
       {type = 'separator', name = 'additional processing'},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
-      {id = 'foldLo', name = 'wavefold (lo)', type = 'control', min = -1, max = 1, warp = 'lin',  default = -1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'foldHi', name = 'wavefold (hi)', type = 'control', min = -1, max = 1, warp = 'lin',  default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'foldRange', name = 'wavefold range', type = 'control', min = 0, max = 1, warp = 'lin',  default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'foldSmooth', name = 'wavefold smoothing', type = 'control', min = 0, max = 1, warp = 'lin',  default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-      {id = 'foldAmount', name = 'wavefold amount', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.5, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if (type(param) == 'table' and param:get() or param) == 1 then return ("off") else return (round_form((type(param) == 'table' and param:get() or param),1,'')) end end},
       {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.1).." Hz") end},
@@ -710,9 +706,6 @@ function Kildare.init(poly)
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
     },
     ['sample'] = sample_params,
-    ["sample1"] = sample_params,
-    ["sample2"] = sample_params,
-    ["sample3"] = sample_params
   }
 
   local feedback_channels = {'a','b','c'}
@@ -807,9 +800,9 @@ function Kildare.init(poly)
     params:add_option("no_kildare","----- kildare not loaded -----",{" "})
   end
 
-  params:add_group('kildare_model_management', 'models', 7)
+  params:add_group('kildare_model_management', 'models', 8)
   local models = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','sample'}
-  for i = 1,7 do
+  for i = 1,8 do
     params:add_option('voice_model_'..i, 'voice '..i, models, i)
     params:set_action('voice_model_'..i, function(x)
       Kildare.rebuild_model_params(i, models[x])
@@ -824,7 +817,7 @@ function Kildare.init(poly)
     how_many_params = tab.count(kildare_drum_params[swappable_drums[i]]) + how_many_params
   end
 
-  for i = 1,7 do
+  for i = 1,8 do
     local shown_set = params:string('voice_model_'..i)
     params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params)
     
@@ -886,8 +879,8 @@ function Kildare.init(poly)
               if engine.name == "Kildare" then
                 if v == params:string('voice_model_'..i) then
                   engine.set_voice_param(i, d.id, musicutil.note_num_to_freq(x))
-                  engine.set_voice_param(i, 'thirdHz', musicutil.note_num_to_freq(x))
-                  engine.set_voice_param(i, 'seventhHz', musicutil.note_num_to_freq(x))
+                  engine.set_voice_param(i, 'carHzThird', musicutil.note_num_to_freq(x))
+                  engine.set_voice_param(i, 'carHzSeventh', musicutil.note_num_to_freq(x))
                   Kildare.voice_param_callback(i, d.id, x)
                 end
               end
@@ -947,119 +940,6 @@ function Kildare.init(poly)
 
     Kildare.rebuild_model_params(i,shown_set)
 
-  end
-
-  for j = 8,10 do
-    local k = 'sample'..(j-7)
-    j = 'sample'..(j-7)
-    params:add_group('kildare_'..j..'_group', j, #kildare_drum_params[k])
-    
-    for i = 1, #kildare_drum_params[k] do
-      local d = kildare_drum_params[k][i]
-      if d.type == 'control' then
-        local quantum_size = 0.01
-        if d.quantum ~= nil then
-          quantum_size = d.quantum
-        end
-        local step_size = 0
-        if d.step ~= nil then
-          step_size = d.step
-        end
-        if d.id == "carHz" then
-          quantum_size = 1/math.abs(d.max-d.min)
-        end
-        params:add_control(
-          j.."_"..d.id,
-          d.name,
-          ControlSpec.new(d.min, d.max, d.warp, step_size, d.default, nil, quantum_size),
-          d.formatter
-        )
-      elseif d.type == 'number' then
-        params:add_number(
-          j.."_"..d.id,
-          d.name,
-          d.min,
-          d.max,
-          d.default,
-          d.formatter
-        )
-      elseif d.type == "option" then
-        params:add_option(
-          j.."_"..d.id,
-          d.name,
-          d.options,
-          d.default
-        )
-      elseif d.type == 'separator' then
-        params:add_separator(j..'_separator_'..d.name, d.name)
-      elseif d.type == 'file' then
-        params:add_file(j.."_"..d.id, d.name, d.default)
-      elseif d.type == 'binary' then
-        params:add_binary(j.."_"..d.id, d.name, d.behavior)
-      end
-      if d.type ~= 'separator' then
-        if not tab.contains(custom_actions,d.id) then
-          params:set_action(j.."_"..d.id, function(x)
-            if engine.name == "Kildare" then
-              engine.set_voice_param(j, d.id, x)
-              Kildare.voice_param_callback(j, d.id, x)
-            end
-          end)
-        elseif d.id == "carHz" then
-          params:set_action(j.."_"..d.id, function(x)
-            if engine.name == "Kildare" then
-              engine.set_voice_param(j, d.id, musicutil.note_num_to_freq(x))
-              Kildare.voice_param_callback(j, d.id, x)
-            end
-          end)
-        elseif d.id == "poly" then
-          params:set_action(j.."_"..d.id, function(x)
-            if engine.name == "Kildare" then
-              engine.set_voice_param(j, d.id, x == 1 and 0 or 1)
-              Kildare.voice_param_callback(j, d.id, x)
-            end
-          end)
-          if not poly then
-            params:hide(j.."_"..d.id) -- avoid exposing poly for performance management
-          end
-        elseif d.id == "sampleMode" then
-        elseif d.id == "sampleFile" then
-          params:set_action(j.."_"..d.id,
-            function(file)
-              if file ~= _path.audio then
-                if params:string(j.."_sampleMode") == "distribute" then
-                  local split_at = string.match(file, "^.*()/")
-                  local folder = string.sub(file, 1, split_at)
-                  engine.load_folder(j,folder)
-                  Kildare.folder_callback(j,folder)
-                else
-                  engine.load_file(j,file)
-                  Kildare.file_callback(j,file)
-                end
-              end
-            end
-          )
-        elseif d.id == "sampleClear" then
-          params:set_action(j.."_"..d.id,
-            function(x)
-              engine.clear_samples(j)
-              params:set(j.."_sampleFile", _path.audio, silent)
-              Kildare.clear_callback(j)
-            end
-          )
-        elseif d.id == 'playbackRateBase' then
-        elseif d.id == 'playbackRateOffset' or d.id == 'playbackPitchControl' then
-        elseif d.id == 'loop' then
-          params:set_action(j..'_loop',
-            function(x)
-              if x == 0 then
-                engine.stop_sample(j)
-              end
-            end
-          )
-        end
-      end
-    end
   end
 
   local function build_slices(path,slices,sample_voice)
@@ -1229,7 +1109,7 @@ function Kildare.init(poly)
   -- params:bang()
 
   params:add_separator("kildare_lfo_header","kildare lfos")
-  Kildare.lfos.add_params(Kildare.drums, Kildare.fx ,poly)
+  Kildare.lfos.add_params(Kildare.fx ,poly)
   
   -- params:bang()
 
