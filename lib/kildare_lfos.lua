@@ -14,8 +14,10 @@ lfos.specs = {}
 
 lfos.params_list = {}
 lfos.last_param = {}
+lfos.last_track = {}
 for i = 1,lfos.count do
   lfos.last_param[i] = "empty"
+  lfos.last_track[i] = 'none'
 end
 
 _lfo = require 'lfo'
@@ -26,7 +28,7 @@ klfo = {}
 
 ivals = {}
 
-function lfos.add_params(fx_names, poly)
+function lfos.add_params(track_count, fx_names, poly)
 
   for i = 1,lfos.count do
     klfo[i] = _lfo:add{
@@ -45,13 +47,13 @@ function lfos.add_params(fx_names, poly)
           r = util.linlin(0,1,scaled_min, scaled_max,r + klfo[i].offset)
           lfos.send_param_value(target_track, param_name.ids[(target_param)], r)
         end
-      end,
-      ppqn = 32
+      end
     }
+    klfo[i]:set('ppqn',32)
   end
 
   local lfo_target_iter = 1
-  for i = 1,8 do
+  for i = 1,track_count do
     lfos.targets[lfo_target_iter] = i
     lfo_target_iter = lfo_target_iter + 1
   end
@@ -90,15 +92,8 @@ function lfos.add_params(fx_names, poly)
 
   params:add_group("lfos",lfos.count * 15)
   for i = 1,lfos.count do
-    if lfos.targets[util.wrap(i,1,#lfos.targets)] == "delay" then
-      lfos.last_param[i] = "time"
-    elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "feedback" then
-      lfos.last_param[i] = "decay"
-    elseif lfos.targets[util.wrap(i,1,#lfos.targets)] == "main" then
-      lfos.last_param[i] = "lSHz"
-    else
-      lfos.last_param[i] = "amp"
-    end
+    lfos.last_track[i] = 1
+    lfos.last_param[i] = "amp"
     
     params:add_separator('lfo_'..i..'_separator', "lfo "..i)
     params:add_control(
@@ -344,15 +339,17 @@ end
 
 function lfos.change_target(i,x)
   local new_target = x
-  local param_id = params.lookup["lfo_target_param_"..i]
-  params.params[param_id].options = lfos.params_list[lfos.targets[params:get("lfo_target_track_"..i)]].names
-  params.params[param_id].count = tab.count(params.params[param_id].options)
+  local target_param_id = params.lookup["lfo_target_param_"..i] -- just looks up the ID for this parameter bucket
+  local target_params_selector = params.params[target_param_id] -- the parameter bucket
+  local track_id = lfos.targets[params:get("lfo_target_track_"..i)]
+  target_params_selector.options = lfos.params_list[track_id].names -- rebuild parameter names
+  target_params_selector.count = tab.count(target_params_selector.options) -- count the names
   -- print(params:get("lfo_target_param_"..i))
   lfos.rebuild_param("min",i)
   lfos.rebuild_param("max",i)
   if params:string('lfo_'..i) ~= 'off' then
     -- print('lfo change target callback',i)
-    lfos.return_to_baseline(i,nil,true)
+    lfos.return_to_baseline(i,nil,true) -- i kinda want this to be the *previous* param OR the current, depending on situation.
   end
   params:set("lfo_target_param_"..i,1)
   params:set("lfo_depth_"..i,0)
@@ -363,9 +360,9 @@ function lfos.return_to_baseline(i,silent,poly)
   -- print('return to baseline: '..i)
   local drum_target = params:get("lfo_target_track_"..i)
   local parent = lfos.targets[drum_target]
-  local param_name = parent.."_"..(lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
+  local current_param_name = parent.."_"..(lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
   local param_exclusions = {'delay','feedback','main'}
-  print(drum_target,parent,param_name)
+  print('returning to baseline',drum_target,parent,current_param_name,lfos.last_track[i],lfos.last_param[i])
   if not tab.contains(param_exclusions, parent) then
     if lfos.last_param[i] == "time" or lfos.last_param[i] == "decay" or lfos.last_param[i] == "lSHz" or lfos.last_param[i] == "sampleMode" then
       lfos.last_param[i] = "amp"
@@ -394,6 +391,7 @@ function lfos.return_to_baseline(i,silent,poly)
     end
   end
   if not silent then
+    lfos.last_track[i] = parent
     lfos.last_param[i] = (lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
   end
 end

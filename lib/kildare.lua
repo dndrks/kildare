@@ -6,8 +6,8 @@ Kildare.lfos = include 'kildare/lib/kildare_lfos'
 Kildare.json = include 'kildare/lib/kildare_json'
 local musicutil = require 'musicutil'
 
-Kildare.drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','sample'}
-local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','sample'}
+Kildare.drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','sample'}
+local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','sample'}
 Kildare.fx = {"delay", "feedback", "main"}
 local fx = {"delay", "feedback", "main"}
 
@@ -171,11 +171,14 @@ function Kildare.push_model_to_lfos(i,current_model)
 
 end
 
-function Kildare.init(poly)
+function Kildare.init(track_count, poly)
 
   local extensions = _path.home .. '/.local/share/SuperCollider/Extensions/'
   if not util.file_exists(extensions..'miSCellaneous_lib/Classes/WaveFolding/') then
     util.os_capture('mkdir -p '..extensions ..'miSCellaneous_lib/Classes/WaveFolding/')
+  end
+  if not util.file_exists(extensions ..'PortedPlugins/Classes/') then
+    util.os_capture('mkdir -p '..extensions ..'PortedPlugins/Classes/')
   end
   local install_these = {'SmoothClip.sc', 'SmoothFold.sc'}
   local restart_flag = false
@@ -183,6 +186,22 @@ function Kildare.init(poly)
     if not util.file_exists(extensions..'miSCellaneous_lib/Classes/WaveFolding/'..install_these[i]) then
       util.os_capture('mkdir -p '..extensions ..'miSCellaneous_lib/Classes/WaveFolding/')
       util.os_capture('cp ' .. _path.code .. 'kildare/lib/ignore/' .. install_these[i].." " .. extensions..'miSCellaneous_lib/Classes/WaveFolding/'..install_these[i])
+      print("installing "..install_these[i])
+      if not restart_flag then restart_flag = true end
+    end
+  end
+  install_these = {'NonlinearFilter.sc'}
+  for i = 1,#install_these do
+    if not util.file_exists(extensions..'PortedPlugins/Classes/'..install_these[i]) then
+      util.os_capture('cp ' .. _path.code .. 'kildare/lib/ignore/' .. install_these[i].." " .. extensions..'PortedPlugins/Classes/'..install_these[i])
+      print("installing "..install_these[i])
+      if not restart_flag then restart_flag = true end
+    end
+  end
+  install_these = {'NonlinearFilter_scsynth.so'}
+  for i = 1,#install_these do
+    if not util.file_exists(extensions..'PortedPlugins/'..install_these[i]) then
+      util.os_capture('cp ' .. _path.code .. 'kildare/lib/ignore/' .. install_these[i].." " .. extensions..'PortedPlugins/'..install_these[i])
       print("installing "..install_these[i])
       if not restart_flag then restart_flag = true end
     end
@@ -260,13 +279,14 @@ function Kildare.init(poly)
       {type = 'separator', name = 'pitch ramp'},
       {id = 'rampDepth', name = 'ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.11, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.3, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
-      {type = 'separator', name = 'additional processing'},
+      {type = 'separator', name = 'grit'},
       {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
       {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if (type(param) == 'table' and param:get() or param) == 1 then return ("off") else return (round_form((type(param) == 'table' and param:get() or param),1,'')) end end},
       {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
       {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.1).." Hz") end},
       {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1," bit")) end},
+      {type = 'separator', name = 'carve'},
       {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = -2, max = 2, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
@@ -705,6 +725,108 @@ function Kildare.init(poly)
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
     },
+    ["timbre"] = {
+      {type = 'separator', name = 'carrier'},
+      {id = 'poly', name = 'polyphony', type = 'control', min = 1, max = 2, warp = "lin", default = 1, quantum = 1,  step = 1, formatter = function(param) local modes = {"mono","poly"} return modes[(type(param) == 'table' and param:get() or param)] end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'shapeA', name = 'shape A', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.5, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'shapeB', name = 'shape B', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.5, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'shapeC', name = 'shape C', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.5, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'pwA', name = 'pw A', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'pwB', name = 'pw B', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'pwC', name = 'pw C', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'control', min = 0, max = 127, warp = 'lin', default = 36, step = 1, formatter = function(param) return (musicutil.note_num_to_name((type(param) == 'table' and param:get() or param),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0,  step = 1/10, quantum = 1/240, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.1," semitones")) end},
+      {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 3.3, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'carCurve', name = 'carrier env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
+      {type = 'separator', name = 'pitch ramp'},
+      {id = 'rampDepth', name = 'ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.3, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {type = 'separator', name = 'additional processing'},
+      {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if (type(param) == 'table' and param:get() or param) == 1 then return ("off") else return (round_form((type(param) == 'table' and param:get() or param),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
+      {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.1).." Hz") end},
+      {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = -2, max = 2, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'lpCurve', name = 'lo-pass env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
+      {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'hpHz', name = 'hi-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 20, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'filterQ', name = 'filter q', type = 'control', min = 0, max = 100, warp = 'lin', default = 50, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
+      {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (bipolar_as_pan_widget(type(param) == 'table' and param or param)) end},
+      {type = 'separator', name = 'fx sends'},
+      {id = 'delaySend', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+    },
+    ["ptr"] = {
+      {type = 'separator', name = 'carrier'},
+      {id = 'poly', name = 'polyphony', type = 'control', min = 1, max = 2, warp = "lin", default = 1, quantum = 1,  step = 1, formatter = function(param) local modes = {"mono","poly"} return modes[(type(param) == 'table' and param:get() or param)] end},
+      {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'carHz', name = 'carrier freq', type = 'control', min = 0, max = 127, warp = 'lin', default = 36, step = 1, formatter = function(param) return (musicutil.note_num_to_name((type(param) == 'table' and param:get() or param),true)) end},
+      {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0,  step = 1/10, quantum = 1/240, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.1," semitones")) end},
+      {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 3.3, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'carCurve', name = 'carrier env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
+      {type = 'separator', name = 'pitch ramp'},
+      {id = 'rampDepth', name = 'ramp depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'rampDec', name = 'ramp decay', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.3, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {type = 'separator', name = 'formant + pulse'},
+      {id = 'formantHz', name = 'formant freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 600, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'formantNum', name = '--> formant num', type = 'control', min = 1, max = 20, warp = 'lin', default = 1,  step = 1, quantum = 1/20, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
+      {id = 'formantDenum', name = '--> formant denum', type = 'control', min = 1, max = 20, warp = 'lin', default = 1,  step = 1, quantum = 1/20, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
+      {id = 'pulseHz', name = 'pulse freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 600, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'pulseNum', name = '--> pulse num', type = 'control', min = 1, max = 20, warp = 'lin', default = 1,  step = 1, quantum = 1/20, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
+      {id = 'pulseDenum', name = '--> pulse denum', type = 'control', min = 1, max = 20, warp = 'lin', default = 1,  step = 1, quantum = 1/20, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
+      {id = 'phaseMul', name = 'phase multiplier', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'phaseAmp', name = 'phase presence', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'phaseAtk', name = 'phase attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'phaseRel', name = 'phase release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 3, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'phaseCurve', name = 'phase env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
+      {id = 'width', name = 'width', type = 'control', min = 0, max = 1, warp = 'lin', default = 0.5, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'sync', name = 'sync', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, step = 1, quantum = 1, formatter = function(param) if (type(param) == 'table' and param:get() or param) == 0 then return ("off") else return ("on") end end},
+      {type = 'separator', name = 'additional processing'},
+      {id = 'amDepth', name = 'amp mod depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'amHz', name = 'amp mod freq', type = 'control', min = 0.001, max = 12000, warp = 'exp', default = 8175.08, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'squishPitch', name = 'squish pitch', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) if (type(param) == 'table' and param:get() or param) == 1 then return ("off") else return (round_form((type(param) == 'table' and param:get() or param),1,'')) end end},
+      {id = 'squishChunk', name = 'squish chunkiness', type = 'control', min = 1, max = 10, warp = 'lin',  step = 1, default = 1, quantum = 1/9, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
+      {id = 'bitRate', name = 'bit rate', type = 'control', min = 20, max = 24000, warp = 'exp', default = 24000, formatter = function(param) return (util.round((type(param) == 'table' and param:get() or param),0.1).." Hz") end},
+      {id = 'bitCount', name = 'bit depth', type = 'control', min = 1, max = 24, warp = 'lin', default = 24, quantum = 1/23, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1," bit")) end},
+      {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'eqAmp', name = 'eq gain', type = 'control', min = -2, max = 2, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'lpCurve', name = 'lo-pass env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
+      {id = 'lpDepth', name = 'lo-pass env depth', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'hpHz', name = 'hi-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 20, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'filterQ', name = 'filter q', type = 'control', min = 0, max = 100, warp = 'lin', default = 50, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
+      {id = 'pan', name = 'pan', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (bipolar_as_pan_widget(type(param) == 'table' and param or param)) end},
+      {type = 'separator', name = 'fx sends'},
+      {id = 'delaySend', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+    },
     ['sample'] = sample_params,
   }
 
@@ -801,7 +923,7 @@ function Kildare.init(poly)
   end
 
   params:add_group('kildare_model_management', 'models', 8)
-  local models = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','sample'}
+  local models = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','sample'}
   for i = 1,8 do
     params:add_option('voice_model_'..i, 'voice '..i, models, i)
     params:set_action('voice_model_'..i, function(x)
@@ -1109,7 +1231,7 @@ function Kildare.init(poly)
   -- params:bang()
 
   params:add_separator("kildare_lfo_header","kildare lfos")
-  Kildare.lfos.add_params(Kildare.fx ,poly)
+  Kildare.lfos.add_params(track_count, Kildare.fx ,poly)
   
   -- params:bang()
 
