@@ -854,6 +854,12 @@ function Kildare.init(track_count, poly)
       {id = 'mainMixer_mixLevel', name = 'main output level', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'mainMixer_mixSpread', name = 'stereo spread', type = 'control', min = 0, max = 1, warp = 'lin', step = 0.01, quantum = 0.01, default = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'mainMixer_mixCenter', name = 'stereo center', type = 'control', min = -1, max = 1, warp = 'lin', default = 0, quantum = 1/200, formatter = function(param) return (bipolar_as_pan_widget(type(param) == 'table' and param or param)) end},
+      {id = 'mainMixer_lSHz', name = 'main low shelf', type = 'control', min = 20, max = 12000, warp = 'exp', default = 600, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'mainMixer_lSdb', name = 'main low shelf gain', type = 'control', min = -15, max = 15, warp = 'lin', default = 0, quantum = 1/30, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," dB")) end},
+      {id = 'mainMixer_lSQ', name = 'main low shelf q', type = 'control', min = 0, max = 100, warp = 'lin', default = 50, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
+      {id = 'mainMixer_hSHz', name = 'main hi shelf', type = 'control', min = 80, max = 19000, warp = 'exp', default = 19000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
+      {id = 'mainMixer_hSdb', name = 'main hi shelf gain', type = 'control', min = -15, max = 15, warp = 'lin', default = 0, quantum = 1/30, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," dB")) end},
+      {id = 'mainMixer_hSQ', name = 'main hi shelf q', type = 'control', min = 0, max = 100, warp = 'lin', default = 50, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
       {type = 'separator', name = 'A'},
       {id = 'aMixer_inAmp', name = 'A <- engine', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'mainMixer_inA', name = 'A -> mixer', type = 'control', min = 0, max = 2, warp = 'lin', step = 0.01, quantum = 0.01, default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
@@ -930,8 +936,9 @@ function Kildare.init(track_count, poly)
   for i = 1,track_count do
     params:add_option('voice_model_'..i, 'voice '..i, models, i)
     params:set_action('voice_model_'..i, function(x)
-      Kildare.rebuild_model_params(i, models[x])
       engine.set_model(i, 'kildare_'..models[x], 'false')
+      Kildare.rebuild_model_params(i, models[x])
+      -- engine.set_model(i, 'kildare_'..models[x], 'false')
     end)
   end
 
