@@ -1,7 +1,7 @@
 Kildare {
 	classvar <voiceKeys;
 	classvar <synthDefs;
-	const <numVoices = 2;
+	const <numVoices = 4;
 
 	var <synthKeys;
 	var <paramProtos;
@@ -1018,14 +1018,18 @@ Kildare {
 	}
 
 	test_trigger { arg voiceKey, velocity;
+
+		'triggering'.postln;
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
-			groups[voiceKey].set(\velocity, velocity);
-			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-				groups[voiceKey].set(\t_trig, 1);
-				('triggering sample').postln;
+			if( groups[voiceKey].isPlaying,{
+				groups[voiceKey].set(\velocity, velocity);
+				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+					groups[voiceKey].set(\t_trig, 1);
+					('triggering sample').postln;
+				});
+				groups[voiceKey].set(\t_gate, 1);
 			});
-			groups[voiceKey].set(\t_gate, 1);
 		},{
 			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
 			voiceTracker[voiceKey][indexTracker[voiceKey]].set(\velocity, velocity);
@@ -1034,30 +1038,33 @@ Kildare {
 	}
 
 	trigger { arg voiceKey, velocity, retrigFlag;
+
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
-			indexTracker[voiceKey] = numVoices;
-			if( retrigFlag == 'true',{
-				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-				},{
-					groups[voiceKey].set(\stopGate, -1.05);
-				});
-			},{
-				groups[voiceKey].set(\stopGate, -1.1);
-			});
-			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-				// (retrigFlag).postln;
+			if( groups[voiceKey].isPlaying, {
+				indexTracker[voiceKey] = numVoices;
 				if( retrigFlag == 'true',{
-					// groups[voiceKey].set(\t_trig, -1.025);
-					// ('re-triggering').postln;
-					groups[voiceKey].set(\t_trig, 1);
+					if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+					},{
+						groups[voiceKey].set(\stopGate, -1.05);
+					});
 				},{
-					groups[voiceKey].set(\t_trig, -1.05);
-					Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
-					// ('fresh trigger').postln;
+					groups[voiceKey].set(\stopGate, -1.1);
 				});
-			},{
-				Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
+				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+					// (retrigFlag).postln;
+					if( retrigFlag == 'true',{
+						// groups[voiceKey].set(\t_trig, -1.025);
+						// ('re-triggering').postln;
+						groups[voiceKey].set(\t_trig, 1);
+					},{
+						groups[voiceKey].set(\t_trig, -1.05);
+						Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
+						// ('fresh trigger').postln;
+					});
+				},{
+					Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
+				});
 			});
 		},{
 			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
@@ -1086,8 +1093,9 @@ Kildare {
 	setVoiceParam { arg voiceKey, paramKey, paramValue;
 		var prevPoly = paramProtos[voiceKey][\poly];
 		paramProtos[voiceKey][paramKey] = paramValue;
+
 		if( paramKey == \poly, {
-			(0..1).do({ arg voiceIndex;
+			(numVoices).do({ arg voiceIndex;
 				if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 					// voiceTracker[voiceKey][voiceIndex].free;
 					('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
@@ -1098,7 +1106,7 @@ Kildare {
 					('would want to clear mono voice for poly '++voiceKey).postln;
 					groups[voiceKey].free;
 				});
-				(0..1).do({ arg voiceIndex;
+				(numVoices).do({ arg voiceIndex;
 					if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 						// voiceTracker[voiceKey][voiceIndex].free;
 						('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
@@ -1109,7 +1117,7 @@ Kildare {
 			},{
 				if( prevPoly != 0, {
 					(voiceKey++' sending '++paramKey++ ' ' ++paramValue).postln;
-					(0..1).do({ arg voiceIndex;
+					(numVoices).do({ arg voiceIndex;
 						if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 							('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
 							voiceTracker[voiceKey][voiceIndex].free;
@@ -1131,12 +1139,14 @@ Kildare {
 			});
 		},{
 			if( paramProtos[voiceKey][\poly] == 0,{
-				groups[voiceKey].set(paramKey, paramValue);
+				if( groups[voiceKey].isPlaying,
+					{groups[voiceKey].set(paramKey, paramValue);}
+				);
 			},{
 				if ( (paramKey.asString).contains("carHz"), {
 					voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue);
 				},{
-					2.do{ arg i;
+					numVoices.do{ arg i;
 						voiceTracker[voiceKey][i].set(paramKey, paramValue);
 					};
 				});
@@ -1168,9 +1178,13 @@ Kildare {
 	freeVoice { arg voiceKey;
 		if (groups[voiceKey].isPlaying, {
 			('clearing '++voiceKey).postln;
-			groups[voiceKey].free;
+			groups[voiceKey].set(\t_gate, -1.1);
+			Routine {
+				0.15.wait;
+				groups[voiceKey].free;
+			}.play;
 		});
-		(0..1).do({ arg voiceIndex;
+		(numVoices).do({ arg voiceIndex;
 			if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 				voiceTracker[voiceKey][voiceIndex].free;
 			});
@@ -1249,20 +1263,26 @@ Kildare {
 		groups[voice].set(\t_gate, -1.1);
 	}
 
-	setModel { arg voice, model;
+	setModel { arg voice, model, reseed;
 		var compileFlag = false;
-		if (synthKeys[voice] != model, {
-			compileFlag = true;
-			groups[voice].free;
-		});
-		synthKeys[voice] = model;
-		paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
+		if (synthKeys[voice] != model,
+			{
+				compileFlag = true;
+				groups[voice].free;
+				synthKeys[voice] = model;
+				paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
+			},
+			{
+				if (reseed == 'true',
+					{compileFlag = true});
+			}
+		);
 		if (compileFlag, {
 			('building synth ' ++ voice ++ ' ' ++ model).postln;
 			groups[voice] = Synth.new(model, paramProtos[voice].getPairs);
 			NodeWatcher.register(groups[voice],true);
-			groups[voice].isPlaying.postln;
-			(0..1).do({ arg voiceIndex;
+			('ayyy: ' ++ groups[voice].isPlaying).postln;
+			(numVoices).do({ arg voiceIndex;
 				voiceTracker[voice][voiceIndex].isPlaying.postln;
 			});
 		});
@@ -1276,15 +1296,15 @@ Kildare {
 		feedbackSynths.do({arg bus;
 			bus.free;
 		});
-		// ~feedback.free;
-		// ~mixer.free;
-		// ~processing.free;
-		// ~main.free;
+		~feedback.free;
+		~mixer.free;
+		~processing.free;
+		~main.free;
 		synthDefs.do({arg def;
 			def.free;
 		});
 		voiceTracker.do({arg voice;
-			(0..1).do({ arg voiceIndex;
+			(numVoices).do({ arg voiceIndex;
 				if (voice[voiceIndex].isPlaying, {
 					('freeing poly ').postln;
 					voice[voiceIndex].free;

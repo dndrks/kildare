@@ -10,6 +10,7 @@ Kildare.drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','
 local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','sample'}
 Kildare.fx = {"delay", "feedback", "main"}
 local fx = {"delay", "feedback", "main"}
+Kildare.voice_state = {}
 
 Kildare.soundfile_append = ''
 
@@ -210,7 +211,9 @@ function Kildare.init(track_count, poly)
     Kildare.restart_needed_callback()
   end
 
-
+  for i = 1,track_count do
+    Kildare.voice_state[i] = true
+  end
 
   function percent_formatter(param)
     return ((type(param) == 'table' and param:get() or param).."%")
@@ -922,13 +925,13 @@ function Kildare.init(track_count, poly)
     params:add_option("no_kildare","----- kildare not loaded -----",{" "})
   end
 
-  params:add_group('kildare_model_management', 'models', 8)
+  params:add_group('kildare_model_management', 'models', track_count)
   local models = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','sample'}
-  for i = 1,8 do
+  for i = 1,track_count do
     params:add_option('voice_model_'..i, 'voice '..i, models, i)
     params:set_action('voice_model_'..i, function(x)
       Kildare.rebuild_model_params(i, models[x])
-      engine.set_model(i, 'kildare_'..models[x])
+      engine.set_model(i, 'kildare_'..models[x], 'false')
     end)
   end
 
@@ -939,10 +942,30 @@ function Kildare.init(track_count, poly)
     how_many_params = tab.count(kildare_drum_params[swappable_drums[i]]) + how_many_params
   end
 
-  for i = 1,8 do
+  for i = 1,track_count do
     local shown_set = params:string('voice_model_'..i)
-    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params)
+    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 2)
     
+    params:add_trigger('free_voice_'..i, 'K3 to free voice')
+    params:set_action('free_voice_'..i,
+    function()
+      engine.free_voice(i)
+      params:show('init_voice_'..i)
+      params:hide('free_voice_'..i)
+      _menu.rebuild_params()
+    end)
+
+    params:add_trigger('init_voice_'..i, 'voice freed, K3 to init')
+    params:set_action('init_voice_'..i,
+    function()
+      engine.set_model(i, 'kildare_'..params:string('voice_model_'..i), 'true')
+      params:show('free_voice_'..i)
+      params:hide('init_voice_'..i)
+      _menu.rebuild_params()
+    end)
+
+    params:hide('init_voice_'..i)
+
     for k,v in pairs(swappable_drums) do
       for prms,d in pairs(kildare_drum_params[v]) do
         if d.type == 'control' then
