@@ -62,21 +62,21 @@ KildareTimbre {
 				freq: carHz + (carRamp*rampDepth),
 				pw: pwA,
 				waveshape: shapeA
-			) * carEnv;
+			);
 
 			carThird = NeoVarSawOsc.ar(
 				freq: carHzThird + (carRamp*rampDepth),
 				pw: pwB,
 				waveshape: shapeB
-			) * carEnv;
+			);
 
 			carSeventh = NeoVarSawOsc.ar(
 				freq: carHzSeventh + (carRamp*rampDepth),
 				pw: pwC,
 				waveshape: shapeC
-			) * carEnv;
+			);
 
-			car = (car * 0.33) + (carThird * 0.33) + (carSeventh * 0.33);
+			car = ((car * 0.33) + (carThird * 0.33) + (carSeventh * 0.33)) * carEnv;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
 			car = car * ampMod;

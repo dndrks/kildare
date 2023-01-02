@@ -137,10 +137,11 @@ Kildare {
 			]),
 		]);
 
-		topGroup = Group.new(s);
+		// topGroup = Group.new(s);
 		groups = Dictionary.new;
 		voiceKeys.do({ arg voiceKey;
-			groups[voiceKey] = Group.new(topGroup);
+/*			groups[voiceKey] = Group.new(topGroup);
+			groups[voiceKey].postln;*/
 			indexTracker[voiceKey] = 0;
 			numVoices.do{ arg i;
 				voiceTracker[voiceKey] = Dictionary.new(numVoices);
@@ -1165,7 +1166,7 @@ Kildare {
 							}.play;
 						});
 					});
-					groups[voiceKey].isPlaying.postln;
+					// groups[voiceKey].isPlaying.postln;
 					if (groups[voiceKey].isPlaying, {
 						('clearing mono voice for new mono '++voiceKey).postln;
 						groups[voiceKey].free;
@@ -1183,24 +1184,27 @@ Kildare {
 				});
 			});
 		},{
-			if( paramProtos[voiceKey][\poly] == 0,{
-				if( groups[voiceKey].isPlaying,
-					{groups[voiceKey].set(paramKey, paramValue);}
-				);
-			},{
-				if ( (paramKey.asString).contains("carHz"), {
-					if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
-						{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue)}
+			if( paramProtos[voiceKey][\poly] == 0,
+				{ // if mono:
+					if( groups[voiceKey].isPlaying,
+						{groups[voiceKey].set(paramKey, paramValue);}
 					);
-				},{
-					// numVoices.do{ arg i;
-					(voiceLimit[voiceKey]).do{ arg i;
-						if( voiceTracker[voiceKey][i].isPlaying,
-							{voiceTracker[voiceKey][i].set(paramKey, paramValue);}
+				},
+				{ // if poly:
+					if ( (paramKey.asString).contains("carHz"), {
+						if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
+							{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue)}
 						);
-					};
-				});
-			});
+					},{
+						// set parameters for every voice:
+						(voiceLimit[voiceKey]).do{ arg i;
+							if( voiceTracker[voiceKey][i].isPlaying,
+								{voiceTracker[voiceKey][i].set(paramKey, paramValue);}
+							);
+						};
+					});
+				}
+			);
 		});
 	}
 
@@ -1219,7 +1223,7 @@ Kildare {
 	}
 
 	allNotesOff {
-		topGroup.set(\stopGate, 0);
+		// topGroup.set(\stopGate, 0);
 	}
 
 	freeVoice { arg voiceKey;
@@ -1339,7 +1343,7 @@ Kildare {
 
 	setModel { arg voice, model, reseed;
 		var compileFlag = false;
-		emptyVoices[voice].postln;
+		// emptyVoices[voice].postln;
 		if (emptyVoices[voice] == false, {
 			if (synthKeys[voice] != model,
 				{
@@ -1370,7 +1374,7 @@ Kildare {
 			);
 			if (compileFlag, {
 				('building synth ' ++ voice ++ ' ' ++ model).postln;
-				('ayyy: ' ++ groups[voice].isPlaying).postln;
+				// ('ayyy: ' ++ groups[voice].isPlaying).postln;
 				if( paramProtos[voice][\poly] == 1,
 					{
 						// (numVoices).do({ arg voiceIndex;
@@ -1391,9 +1395,12 @@ Kildare {
 
 	free {
 		groups.do({arg voice;
-			voice.free;
+			if( voice.isPlaying, {
+				('freeing mono voice '++voice).postln;
+				voice.free;
+			});
 		});
-		topGroup.free;
+		// topGroup.free;
 		feedbackSynths.do({arg bus;
 			bus.free;
 		});
@@ -1405,11 +1412,11 @@ Kildare {
 			def.free;
 		});
 		voiceTracker.do({arg voice;
-			// (numVoices).do({ arg voiceIndex;
-			(voiceLimit[voice]).do({ arg voiceIndex;
-				if (voice[voiceIndex].isPlaying, {
-					('freeing poly ').postln;
-					voice[voiceIndex].free;
+			(voice).do({ arg voiceIndex;
+				voiceIndex.postln;
+				if (voiceIndex.isPlaying, {
+					('freeing poly voice '++voiceIndex).postln;
+					voiceIndex.free;
 				});
 			});
 		});

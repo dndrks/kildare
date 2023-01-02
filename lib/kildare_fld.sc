@@ -77,7 +77,7 @@ KildareFLD {
 				modAmp*10
 			)* modEnv;
 
-			mod_2 = SinOscFB.ar(
+			/*mod_2 = SinOscFB.ar(
 				modHzThird + ((carRamp*3)*rampDepth),
 				feedAmp,
 				modAmp*10
@@ -87,13 +87,13 @@ KildareFLD {
 				modHzSeventh + ((carRamp*3)*rampDepth),
 				feedAmp,
 				modAmp*10
-			)* modEnv;
+			)* modEnv;*/
 
-			car = (SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) + Saw.ar(carHz/4)) * carEnv;
-			carThird = (SinOsc.ar(carHzThird + (mod_2) + (carRamp*rampDepth)) + LFTri.ar(carHzThird/4)) * carEnv;
-			carSeventh = (SinOsc.ar(carHzSeventh + (mod_2) + (carRamp*rampDepth)) + LFPar.ar(carHzSeventh/4)) * carEnv;
+			car = (SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) + Saw.ar(carHz/4)) ;
+			carThird = (SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) + LFTri.ar(carHz/4));
+			carSeventh = (SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) + LFPar.ar(carHz/4));
 
-			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
+			car = ((car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18)) * carEnv;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
 			car = car * ampMod;

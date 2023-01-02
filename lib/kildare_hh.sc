@@ -71,14 +71,14 @@ KildareHH {
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 
 			mod_1 = SinOsc.ar(modHz, mul:modAmp) * modEnv;
-			mod_2 = SinOsc.ar(modHzThird, mul:modAmp) * modEnv;
-			mod_3 = SinOsc.ar(modHzSeventh, mul:modAmp) * modEnv;
+			// mod_2 = SinOsc.ar(modHzThird, mul:modAmp) * modEnv;
+			// mod_3 = SinOsc.ar(modHzSeventh, mul:modAmp) * modEnv;
 
 			car = SinOscFB.ar(carHz + mod_1, feedAmp) * carEnv * amp;
-			carThird = SinOscFB.ar(carHzThird + mod_2, feedAmp) * carEnv * amp;
-			carSeventh = SinOscFB.ar(carHzSeventh + mod_3, feedAmp) * carEnv * amp;
+			// carThird = SinOscFB.ar(carHzThird + mod_2, feedAmp) * carEnv * amp;
+			// carSeventh = SinOscFB.ar(carHzSeventh + mod_3, feedAmp) * carEnv * amp;
 
-			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
+			// car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
 			feedScale = LinLin.kr(feedAmp,0,6,40,6600);
 			car = HPF.ar(car,feedScale);

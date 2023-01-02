@@ -76,25 +76,11 @@ KildareBD {
 				modAmp*10
 			)* modEnv;
 
-			mod_2 = SinOscFB.ar(
-				modHzThird + ((carRamp*3)*rampDepth),
-				feedAmp,
-				modAmp*10
-			)* modEnv;
-
-			mod_3 = SinOscFB.ar(
-				modHzSeventh + ((carRamp*3)*rampDepth),
-				feedAmp,
-				modAmp*10
-			)* modEnv;
-
-			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) * carEnv;
-			carThird = SinOsc.ar(carHzThird + (mod_2) + (carRamp*rampDepth)) * carEnv;
-			carSeventh = SinOsc.ar(carHzSeventh + (mod_3) + (carRamp*rampDepth)) * carEnv;
-
-			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
+			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth));
+			car = car*carEnv;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
+
 			click = amp/4;
 			clicksound = LPF.ar(Impulse.ar(0.003),16000,click) * EnvGen.kr(
 				envelope: Env.new([0,0,1,0], times: [0.0,carAtk,0.2]),

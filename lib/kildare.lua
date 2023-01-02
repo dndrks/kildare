@@ -951,7 +951,7 @@ function Kildare.init(track_count, poly)
 
   for i = 1,track_count do
     local shown_set = params:string('voice_model_'..i)
-    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 2)
+    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 3)
     
     params:add_separator('cpu_management_'..i, 'CPU management')
     params:add_binary('voice_state_'..i, 'voice active?', 'toggle', 1)
@@ -967,6 +967,8 @@ function Kildare.init(track_count, poly)
         -- end
       end
     end)
+    params:add_number('poly_voice_count_'..i, 'poly voice count', 1, 8, 2)
+    params:set_action('poly_voice_count_'..i, function(x) engine.set_voice_limit(i,x) end)
 
     for k,v in pairs(swappable_drums) do
       for prms,d in pairs(kildare_drum_params[v]) do

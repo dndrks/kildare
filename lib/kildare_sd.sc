@@ -78,14 +78,14 @@ KildareSD {
 
 			feedCar = SinOsc.ar(carHz + feedMod + (carRamp*rampDepth)) * carEnv * (feedAmp/modAmp * 127);
 			mod_1 = SinOsc.ar(modHz + feedCar, mul:modAmp*100) * modEnv;
-			mod_2 = SinOsc.ar(modHzThird + feedCar, mul:modAmp*100) * modEnv;
-			mod_3 = SinOsc.ar(modHzSeventh + feedCar, mul:modAmp*100) * modEnv;
+			// mod_2 = SinOsc.ar(modHzThird + feedCar, mul:modAmp*100) * modEnv;
+			// mod_3 = SinOsc.ar(modHzSeventh + feedCar, mul:modAmp*100) * modEnv;
 
 			car = SinOsc.ar(carHz + mod_1 + (carRamp*rampDepth)) * carEnv;
-			carThird = SinOsc.ar(carHzThird + mod_2 + (carRamp*rampDepth)) * carEnv;
-			carSeventh = SinOsc.ar(carHzSeventh + mod_3 + (carRamp*rampDepth)) * carEnv;
+			// carThird = SinOsc.ar(carHzThird + mod_2 + (carRamp*rampDepth)) * carEnv;
+			// carSeventh = SinOsc.ar(carHzSeventh + mod_3 + (carRamp*rampDepth)) * carEnv;
 
-			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
+			// car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
 
 			noiseEnv = EnvGen.kr(
 				envelope: Env.new([0,0,1,0], times: [0.01,noiseAtk,noiseRel], curve: [noiseCurve,noiseCurve*(-1)]),

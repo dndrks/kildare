@@ -81,7 +81,7 @@ KildareSaw {
 				modAmp*10
 			)* modEnv;
 
-			mod_2 = SinOscFB.ar(
+			/*mod_2 = SinOscFB.ar(
 				modHzThird + ((carRamp*3)*rampDepth),
 				feedAmp,
 				modAmp*10
@@ -91,12 +91,12 @@ KildareSaw {
 				modHzSeventh + ((carRamp*3)*rampDepth),
 				feedAmp,
 				modAmp*10
-			)* modEnv;
+			)* modEnv;*/
 
-			car = LFSaw.ar(carHz + (mod_1) + (carRamp*rampDepth),0) * carEnv;
-			carThird = LFSaw.ar(carHzThird + (mod_2) + (carRamp*rampDepth), phaseOff1) * carEnv;
-			carSeventh = LFSaw.ar(carHzSeventh + (mod_3) + (carRamp*rampDepth), phaseOff2) * carEnv;
-			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18);
+			car = LFSaw.ar(carHz + (mod_1) + (carRamp*rampDepth),0);
+			carThird = LFSaw.ar(carHz + (mod_1) + (carRamp*rampDepth), phaseOff1);
+			carSeventh = LFSaw.ar(carHz + (mod_1) + (carRamp*rampDepth), phaseOff2);
+			car = (car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18) * carEnv;
 
 			subSq = Pulse.ar(freq: carHz/2, width: subSqPW + (( SinOsc.kr(subSqPWMRate).range(0, 1)) * subSqPWMAmt), mul: subSqAmp) * carEnv;
 
