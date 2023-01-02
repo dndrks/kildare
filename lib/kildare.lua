@@ -953,25 +953,20 @@ function Kildare.init(track_count, poly)
     local shown_set = params:string('voice_model_'..i)
     params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 2)
     
-    params:add_trigger('free_voice_'..i, 'K3 to free voice')
-    params:set_action('free_voice_'..i,
-    function()
-      engine.free_voice(i)
-      params:show('init_voice_'..i)
-      params:hide('free_voice_'..i)
-      _menu.rebuild_params()
+    params:add_separator('cpu_management_'..i, 'CPU management')
+    params:add_binary('voice_state_'..i, 'voice active?', 'toggle', 1)
+    params:set_action('voice_state_'..i,
+    function(x)
+      if x == 0 then
+        engine.free_voice(i)
+      else
+        -- if all_loaded then
+          -- engine.free_voice(i)
+          engine.init_voice(i, 'kildare_'..params:string('voice_model_'..i))
+          Kildare.rebuild_model_params(i, params:string('voice_model_'..i))
+        -- end
+      end
     end)
-
-    params:add_trigger('init_voice_'..i, 'voice freed, K3 to init')
-    params:set_action('init_voice_'..i,
-    function()
-      engine.set_model(i, 'kildare_'..params:string('voice_model_'..i), 'true')
-      params:show('free_voice_'..i)
-      params:hide('init_voice_'..i)
-      _menu.rebuild_params()
-    end)
-
-    params:hide('init_voice_'..i)
 
     for k,v in pairs(swappable_drums) do
       for prms,d in pairs(kildare_drum_params[v]) do

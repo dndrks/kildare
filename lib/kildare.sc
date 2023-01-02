@@ -17,7 +17,9 @@ Kildare {
 	var <mainOutParams;
 
 	var <voiceTracker;
+	var <emptyVoices;
 	var <folderedSamples;
+	var <voiceLimit;
 	classvar <sampleInfo;
 	classvar <indexTracker;
 
@@ -69,6 +71,18 @@ Kildare {
 		feedbackSynths = Dictionary.new;
 
 		voiceTracker = Dictionary.new;
+		voiceLimit = Dictionary.newFrom([
+			\1, 4,
+			\2, 4,
+			\3, 4,
+			\4, 4,
+			\5, 4,
+			\6, 4,
+			\7, 4,
+			\8, 4,
+		]);
+		emptyVoices = Dictionary.new;
+		(1..8).do{arg i; emptyVoices[i] = false};
 		indexTracker = Dictionary.new;
 
 		folderedSamples = Dictionary.new;
@@ -1039,7 +1053,8 @@ Kildare {
 				groups[voiceKey].set(\t_gate, 1);
 			});
 		},{
-			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
+			// indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
+			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1) % voiceLimit[voiceKey];
 			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying, {
 				voiceTracker[voiceKey][indexTracker[voiceKey]].set(\velocity, velocity);
 				voiceTracker[voiceKey][indexTracker[voiceKey]].set(\t_gate, 1);
@@ -1052,7 +1067,8 @@ Kildare {
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
 			if( groups[voiceKey].isPlaying, {
-				indexTracker[voiceKey] = numVoices;
+				// indexTracker[voiceKey] = numVoices;
+				indexTracker[voiceKey] = voiceLimit[voiceKey];
 				if( retrigFlag == 'true',{
 					if ((""++synthKeys[voiceKey]++"").contains("sample"), {
 					},{
@@ -1077,7 +1093,8 @@ Kildare {
 				});
 			});
 		},{
-			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
+			// indexTracker[voiceKey] = (indexTracker[voiceKey] + 1)%numVoices;
+			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1) % voiceLimit[voiceKey];
 			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isNil.not, {
 				if (voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying, {
 					if ((""++synthKeys[voiceKey]++"").contains("sample"), {
@@ -1105,7 +1122,8 @@ Kildare {
 		paramProtos[voiceKey][paramKey] = paramValue;
 
 		if( paramKey == \poly, {
-			(numVoices).do({ arg voiceIndex;
+			// (numVoices).do({ arg voiceIndex;
+			(voiceLimit[voiceKey]).do({ arg voiceIndex;
 				if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 					voiceTracker[voiceKey][voiceIndex].free;
 					('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
@@ -1122,18 +1140,22 @@ Kildare {
 						groups[voiceKey].free;
 					}.play;
 				});
-				(numVoices).do({ arg voiceIndex;
+				// (numVoices).do({ arg voiceIndex;
+				(voiceLimit[voiceKey]).do({ arg voiceIndex;
 					if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 						voiceTracker[voiceKey][voiceIndex].free;
 						('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
 					});
-					voiceTracker[voiceKey][voiceIndex] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
-					NodeWatcher.register(voiceTracker[voiceKey][voiceIndex],true);
+					if( emptyVoices[voiceKey] == false, {
+						voiceTracker[voiceKey][voiceIndex] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
+						NodeWatcher.register(voiceTracker[voiceKey][voiceIndex],true);
+					});
 				});
 			},{
 				if( prevPoly != 0, {
 					(voiceKey++' sending '++paramKey++ ' ' ++paramValue).postln;
-					(numVoices).do({ arg voiceIndex;
+					(voiceLimit[voiceKey]).do({ arg voiceIndex;
+					// (numVoices).do({ arg voiceIndex;
 						if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 							('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
 							voiceTracker[voiceKey][voiceIndex].set(\t_gate, -1.1);
@@ -1150,11 +1172,14 @@ Kildare {
 						groups[voiceKey] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
 						NodeWatcher.register(groups[voiceKey],true);
 					},{
-						('making mono voice '++voiceKey).postln;
-						groups[voiceKey] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
-						NodeWatcher.register(groups[voiceKey],true);
+						if( emptyVoices[voiceKey] == false, {
+							('making mono voice '++voiceKey).postln;
+							groups[voiceKey] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
+							NodeWatcher.register(groups[voiceKey],true);
+						});
 					});
-					indexTracker[voiceKey] = numVoices;
+					// indexTracker[voiceKey] = numVoices;
+					indexTracker[voiceKey] = voiceLimit[voiceKey];
 				});
 			});
 		},{
@@ -1168,7 +1193,8 @@ Kildare {
 						{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue)}
 					);
 				},{
-					numVoices.do{ arg i;
+					// numVoices.do{ arg i;
+					(voiceLimit[voiceKey]).do{ arg i;
 						if( voiceTracker[voiceKey][i].isPlaying,
 							{voiceTracker[voiceKey][i].set(paramKey, paramValue);}
 						);
@@ -1205,9 +1231,36 @@ Kildare {
 				groups[voiceKey].free;
 			}.play;
 		});
-		(numVoices).do({ arg voiceIndex;
+		// (numVoices).do({ arg voiceIndex;
+		(voiceLimit[voiceKey]).do({ arg voiceIndex;
 			if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 				voiceTracker[voiceKey][voiceIndex].free;
+			});
+		});
+		emptyVoices[voiceKey] = true;
+	}
+
+	initVoice { arg voice, model;
+		emptyVoices[voice] = false;
+		this.setModel(voice, model, 'true');
+	}
+
+	setVoiceLimit { arg voice, limit;
+		if( paramProtos[voice][\poly] == 1,{
+			(voiceLimit[voice]).do({ arg voiceIndex;
+				if (voiceTracker[voice][voiceIndex].isPlaying, {
+					voiceTracker[voice][voiceIndex].free;
+					('looks like '++voice++', '++voiceIndex++' needed to be freed').postln;
+				});
+			});
+		});
+		voiceLimit[voice] = limit;
+		if( paramProtos[voice][\poly] == 1,{
+			(voiceLimit[voice]).do({ arg voiceIndex;
+				if( emptyVoices[voice] == false, {
+					voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
+					NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
+				});
 			});
 		});
 	}
@@ -1286,44 +1339,53 @@ Kildare {
 
 	setModel { arg voice, model, reseed;
 		var compileFlag = false;
-		if (synthKeys[voice] != model,
-			{
-				compileFlag = true;
-				if( paramProtos[voice][\poly] == 0,
-					{
-						groups[voice].free;
-						'freeing mono'.postln;
-					},
-					{
-						(numVoices).do({ arg voiceIndex;
-							voiceTracker[voice][voiceIndex].free;
-							('freeing poly '++voiceTracker[voice][voiceIndex].nodeID).postln;
-						});
-					});
-				synthKeys[voice] = model;
-				paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
-			},
-			{
-				if (reseed == 'true',
-					{compileFlag = true});
-			}
-		);
-		if (compileFlag, {
-			('building synth ' ++ voice ++ ' ' ++ model).postln;
-			('ayyy: ' ++ groups[voice].isPlaying).postln;
-			if( paramProtos[voice][\poly] == 1,
+		emptyVoices[voice].postln;
+		if (emptyVoices[voice] == false, {
+			if (synthKeys[voice] != model,
 				{
-					(numVoices).do({ arg voiceIndex;
-						voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
-						NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
-						('poly: '++voiceTracker[voice][voiceIndex].isPlaying).postln;
+					compileFlag = true;
+					if( paramProtos[voice][\poly] == 0,
+						{
+							if( groups[voice].isPlaying, {
+								groups[voice].free;
+								'freeing mono'.postln;
+							});
+						},
+						{
+							// (numVoices).do({ arg voiceIndex;
+							(voiceLimit[voice]).do({ arg voiceIndex;
+								if( voiceTracker[voice][voiceIndex].isPlaying, {
+									voiceTracker[voice][voiceIndex].free;
+									('freeing poly '++voiceTracker[voice][voiceIndex].nodeID).postln;
+								});
+							});
 					});
+					synthKeys[voice] = model;
+					paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
 				},
 				{
-					groups[voice] = Synth.new(model, paramProtos[voice].getPairs);
-					NodeWatcher.register(groups[voice],true);
+					if (reseed == 'true',
+						{compileFlag = true});
 				}
 			);
+			if (compileFlag, {
+				('building synth ' ++ voice ++ ' ' ++ model).postln;
+				('ayyy: ' ++ groups[voice].isPlaying).postln;
+				if( paramProtos[voice][\poly] == 1,
+					{
+						// (numVoices).do({ arg voiceIndex;
+						(voiceLimit[voice]).do({ arg voiceIndex;
+							voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
+							NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
+							('poly: '++voiceTracker[voice][voiceIndex].isPlaying).postln;
+						});
+					},
+					{
+						groups[voice] = Synth.new(model, paramProtos[voice].getPairs);
+						NodeWatcher.register(groups[voice],true);
+					}
+				);
+			});
 		});
 	}
 
@@ -1343,7 +1405,8 @@ Kildare {
 			def.free;
 		});
 		voiceTracker.do({arg voice;
-			(numVoices).do({ arg voiceIndex;
+			// (numVoices).do({ arg voiceIndex;
+			(voiceLimit[voice]).do({ arg voiceIndex;
 				if (voice[voiceIndex].isPlaying, {
 					('freeing poly ').postln;
 					voice[voiceIndex].free;

@@ -85,6 +85,18 @@ Engine_Kildare : CroneEngine {
 			kernel.freeVoice(voiceKey);
 		});
 
+		this.addCommand(\init_voice, "ss", { arg msg;
+			var voiceKey = msg[1].asSymbol;
+			var synthKey = msg[2].asSymbol;
+			kernel.initVoice(voiceKey, synthKey);
+		});
+
+		this.addCommand(\set_voice_limit, "ii", { arg msg;
+			var voice = msg[1].asSymbol;
+			var limit = msg[2].asInteger;
+			kernel.setVoiceLimit(voice, limit);
+		});
+
 		this.addCommand(\test_trig,"s", { arg msg;
 			var k = msg[1].asSymbol;
 			kernel.test_trigger(k);
