@@ -423,9 +423,15 @@ Kildare {
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
 				\feedbackAux,busses[\feedbackSend],
+				\delayEnv,0,
 				\delayAtk,0,
 				\delayRel,2,
+				\delayCurve,-4,
 				\delaySend,0,
+				\feedbackEnv,0,
+				\feedbackAtk,0,
+				\feedbackRel,2,
+				\feedbackCurve,-4,
 				\feedbackSend,0,
 				\poly,0,
 				\velocity,127,
@@ -1042,7 +1048,7 @@ Kildare {
 
 	test_trigger { arg voiceKey, velocity;
 
-		'triggering'.postln;
+		// 'triggering'.postln;
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
 			if( groups[voiceKey].isPlaying,{

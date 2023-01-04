@@ -44,7 +44,6 @@ KildareHH {
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127);
 			feedAmp = LinLin.kr(feedAmp,0.0,1.0,0.0,6.0);
 			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
-			tremDepth = LinLin.kr(tremDepth,0.0,100,0.0,1.0);
 			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
 			carHz = carHz * (2.pow(carDetune/12));
@@ -83,7 +82,7 @@ KildareHH {
 			feedScale = LinLin.kr(feedAmp,0,6,40,6600);
 			car = HPF.ar(car,feedScale);
 			car = car*ampMod;
-			tremolo = SinOsc.ar(tremHz, 0, tremDepth);
+			tremolo = SinOsc.ar(freq: tremHz, mul: tremDepth);
 			tremod = (1.0 - tremDepth) + tremolo;
 			car = car*tremod;
 			car = Squiz.ar(in:car, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);

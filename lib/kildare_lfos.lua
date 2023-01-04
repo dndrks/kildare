@@ -369,12 +369,10 @@ function lfos.return_to_baseline(i,silent,poly)
     end
     local focus_voice = params:string('voice_model_'..parent)
     if focus_voice ~= 'sample' then
-      if lfos.last_param[i] ~= "carHz" and lfos.last_param[i] ~= "amp" and engine.name == "Kildare" then
+      if lfos.last_param[i] ~= "carHz" then
         engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
-      elseif lfos.last_param[i] == "carHz" and engine.name == "Kildare" then
-        engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])))
-      elseif lfos.last_param[i] == "amp" and engine.name == "Kildare" then
-        engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]) == 1 and 0 or 1)
+      elseif lfos.last_param[i] == "carHz" then
+        -- engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])))
       end
     else
       engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))

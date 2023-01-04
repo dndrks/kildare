@@ -10,8 +10,9 @@ KildareBD {
 		SynthDef(\kildare_bd, {
 			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
-			delayEnv, delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel, delayCurve = -4,
 			feedbackAux, feedbackSend,
+			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 127, amp,
 			carHz, carHzThird, carHzSeventh,
 			carDetune, carAtk, carRel, carCurve = -4,
@@ -25,11 +26,11 @@ KildareBD {
 			lpAtk, lpRel, lpCurve = -4, lpDepth;
 
 			var car, carThird, carSeventh,
-			mod, modHzThird, modHzSeventh,
+			mod,
 			carEnv, modEnv, carRamp,
 			feedMod, feedCar, ampMod, click, clicksound,
 			mod_1, mod_2, mod_3,
-			filterEnv, delEnv, mainSend;
+			filterEnv, delEnv, feedEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
@@ -37,8 +38,6 @@ KildareBD {
 			delaySend = delaySend.lag3(0.1);
 			feedbackSend = feedbackSend.lag3(0.1);
 			modHz = (modHz * (1 - modFollow)) + (carHz * modFollow * modDenum);
-			modHzThird = (modHz * (1 - modFollow)) + (carHzThird * modFollow * modDenum);
-			modHzSeventh = (modHz * (1 - modFollow)) + (carHzSeventh * modFollow * modDenum);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			modAmp = LinLin.kr(modAmp,0.0,1.0,0,127).lag3(0.1);
@@ -47,11 +46,7 @@ KildareBD {
 			rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 			amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
 			carHz = (carHz * (1 - modFollow)) + (carHz * modFollow * modNum);
-			carHzThird = (carHzThird * (1 - modFollow)) + (carHzThird * modFollow * modNum);
-			carHzSeventh = (carHzSeventh * (1 - modFollow)) + (carHzSeventh * modFollow * modNum);
 			carHz = carHz * (2.pow(carDetune/12));
-			carHzThird = carHzThird * (2.pow(carDetune/12));
-			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
 
 			modEnv = EnvGen.kr(
 				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
@@ -102,7 +97,17 @@ KildareBD {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel], curve: [delayCurve,delayCurve*(-1)]),
+						gate: t_gate
+					)
+				]
+			);
+
+			feedEnv = Select.kr(
+				feedbackEnv > 0, [
+					feedbackSend,
+					feedbackSend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
 						gate: t_gate
 					)
 				]
@@ -111,7 +116,7 @@ KildareBD {
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
-			Out.ar(feedbackAux, (mainSend * feedbackSend));
+			Out.ar(feedbackAux, (mainSend * (feedbackSend * feedEnv)));
 		}).send;
 	}
 }
