@@ -11,6 +11,7 @@ KildareCB {
 			delayAuxL, delayAuxR, delaySend,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
+			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 127,
 			amp, carHz, carDetune,
 			modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
@@ -24,7 +25,7 @@ KildareCB {
 			squishPitch, squishChunk;
 
 			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
-			voice_1, voice_2, filterEnv, delEnv, mainSend;
+			voice_1, voice_2, filterEnv, delEnv, feedEnv, mainSend;
 
 			amp = amp*0.6;
 			eqHz = eqHz.lag3(0.1);
@@ -85,10 +86,20 @@ KildareCB {
 				]
 			);
 
+			feedEnv = Select.kr(
+				feedbackEnv > 0, [
+					feedbackSend,
+					feedbackSend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						gate: t_gate
+					)
+				]
+			);
+
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(delayAuxR, (voice_1 * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
-			Out.ar(feedbackAux, (mainSend * feedbackSend));
+			Out.ar(feedbackAux, (mainSend * (feedbackSend * feedEnv)));
 
 		}).send;
 	}

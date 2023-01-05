@@ -11,6 +11,7 @@ KildareCP {
 			delayAuxL, delayAuxR, delaySend,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux,feedbackSend,
+			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 0,
 			carHz, carHzThird, carHzSeventh, carDetune,
 			modHz, modAmp, modRel, feedAmp,
@@ -25,7 +26,7 @@ KildareCP {
 			var car, carThird, carSeventh,
 			mod, modHzThird, modHzSeventh,
 			carEnv, modEnv, feedMod, feedCar, ampMod,
-			mod_1, mod_1b, filterEnv, delEnv, mainSend;
+			mod_1, mod_1b, filterEnv, delEnv, feedEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
 			lpHz = lpHz.lag3(0.1);
@@ -99,10 +100,20 @@ KildareCP {
 				]
 			);
 
+			feedEnv = Select.kr(
+				feedbackEnv > 0, [
+					feedbackSend,
+					feedbackSend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						gate: t_gate
+					)
+				]
+			);
+
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(delayAuxR, (car * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
-			Out.ar(feedbackAux, (mainSend * feedbackSend));
+			Out.ar(feedbackAux, (mainSend * (feedbackSend * feedEnv)));
 
 		}).send;
 	}

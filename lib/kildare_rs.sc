@@ -9,8 +9,9 @@ KildareRS {
 		SynthDef(\kildare_rs, {
 			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
-			delayEnv, delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel, delayCurve = -4,
 			feedbackAux,feedbackSend,
+			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 0,
 			carHz, carDetune,
 			modHz, modAmp,
@@ -26,7 +27,7 @@ KildareRS {
 			var car, mod, carEnv, modEnv, carRamp, feedMod, feedCar, ampMod,
 			mod_1,mod_2,feedAmp3,feedAmp4, sd_modHz,
 			sd_car, sd_mod, sd_carEnv, sd_modEnv, sd_carRamp, sd_feedMod, sd_feedCar, sd_noise, sd_noiseEnv,
-			sd_mix, filterEnv, delEnv, mainSendMix, delaySendMix;
+			sd_mix, filterEnv, delEnv, feedEnv, mainSendMix, delaySendMix;
 
 			amp = amp*0.45;
 			eqHz = eqHz.lag3(0.1);
@@ -104,7 +105,7 @@ KildareRS {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel], curve: [delayCurve,delayCurve*(-1)]),
 						gate: t_gate
 					)
 				]
@@ -121,10 +122,20 @@ KildareRS {
 			mainSendMix = Pan2.ar(mainSendMix,pan);
 			mainSendMix = mainSendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0);
 
+			feedEnv = Select.kr(
+				feedbackEnv > 0, [
+					feedbackSend,
+					feedbackSend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						gate: t_gate
+					)
+				]
+			);
+
 			Out.ar(out, mainSendMix);
 			Out.ar(delayAuxL, (delaySendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
 			Out.ar(delayAuxR, (delaySendMix * amp * LinLin.kr(velocity,0,127,0.0,1.0) * delEnv));
-			Out.ar(feedbackAux, (mainSendMix * feedbackSend));
+			Out.ar(feedbackAux, (mainSendMix * (feedbackSend * feedEnv)));
 
 		}).send;
 	}

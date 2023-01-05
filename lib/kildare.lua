@@ -252,7 +252,16 @@ function Kildare.init(track_count, poly)
     {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
     {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
     {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+    {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+      util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+      1,"%")) end},
     {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0,  formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+    {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+    {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+    {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+    {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+      util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+      1,"%")) end},
   }
   
   kildare_drum_params = {
@@ -375,7 +384,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["tm"] = {
       {type = 'separator', name = 'carrier'},
@@ -427,7 +445,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["cp"] = {
       {type = 'separator', name = 'carrier'},
@@ -470,7 +497,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["rs"] = {
       {type = 'separator', name = 'carrier'},
@@ -522,7 +558,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["cb"] = {
       {type = 'separator', name = 'carrier'},
@@ -569,7 +614,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["hh"] = {
       {type = 'separator', name = 'carrier'},
@@ -621,7 +675,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["saw"] = {
       {type = 'separator', name = 'carrier'},
@@ -679,7 +742,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["fld"] = {
       {type = 'separator', name = 'carrier'},
@@ -735,7 +807,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["timbre"] = {
       {type = 'separator', name = 'carrier'},
@@ -781,7 +862,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ["ptr"] = {
       {type = 'separator', name = 'carrier'},
@@ -837,7 +927,16 @@ function Kildare.init(track_count, poly)
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
       {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+        util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+        1,"%")) end},
     },
     ['sample'] = sample_params,
   }
@@ -856,7 +955,7 @@ function Kildare.init(track_count, poly)
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
       {id = 'hpHz', name = 'hi-pass freq', type = 'control', min = 20, max = 24000, warp = 'exp', default = 20, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
       {id = 'filterQ', name = 'filter q', type = 'control', min = 0, max = 100, warp = 'lin', default = 50, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
-      {id = 'feedbackSend', name = 'send to feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
+      -- {id = 'feedbackSend', name = 'send to feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
     },
     ["feedback"] = {
       {type = 'separator', name = 'mix'},
@@ -970,9 +1069,28 @@ function Kildare.init(track_count, poly)
     how_many_params = tab.count(kildare_drum_params[swappable_drums[i]]) + how_many_params
   end
 
+  local function build_controlspec(i,j)
+    local cs = controlspec.new(
+      tonumber(params:get(i..'_'..j..'_osc_min')),
+      tonumber(params:get(i..'_'..j..'_osc_max')),
+      params:string(i..'_'..j..'_osc_warp'),
+      nil,
+      tonumber(params:get(i..'_'..j..'_osc_min')),
+      nil,
+      tonumber(params:get(i..'_'..j..'_osc_quantum'))
+    )
+    return cs
+  end
+  
+  local function refresh_controlspec(i,j)
+    print(i,j)
+    params:lookup_param(i..'_'..j..'_osc_value').controlspec = build_controlspec(i,j)
+  end
+
   for i = 1,track_count do
+    local osc_params_count = 0
     local shown_set = params:string('voice_model_'..i)
-    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 3)
+    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 3 + osc_params_count)
     
     params:add_separator('cpu_management_'..i, 'CPU management')
     params:add_binary(i..'_voice_state', 'voice active?', 'toggle', 1)
@@ -1072,11 +1190,11 @@ function Kildare.init(track_count, poly)
                   if x == 1 then
                     params:show(i.."_"..v..'_delayAtk')
                     params:show(i.."_"..v..'_delayRel')
-                    -- params:show(i.."_"..v..'_delayCurve')
+                    params:show(i.."_"..v..'_delayCurve')
                   elseif x == 0 then
                     params:hide(i.."_"..v..'_delayAtk')
                     params:hide(i.."_"..v..'_delayRel')
-                    -- params:hide(i.."_"..v..'_delayCurve')
+                    params:hide(i.."_"..v..'_delayCurve')
                   end
                   _menu.rebuild_params()
                   engine.set_voice_param(i, d.id, x)
@@ -1085,6 +1203,24 @@ function Kildare.init(track_count, poly)
               end
             end)
           elseif d.id == "feedbackEnv" then
+            params:set_action(i.."_"..v..'_'..d.id, function(x)
+              if engine.name == "Kildare" then
+                if v == params:string('voice_model_'..i) then
+                  if x == 1 then
+                    params:show(i.."_"..v..'_feedbackAtk')
+                    params:show(i.."_"..v..'_feedbackRel')
+                    params:show(i.."_"..v..'_feedbackCurve')
+                  elseif x == 0 then
+                    params:hide(i.."_"..v..'_feedbackAtk')
+                    params:hide(i.."_"..v..'_feedbackRel')
+                    params:hide(i.."_"..v..'_feedbackCurve')
+                  end
+                  _menu.rebuild_params()
+                  engine.set_voice_param(i, d.id, x)
+                  Kildare.voice_param_callback(i, d.id, x)
+                end
+              end
+            end)
           elseif d.id == "sampleMode" then
           elseif d.id == "sampleFile" then
             params:set_action(i.."_"..v..'_'..d.id,

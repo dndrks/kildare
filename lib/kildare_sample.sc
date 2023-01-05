@@ -17,6 +17,7 @@ KildareSample {
 			delayAuxL, delayAuxR, delaySend = 0,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux, feedbackSend = 0,
+			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			// baseRate = 1, rateOffset = 0, pitchControl = 0,
 			rate = 1,
 			amDepth, amHz,
@@ -25,7 +26,7 @@ KildareSample {
 			lpHz, hpHz, filterQ,
 			squishPitch, squishChunk;
 
-			var snd, snd2, pos, pos2, frames, duration, loop_env, arEnv, ampMod, delEnv, mainSend;
+			var snd, snd2, pos, pos2, frames, duration, loop_env, arEnv, ampMod, delEnv, feedEnv, mainSend;
 			var startA, endA, startB, endB, crossfade, aOrB;
 			var totalOffset;
 
@@ -127,10 +128,20 @@ KildareSample {
 				]
 			);
 
+			feedEnv = Select.kr(
+				feedbackEnv > 0, [
+					feedbackSend,
+					feedbackSend * EnvGen.kr(
+						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						gate: t_gate
+					)
+				]
+			);
+
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (mainSend * delEnv));
 			Out.ar(delayAuxR, (mainSend * delEnv));
-			Out.ar(feedbackAux, (mainSend * feedbackSend));
+			Out.ar(feedbackAux, (mainSend * (feedbackSend * feedEnv)));
 
 
 		}).send;
