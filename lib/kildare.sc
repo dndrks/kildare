@@ -6,6 +6,7 @@ Kildare {
 	var <synthKeys;
 	var <paramProtos;
 	var <generalizedParams;
+	var <polyParamStyle;
 	var <groups;
 	var <topGroup;
 
@@ -80,6 +81,16 @@ Kildare {
 			\6, 4,
 			\7, 4,
 			\8, 4,
+		]);
+		polyParamStyle = Dictionary.newFrom([
+			\1, "all",
+			\2, "all",
+			\3, "all",
+			\4, "all",
+			\5, "all",
+			\6, "all",
+			\7, "all",
+			\8, "all",
 		]);
 		emptyVoices = Dictionary.new;
 		(1..8).do{arg i; emptyVoices[i] = false};
@@ -1258,9 +1269,17 @@ Kildare {
 						);
 					},{
 						// set parameters for every voice:
-						(voiceLimit[voiceKey]).do{ arg i;
-							if( voiceTracker[voiceKey][i].isPlaying,
-								{voiceTracker[voiceKey][i].set(paramKey, paramValue);}
+						case
+						{ polyParamStyle[voiceKey] == "all"}{
+							(voiceLimit[voiceKey]).do{ arg i;
+								if( voiceTracker[voiceKey][i].isPlaying,
+									{voiceTracker[voiceKey][i].set(paramKey, paramValue);}
+								);
+							};
+						}
+						{ polyParamStyle[voiceKey] == "current"}{
+							if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
+								{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue);}
 							);
 						};
 					});
@@ -1328,6 +1347,10 @@ Kildare {
 				});
 			});
 		});
+	}
+
+	setPolyParamStyle { arg voice, style;
+		polyParamStyle[voice] = style;
 	}
 
 	clearSamples { arg voice;

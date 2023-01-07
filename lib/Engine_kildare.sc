@@ -97,6 +97,12 @@ Engine_Kildare : CroneEngine {
 			kernel.setVoiceLimit(voice, limit);
 		});
 
+		this.addCommand(\set_poly_param_style, "is", { arg msg;
+			var voice = msg[1].asSymbol;
+			var style = msg[2].asString;
+			kernel.setPolyParamStyle(voice, style);
+		});
+
 		this.addCommand(\test_trig,"s", { arg msg;
 			var k = msg[1].asSymbol;
 			kernel.test_trigger(k);
