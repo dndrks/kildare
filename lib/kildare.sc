@@ -83,14 +83,14 @@ Kildare {
 			\8, 4,
 		]);
 		polyParamStyle = Dictionary.newFrom([
-			\1, "all",
-			\2, "all",
-			\3, "all",
-			\4, "all",
-			\5, "all",
-			\6, "all",
-			\7, "all",
-			\8, "all",
+			\1, "all voices",
+			\2, "all voices",
+			\3, "all voices",
+			\4, "all voices",
+			\5, "all voices",
+			\6, "all voices",
+			\7, "all voices",
+			\8, "all voices",
 		]);
 		emptyVoices = Dictionary.new;
 		(1..8).do{arg i; emptyVoices[i] = false};
@@ -1270,16 +1270,21 @@ Kildare {
 					},{
 						// set parameters for every voice:
 						case
-						{ polyParamStyle[voiceKey] == "all"}{
+						{ polyParamStyle[voiceKey] == "all voices"}{
 							(voiceLimit[voiceKey]).do{ arg i;
 								if( voiceTracker[voiceKey][i].isPlaying,
 									{voiceTracker[voiceKey][i].set(paramKey, paramValue);}
 								);
 							};
 						}
-						{ polyParamStyle[voiceKey] == "current"}{
+						{ polyParamStyle[voiceKey] == "current voice"}{
 							if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
 								{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue);}
+							);
+						}
+						{ polyParamStyle[voiceKey] == "next voice"}{
+							if( voiceTracker[voiceKey][(indexTracker[voiceKey] + 1) % voiceLimit[voiceKey]].isPlaying,
+								{voiceTracker[voiceKey][(indexTracker[voiceKey] + 1) % voiceLimit[voiceKey]].set(paramKey, paramValue);}
 							);
 						};
 					});

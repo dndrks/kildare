@@ -1090,9 +1090,9 @@ function Kildare.init(track_count, poly)
   for i = 1,track_count do
     local osc_params_count = 0
     local shown_set = params:string('voice_model_'..i)
-    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 3 + osc_params_count)
+    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 4 + osc_params_count)
     
-    params:add_separator('cpu_management_'..i, 'CPU management')
+    params:add_separator('voice_management_'..i, 'voice management')
     params:add_binary(i..'_voice_state', 'voice active?', 'toggle', 1)
     params:set_action(i..'_voice_state',
     function(x)
@@ -1105,6 +1105,8 @@ function Kildare.init(track_count, poly)
     end)
     params:add_number(i..'_poly_voice_count', 'poly voice count', 1, 8, 2)
     params:set_action(i..'_poly_voice_count', function(x) engine.set_voice_limit(i,x) end)
+    params:add_option(i..'_poly_param_style', 'poly params', {'all voices','current voice','next voice'}, 1)
+    params:set_action(i..'_poly_param_style', function(x) engine.set_poly_param_style(i, params:string(i..'_poly_param_style')) end)
 
     for k,v in pairs(swappable_drums) do
       for prms,d in pairs(kildare_drum_params[v]) do
