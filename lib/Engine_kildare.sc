@@ -103,10 +103,16 @@ Engine_Kildare : CroneEngine {
 			kernel.setPolyParamStyle(voice, style);
 		});
 
-		this.addCommand(\test_trig,"s", { arg msg;
-			var k = msg[1].asSymbol;
-			kernel.test_trigger(k);
+		this.addCommand(\save_poly_params, "s", { arg msg;
+			kernel.savePolyParams(msg[1].asString);
 		});
+
+		this.addCommand(\load_poly_params, "s", { arg msg;
+			kernel.loadPolyParams(msg[1].asString);
+		});
+
+		//("/home/we/dust/data/kildare/test.txt")
+		//("/home/we/dust/data/hills/test.txt")
 
 		// debugPrinter = { loop { [context.server.peakCPU, context.server.avgCPU].postln; 3.wait; } }.fork;
 	}
