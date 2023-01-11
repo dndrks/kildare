@@ -19,6 +19,7 @@ KildareSample {
 			feedbackAux, feedbackSend = 0,
 			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			// baseRate = 1, rateOffset = 0, pitchControl = 0,
+			channels = 2,
 			rate = 1,
 			amDepth, amHz,
 			eqHz, eqAmp,
@@ -114,7 +115,10 @@ KildareSample {
 			mainSend = RLPF.ar(in:mainSend,freq:Clip.kr(lpHz, 20, 20000), rq: filterQ, mul:1);
 			mainSend = RHPF.ar(in:mainSend,freq:hpHz, rq: filterQ, mul:1);
 
-			mainSend = Balance2.ar(mainSend[0],mainSend[1],pan);
+			if( channels == 2,
+				{mainSend = Balance2.ar(mainSend[0],mainSend[1],pan)},
+				{mainSend = Balance2.ar(mainSend[0],mainSend[0],pan)}
+			);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
 			mainSend = mainSend;
 

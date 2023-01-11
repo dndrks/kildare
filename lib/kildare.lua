@@ -6,11 +6,14 @@ Kildare.lfos = include 'kildare/lib/kildare_lfos'
 Kildare.json = include 'kildare/lib/kildare_json'
 local musicutil = require 'musicutil'
 
+local total_tracks;
+
 Kildare.drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','sample'}
 local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','sample'}
 Kildare.fx = {"delay", "feedback", "main"}
 local fx = {"delay", "feedback", "main"}
 Kildare.voice_state = {}
+Kildare.allocVoice = {}
 
 Kildare.soundfile_append = ''
 
@@ -174,6 +177,8 @@ end
 
 function Kildare.init(track_count, poly)
 
+  total_tracks = track_count
+
   local extensions = _path.home .. '/.local/share/SuperCollider/Extensions/'
   if not util.file_exists(extensions..'miSCellaneous_lib/Classes/WaveFolding/') then
     util.os_capture('mkdir -p '..extensions ..'miSCellaneous_lib/Classes/WaveFolding/')
@@ -213,6 +218,7 @@ function Kildare.init(track_count, poly)
 
   for i = 1,track_count do
     Kildare.voice_state[i] = true
+    Kildare.allocVoice[i] = 0
   end
 
   function percent_formatter(param)
@@ -1044,8 +1050,11 @@ function Kildare.init(track_count, poly)
   for i = 1,track_count do
     params:add_option('voice_model_'..i, 'voice '..i, models, i)
     params:set_action('voice_model_'..i, function(x)
-      engine.set_model(i, 'kildare_'..models[x], 'false')
-      Kildare.rebuild_model_params(i, models[x])
+      if all_loaded then
+        engine.set_model(i, 'kildare_'..models[x], 'false')
+        print('model build')
+        Kildare.rebuild_model_params(i, models[x])
+      end
       -- engine.set_model(i, 'kildare_'..models[x], 'false')
     end)
   end
@@ -1100,11 +1109,12 @@ function Kildare.init(track_count, poly)
         engine.free_voice(i)
       else
         engine.init_voice(i, 'kildare_'..params:string('voice_model_'..i))
+        print('activating voice '..i)
         Kildare.rebuild_model_params(i, params:string('voice_model_'..i))
       end
     end)
     params:add_number(i..'_poly_voice_count', 'poly voice count', 1, 8, 2)
-    params:set_action(i..'_poly_voice_count', function(x) engine.set_voice_limit(i,x) end)
+    params:set_action(i..'_poly_voice_count', function(x) engine.set_voice_limit(i,x) Kildare.allocVoice[i] = 0 end)
     params:add_option(i..'_poly_param_style', 'poly params', {'all voices','current voice','next voice'}, 1)
     params:set_action(i..'_poly_param_style', function(x) engine.set_poly_param_style(i, params:string(i..'_poly_param_style')) end)
 
@@ -1151,6 +1161,7 @@ function Kildare.init(track_count, poly)
         elseif d.type == 'binary' then
           params:add_binary(i.."_"..v..'_'..d.id, d.name, d.behavior)
         end
+        -- build actions:
         if d.type ~= 'separator' then
           if not tab.contains(custom_actions,d.id) then
             params:set_action(i.."_"..v..'_'..d.id, function(x)
@@ -1263,7 +1274,8 @@ function Kildare.init(track_count, poly)
       end
     end
 
-    Kildare.rebuild_model_params(i,shown_set)
+    -- print('end of the road!')
+    -- Kildare.rebuild_model_params(i,shown_set)
 
   end
 

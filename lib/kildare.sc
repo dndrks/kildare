@@ -756,6 +756,7 @@ Kildare {
 				\delayAuxL,busses[\delayLSend],
 				\delayAuxR,busses[\delayRSend],
 				\feedbackAux,busses[\feedbackSend],
+				\channels,2,
 				\delayEnv,0,
 				\delayAtk,0,
 				\delayRel,2,
@@ -1112,9 +1113,8 @@ Kildare {
 
 	}
 
-	test_trigger { arg voiceKey, velocity;
+	test_trigger { arg voiceKey, velocity, allocVoice;
 
-		// 'triggering'.postln;
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
 			if( groups[voiceKey].isPlaying,{
@@ -1126,15 +1126,20 @@ Kildare {
 				groups[voiceKey].set(\t_gate, 1);
 			});
 		},{
-			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1) % voiceLimit[voiceKey];
-			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying, {
-				voiceTracker[voiceKey][indexTracker[voiceKey]].set(\velocity, velocity);
-				voiceTracker[voiceKey][indexTracker[voiceKey]].set(\t_gate, 1);
+			// indexTracker[voiceKey] = (indexTracker[voiceKey] + 1) % voiceLimit[voiceKey];
+			indexTracker[voiceKey] = allocVoice;
+			if (voiceTracker[voiceKey][allocVoice].isPlaying, {
+				voiceTracker[voiceKey][allocVoice].set(\velocity, velocity);
+				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+					voiceTracker[voiceKey][allocVoice].set(\t_trig, 1);
+					('triggering poly sample').postln;
+				});
+				voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
 			});
 		});
 	}
 
-	trigger { arg voiceKey, velocity, retrigFlag;
+	/*trigger { arg voiceKey, velocity, retrigFlag;
 
 		paramProtos[voiceKey][\velocity] = velocity;
 		if( paramProtos[voiceKey][\poly] == 0,{
@@ -1149,15 +1154,11 @@ Kildare {
 					groups[voiceKey].set(\stopGate, -1.1);
 				});
 				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-					// (retrigFlag).postln;
 					if( retrigFlag == 'true',{
-						// groups[voiceKey].set(\t_trig, -1.025);
-						// ('re-triggering').postln;
 						groups[voiceKey].set(\t_trig, 1);
 					},{
 						groups[voiceKey].set(\t_trig, -1.05);
 						Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
-						// ('fresh trigger').postln;
 					});
 				},{
 					Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
@@ -1185,13 +1186,13 @@ Kildare {
 			});
 		}
 		);
-	}
+	}*/
 
 	setVoiceParam { arg voiceKey, paramKey, paramValue;
 		var prevPoly = paramProtos[voiceKey][\poly];
 		paramProtos[voiceKey][paramKey] = paramValue;
 
-		if( paramKey == \poly, {
+		if( paramKey == \poly, { // if the key is 'poly', then...
 			(voiceLimit[voiceKey]).do({ arg voiceIndex;
 				if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 					voiceTracker[voiceKey][voiceIndex].free;
@@ -1205,7 +1206,7 @@ Kildare {
 					groups[voiceKey].set(\t_gate, -1.1);
 					Routine {
 						0.15.wait;
-						groups[voiceKey].nodeID.postln;
+						('freeing this node: '++(groups[voiceKey].nodeID)).postln;
 						groups[voiceKey].free;
 					}.play;
 				});
@@ -1232,7 +1233,6 @@ Kildare {
 							}.play;
 						});
 					});
-					// groups[voiceKey].isPlaying.postln;
 					if (groups[voiceKey].isPlaying, {
 						('clearing mono voice for new mono '++voiceKey).postln;
 						groups[voiceKey].free;
@@ -1248,7 +1248,7 @@ Kildare {
 					indexTracker[voiceKey] = voiceLimit[voiceKey];
 				});
 			});
-		},{
+		},{ // if the key is not 'poly', then...
 			if( paramProtos[voiceKey][\poly] == 0,
 				{ // if mono:
 					if( groups[voiceKey].isPlaying,
@@ -1291,6 +1291,21 @@ Kildare {
 							);
 						};
 					});
+				}
+			);
+		});
+	}
+
+	setPolyVoiceParam{ arg voiceKey, allocVoice, paramKey, paramValue;
+		if ( (paramKey.asString).contains("carHz"), {
+			if( voiceTracker[voiceKey][allocVoice].isPlaying,
+				{voiceTracker[voiceKey][allocVoice].set(paramKey, paramValue)}
+			);
+		},{
+			if( voiceTracker[voiceKey][allocVoice].isPlaying,
+				{
+					voiceTracker[voiceKey][allocVoice].set(paramKey, paramValue);
+					polyParams[voiceKey][allocVoice][paramKey] = paramValue;
 				}
 			);
 		});
@@ -1413,8 +1428,8 @@ Kildare {
 			paramProtos[voice][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
 			groups[voice].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
 			groups[voice].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
-			paramProtos[voice][\channels].postln;
-			groups[voice].postln;
+			('channel count: '++paramProtos[voice][\channels]).postln;
+			('group: ' ++ groups[voice]).postln;
 		});
 	}
 
@@ -1422,7 +1437,7 @@ Kildare {
 		sampleInfo[voice][\samples][index] = Buffer.read(Server.default, path, action:{
 			arg bufnum;
 			sampleInfo[voice][\pointers][index] = bufnum;
-			sampleInfo[voice][\pointers][index].postln;
+			('pointers info: ' ++ sampleInfo[voice][\pointers][index]).postln;
 			if (index == 0, {
 				this.setFile(voice,1);
 			});
