@@ -1254,6 +1254,9 @@ Kildare {
 					if( groups[voiceKey].isPlaying,
 						{groups[voiceKey].set(paramKey, paramValue);}
 					);
+					8.do({ arg i;
+						polyParams[voiceKey][i][paramKey] = paramValue; // write to poly voice storage
+					});
 				},
 				{ // if poly:
 					if ( (paramKey.asString).contains("carHz"), {
@@ -1268,10 +1271,12 @@ Kildare {
 								if( voiceTracker[voiceKey][i].isPlaying,
 									{
 										voiceTracker[voiceKey][i].set(paramKey, paramValue);
-										polyParams[voiceKey][i][paramKey] = paramValue;
 									}
 								);
 							};
+							8.do({ arg i; // write to all poly voice storage
+								polyParams[voiceKey][i][paramKey] = paramValue;
+							});
 						}
 						{ polyParamStyle[voiceKey] == "current voice"}{
 							if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
@@ -1296,6 +1301,7 @@ Kildare {
 		});
 	}
 
+	//not used yet:
 	setPolyVoiceParam{ arg voiceKey, allocVoice, paramKey, paramValue;
 		if ( (paramKey.asString).contains("carHz"), {
 			if( voiceTracker[voiceKey][allocVoice].isPlaying,
@@ -1305,9 +1311,9 @@ Kildare {
 			if( voiceTracker[voiceKey][allocVoice].isPlaying,
 				{
 					voiceTracker[voiceKey][allocVoice].set(paramKey, paramValue);
-					polyParams[voiceKey][allocVoice][paramKey] = paramValue;
 				}
 			);
+			polyParams[voiceKey][allocVoice][paramKey] = paramValue;
 		});
 	}
 
@@ -1385,7 +1391,8 @@ Kildare {
 		if( paramProtos[voice][\poly] == 1,{
 			(voiceLimit[voice]).do({ arg voiceIndex;
 				if( emptyVoices[voice] == false, {
-					voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
+					// voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
+					voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], polyParams[voice][voiceIndex].getPairs);
 					NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
 				});
 			});

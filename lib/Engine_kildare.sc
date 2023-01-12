@@ -23,6 +23,14 @@ Engine_Kildare : CroneEngine {
 			kernel.setVoiceParam(voiceKey, paramKey, paramValue);
 		});
 
+		this.addCommand(\set_poly_voice_param, "iisf", { arg msg;
+			var voiceKey = msg[1].asSymbol;
+			var allocVoice = msg[2].asInteger-1;
+			var paramKey = msg[3].asSymbol;
+			var paramValue = msg[4].asFloat;
+			kernel.setPolyVoiceParam(voiceKey, allocVoice, paramKey, paramValue);
+		});
+
 		this.addCommand(\set_delay_param, "sf", {arg msg;
 			var paramKey = msg[1].asSymbol;
 			var paramValue = msg[2].asFloat;
