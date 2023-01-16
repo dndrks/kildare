@@ -769,7 +769,6 @@ Kildare {
 				\feedbackSend,0,
 				\poly,0,
 				\amp,1,
-				\sampleEnv,0,
 				\sampleAtk,0,
 				\sampleRel,1,
 				\sampleStart,0,
@@ -1122,6 +1121,12 @@ Kildare {
 				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
 					groups[voiceKey].set(\t_trig, 1);
 					('triggering sample').postln;
+					/*Routine{
+						groups[voiceKey].set(\loop_trig,0);
+						0.01.wait;
+						groups[voiceKey].set(\t_trig, 1);
+						groups[voiceKey].set(\loop_trig,1);
+					}.play;*/
 				});
 				groups[voiceKey].set(\t_gate, 1);
 			});
@@ -1433,6 +1438,7 @@ Kildare {
 			paramProtos[voice][\bufnum] = sampleInfo[voice][\pointers][samplenum];
 			sampleInfo[voice][\samplerates][samplenum] = sampleInfo[voice][\samples][samplenum].sampleRate;
 			paramProtos[voice][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
+			groups[voice].set(\style, 1);
 			groups[voice].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
 			groups[voice].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
 			('channel count: '++paramProtos[voice][\channels]).postln;

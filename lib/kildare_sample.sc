@@ -7,13 +7,13 @@ KildareSample {
 
 	init {
 		SynthDef(\kildare_sample, {
-			arg bufnum, out = 0, amp = 1,
-			t_trig = 1, t_gate = 0,
+			arg bufnum, style = 0, out = 0, amp = 1,
+			t_trig = 1, t_gate = 0, loopAtk = 0.03, loopRel = 0.05,
 			velocity = 127,
 			sampleStart = 0, sampleEnd = 1,
-			loop = 0, loopFadeIn = 0.01, loopFadeOut = 0.08,
+			loop = 0, loopFadeIn = 0.4, loopFadeOut = 0.4, envCurve = -4,
 			pan = 0,
-			sampleEnv = 0, sampleAtk = 0.01, sampleRel = 0.05,
+			sampleAtk = 0.01, sampleRel = 0.05,
 			delayAuxL, delayAuxR, delaySend = 0,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux, feedbackSend = 0,
@@ -27,7 +27,7 @@ KildareSample {
 			lpHz, hpHz, filterQ,
 			squishPitch, squishChunk;
 
-			var snd, snd2, pos, pos2, frames, duration, loop_env, arEnv, ampMod, delEnv, feedEnv, mainSend;
+			var snd, snd2, pos, pos2, frames, duration, loop_env, ampMod, delEnv, feedEnv, mainSend;
 			var startA, endA, startB, endB, crossfade, aOrB;
 			var totalOffset;
 
@@ -54,25 +54,39 @@ KildareSample {
 			rate = rate*BufRateScale.kr(bufnum);
 			frames = BufFrames.kr(bufnum);
 
-			duration = Select.kr(loop > 0, [frames*(sampleEnd-sampleStart)/rate.abs/Server.default.sampleRate, inf]);
+			duration = frames*(sampleEnd-sampleStart)/rate.abs/Server.default.sampleRate;
 
-			loop_env = EnvGen.ar(
-				Env.new(
-					levels: [0,1,1,0],
-					times: [loopFadeIn,duration-(loopFadeIn + loopFadeOut),loopFadeOut],
-				),
-				gate:t_trig
-			);
+			/*loop_env = EnvGen.ar(
+				Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
+				gate: t_gate
+			);*/
 
-			arEnv = Select.kr(
-				sampleEnv > 0, [
-					1,
-					EnvGen.kr(
-						Env.linen(attackTime: sampleAtk, sustainTime: 0.08, releaseTime: sampleRel, curve: 'sin'),
+			loop_env = Select.kr(
+				style, [
+					EnvGen.ar(
+						Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
 						gate: t_gate
-					)
+					),
+					EnvGen.ar(
+						Env([0,1,1,0],[loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
+						gate: t_gate
+					);
 				]
 			);
+
+			/*case
+			{ style != "distributed" } {
+				loop_env = EnvGen.ar(
+					Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
+					gate: t_gate
+				);
+			}
+			{ style == "distributed" } {
+				loop_env = EnvGen.ar(
+					Env([0,1,1,0],[loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
+					gate: t_gate
+				);
+			};*/
 
 			pos=Phasor.ar(
 				trig:aOrB,
@@ -105,9 +119,9 @@ KildareSample {
 
 			// ^^ sample handling all adapted from Zack Scholl: https://schollz.com/blog/sampler/ ^^
 
-			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
+			ampMod = SinOsc.ar(freq:amHz,mul:amDepth/10,add:1);
 
-			mainSend = ( ((((crossfade*snd)+((1-crossfade)*snd2)) * loop_env)*ampMod) * arEnv );
+			mainSend = ( ((((crossfade*snd)+((1-crossfade)*snd2)) * loop_env)*ampMod));
 
 			mainSend = Squiz.ar(in:mainSend, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 			mainSend = Decimator.ar(mainSend,bitRate,bitCount,1.0);

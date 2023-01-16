@@ -5,6 +5,63 @@ KildareBD {
 		^super.new.init(srv);
 	}
 
+	/**buildParams {
+		arg mainOutBus, delayLSendBus, delayRSendBus, feedbackSendBus;
+		Dictionary.newFrom([
+			\out,mainOutBus,
+			\delayAuxL,delayLSendBus,
+			\delayAuxR,delayRSendBus,
+			\feedbackAux,feedbackSendBus,
+			\delayEnv,0,
+			\delayAtk,0,
+			\delayRel,2,
+			\delayCurve,-4,
+			\delaySend,0,
+			\feedbackEnv,0,
+			\feedbackAtk,0,
+			\feedbackRel,2,
+			\feedbackCurve,-4,
+			\feedbackSend,0,
+			\poly,0,
+			\velocity,127,
+			\amp,0.7,
+			\carHz,55,
+			\carHzThird,55,
+			\carHzSeventh,55,
+			\carDetune,0,
+			\carAtk,0,
+			\carRel,0.3,
+			\carCurve,-4,
+			\modAmp,0,
+			\modHz,600,
+			\modFollow,0,
+			\modNum,1,
+			\modDenum,1,
+			\modAtk,0,
+			\modRel,0.05,
+			\modCurve,-4,
+			\feedAmp,1,
+			\rampDepth,0.11,
+			\rampDec,0.3,
+			\squishPitch,1,
+			\squishChunk,1,
+			\amDepth,0,
+			\amHz,8175.08,
+			\eqHz,6000,
+			\eqAmp,0,
+			\bitRate,24000,
+			\bitCount,24,
+			\lpHz,20000,
+			\hpHz,20,
+			\filterQ,50,
+			\lpAtk,0,
+			\lpRel,0.3,
+			\lpCurve,-4,
+			\lpDepth,0,
+			\pan,0,
+		]);
+	}*/
+
 	init {
 
 		SynthDef(\kildare_bd, {
