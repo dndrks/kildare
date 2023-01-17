@@ -83,7 +83,7 @@ KildareSample {
 				bufnum:bufnum,
 				phase:pos,
 				interpolation:4,
-			);
+			) * loop_env;
 
 			// add a second reader
 			pos2=Phasor.ar(
@@ -98,13 +98,15 @@ KildareSample {
 				bufnum:bufnum,
 				phase:pos2,
 				interpolation:4,
-			);
+			) * loop_env;
 
 			// ^^ sample handling all adapted from Zack Scholl: https://schollz.com/blog/sampler/ ^^
 
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth/10,add:1);
 
-			mainSend = ( ((((crossfade*snd)+((1-crossfade)*snd2)) * loop_env)*ampMod));
+			// crossfade.poll;
+
+			mainSend = ( ((((crossfade*snd)+((1-crossfade)*snd2)))*ampMod));
 
 			mainSend = Squiz.ar(in:mainSend, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 			mainSend = Decimator.ar(mainSend,bitRate,bitCount,1.0);
@@ -117,7 +119,6 @@ KildareSample {
 				{mainSend = Balance2.ar(mainSend[0],mainSend[0],pan)}
 			);
 			mainSend = mainSend * (amp * LinLin.kr(velocity,0,127,0.0,1.0));
-			mainSend = mainSend;
 
 			delEnv = Select.kr(
 				delayEnv > 0, [
