@@ -769,8 +769,9 @@ Kildare {
 				\feedbackSend,0,
 				\poly,0,
 				\amp,1,
-				\sampleAtk,0,
-				\sampleRel,1,
+				\loopAtk,0.03,
+				\loopRel,0.05,
+				\envStyle,0,
 				\sampleStart,0,
 				\sampleEnd,1,
 				\loop,0,
@@ -788,6 +789,7 @@ Kildare {
 				\filterQ,50,
 				\pan,0,
 				\t_trig,1,
+				\t_gate,0,
 				\startA, 0,
 				\startB, 0,
 				\crossfade, 0,
@@ -1201,7 +1203,7 @@ Kildare {
 			(voiceLimit[voiceKey]).do({ arg voiceIndex;
 				if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 					voiceTracker[voiceKey][voiceIndex].free;
-					('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
+					('looks like '++voiceKey++', '++voiceIndex++' needed to be freed: 1206').postln;
 				});
 			});
 			if( paramValue == 1, {
@@ -1218,7 +1220,7 @@ Kildare {
 				(voiceLimit[voiceKey]).do({ arg voiceIndex;
 					if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
 						voiceTracker[voiceKey][voiceIndex].free;
-						('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
+						('looks like '++voiceKey++', '++voiceIndex++' needed to be freed: 1223').postln;
 					});
 					if( emptyVoices[voiceKey] == false, {
 						voiceTracker[voiceKey][voiceIndex] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
@@ -1230,7 +1232,7 @@ Kildare {
 					(voiceKey++' sending '++paramKey++ ' ' ++paramValue).postln;
 					(voiceLimit[voiceKey]).do({ arg voiceIndex;
 						if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
-							('looks like '++voiceKey++', '++voiceIndex++' needed to be freed').postln;
+							('looks like '++voiceKey++', '++voiceIndex++' needed to be freed: 1235').postln;
 							voiceTracker[voiceKey][voiceIndex].set(\t_gate, -1.1);
 							Routine {
 								0.15.wait;
@@ -1380,6 +1382,7 @@ Kildare {
 
 	initVoice { arg voice, model;
 		emptyVoices[voice] = false;
+		('initializing '++voice++', '++model).postln;
 		this.setModel(voice, model, 'true');
 	}
 
@@ -1388,7 +1391,7 @@ Kildare {
 			(voiceLimit[voice]).do({ arg voiceIndex;
 				if (voiceTracker[voice][voiceIndex].isPlaying, {
 					voiceTracker[voice][voiceIndex].free;
-					('looks like '++voice++', '++voiceIndex++' needed to be freed').postln;
+					('looks like '++voice++', '++voiceIndex++' needed to be freed: setVoiceLimit').postln;
 				});
 			});
 		});
@@ -1421,26 +1424,55 @@ Kildare {
 
 	loadFile { arg msg;
 		var voice = msg[1], filename = msg[2];
-		groups[voice].set(\t_trig, -1);
-		groups[voice].set(\t_gate, -1);
+		if (paramProtos[voice][\poly] == 0,{
+			groups[voice].set(\t_trig, -1);
+			groups[voice].set(\t_gate, -1);
+		},{
+			voiceTracker[voice][indexTracker[voice]].set(\t_trig, -1);
+			voiceTracker[voice][indexTracker[voice]].set(\t_gate, -1);
+		});
 		this.clearSamples(voice);
 		sampleInfo[voice][\samples][0] = Buffer.read(Server.default, filename ,action:{
 			arg bufnum;
 			sampleInfo[voice][\pointers][0] = bufnum;
-			this.setFile(voice,1);
+			this.setFile(voice,1,true);
 		});
+		('loadFile called').postln;
 	}
 
-	setFile { arg voice, samplenum;
+	setFile { arg voice, samplenum, fromLoad;
 		if ( sampleInfo[voice][\samples].size > 0, {
 			samplenum = samplenum - 1;
 			samplenum = samplenum.wrap(0,sampleInfo[voice][\samples].size-1);
 			paramProtos[voice][\bufnum] = sampleInfo[voice][\pointers][samplenum];
 			sampleInfo[voice][\samplerates][samplenum] = sampleInfo[voice][\samples][samplenum].sampleRate;
 			paramProtos[voice][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
-			groups[voice].set(\style, 1);
-			groups[voice].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
-			groups[voice].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
+			if (paramProtos[voice][\poly] == 0,{
+				groups[voice].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
+				groups[voice].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
+				if( fromLoad == true, {
+					8.do({ arg alloc;
+						polyParams[voice][alloc][\bufnum] = sampleInfo[voice][\pointers][samplenum];
+						polyParams[voice][alloc][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
+						('pre-setting buffer for ' ++ voice ++ ', ' ++ alloc ++ ': buffer ' ++ sampleInfo[voice][\pointers][samplenum]).postln;
+					});
+				});
+			},{
+				if (fromLoad == true, {
+					8.do({ arg alloc;
+						voiceTracker[voice][alloc].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
+						voiceTracker[voice][alloc].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
+						polyParams[voice][alloc][\bufnum] = sampleInfo[voice][\pointers][samplenum];
+						polyParams[voice][alloc][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
+						('setting buffer for ' ++ voice ++ ', ' ++ alloc ++ ': buffer ' ++ sampleInfo[voice][\pointers][samplenum]).postln;
+					});
+				},{
+					voiceTracker[voice][indexTracker[voice]].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
+					voiceTracker[voice][indexTracker[voice]].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
+					polyParams[voice][indexTracker[voice]][\bufnum] = sampleInfo[voice][\pointers][samplenum];
+					polyParams[voice][indexTracker[voice]][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
+				});
+			});
 			('channel count: '++paramProtos[voice][\channels]).postln;
 			('group: ' ++ groups[voice]).postln;
 		});
@@ -1452,9 +1484,10 @@ Kildare {
 			sampleInfo[voice][\pointers][index] = bufnum;
 			('pointers info: ' ++ sampleInfo[voice][\pointers][index]).postln;
 			if (index == 0, {
-				this.setFile(voice,1);
+				this.setFile(voice,1,true);
 			});
 		});
+		('loadFileIntoContainer called').postln;
 	}
 
 	loadFolder { arg voice, filepath;
@@ -1464,6 +1497,7 @@ Kildare {
 			arg i;
 			this.loadFileIntoContainer(voice,i,folderedSamples[voice][i].path);
 		});
+		('loadFolder called').postln;
 	}
 
 	adjustSampleMult { arg voice, mult;
@@ -1477,8 +1511,13 @@ Kildare {
 	}
 
 	stopSample { arg voice;
-		groups[voice].set(\t_trig, -1.1);
-		groups[voice].set(\t_gate, -1.1);
+		if (paramProtos[voice][\poly] == 0,{
+			groups[voice].set(\t_trig, -1.1);
+			groups[voice].set(\t_gate, -1.1);
+		},{
+			voiceTracker[voice][indexTracker[voice]].set(\t_trig, -1.1);
+			voiceTracker[voice][indexTracker[voice]].set(\t_gate, -1.1);
+		});
 	}
 
 	setModel { arg voice, model, reseed;

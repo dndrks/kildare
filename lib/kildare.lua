@@ -146,7 +146,7 @@ function Kildare.rebuild_model_params(i,current_model)
   _menu.rebuild_params()
   Kildare.model_change_callback(i,current_model)
   print(i,current_model)
-  Kildare.push_new_model_params(i,current_model)
+  Kildare.push_new_model_params(i,current_model) -- TODO VERIFY THIS IS OK...
   Kildare.lfos.build_params_static(true)
   if Kildare.loaded then
     Kildare.lfos.rebuild_model_spec(i,true)
@@ -233,9 +233,12 @@ function Kildare.init(track_count, poly)
     {type = 'separator', name = 'voice params'},
     {id = 'poly', name = 'polyphony', type = 'control', min = 1, max = 2,  step = 1, warp = "lin", default = 1, quantum = 1, formatter = function(param) local modes = {"mono","poly"} return modes[(type(param) == 'table' and param:get() or param)] end},
     {id = 'amp', name = 'amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-    {id = 'sampleEnv', name = 'amp envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0, quantum = 1, step = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
-    {id = 'sampleAtk', name = 'amp attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
-    {id = 'sampleRel', name = 'amp release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+    {id = 'envStyle', name = 'loop env style', type = 'control', min = 0, max = 1, warp = "lin", default = 0, quantum = 1, step = 1, formatter = function(param) local modes = {"4-stage","3-stage"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
+    {id = 'loopAtk', name = 'loop attack', type = 'control', min = 0, max = 100, warp = 'lin', default = 0, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
+    {id = 'loopRel', name = 'loop release', type = 'control', min = 0, max = 100, warp = 'lin', default = 50, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
+    {id = 'envCurve', name = 'loop env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
+      util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
+      1,"%")) end},
     {id = 'playbackRateBase', name = 'rate', type = 'control', min = 1, max = 11, warp = 'lin', default = 9, step = 1, quantum = 1/10, formatter = function(param) local rate_options = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 4} return rate_options[(type(param) == 'table' and param:get() or param)]..'x' end},
     {id = 'playbackRateOffset', name = 'offset', type = 'control', min = -24, max = 24, warp = 'lin', default = 0, step = 1, quantum = 1/48, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1," semitones")) end},
     {id = 'playbackPitchControl', name = 'pitch control', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, step = 1/10, quantum = 1/240, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01,"%")) end},

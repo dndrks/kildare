@@ -69,7 +69,7 @@ Engine_Kildare : CroneEngine {
 		this.addCommand(\change_sample, "si", { arg msg;
 			var voiceKey = msg[1].asSymbol;
 			var sample = msg[2].asInteger;
-			kernel.setFile(voiceKey, sample);
+			kernel.setFile(voiceKey, sample, false);
 		});
 
 		this.addCommand(\stop_sample, "s", { arg msg;

@@ -7,13 +7,12 @@ KildareSample {
 
 	init {
 		SynthDef(\kildare_sample, {
-			arg bufnum, style = 0, out = 0, amp = 1,
+			arg bufnum, envStyle = 0, out = 0, amp = 1,
 			t_trig = 1, t_gate = 0, loopAtk = 0.03, loopRel = 0.05,
 			velocity = 127,
 			sampleStart = 0, sampleEnd = 1,
-			loop = 0, loopFadeIn = 0.4, loopFadeOut = 0.4, envCurve = -4,
+			loop = 0, envCurve = -4,
 			pan = 0,
-			sampleAtk = 0.01, sampleRel = 0.05,
 			delayAuxL, delayAuxR, delaySend = 0,
 			delayEnv, delayAtk, delayRel,
 			feedbackAux, feedbackSend = 0,
@@ -56,13 +55,11 @@ KildareSample {
 
 			duration = frames*(sampleEnd-sampleStart)/rate.abs/Server.default.sampleRate;
 
-			/*loop_env = EnvGen.ar(
-				Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
-				gate: t_gate
-			);*/
+			loopAtk = LinLin.kr(loopAtk,0,100,0,duration/2);
+			loopRel = LinLin.kr(loopRel,0,100,0,duration/2);
 
 			loop_env = Select.kr(
-				style, [
+				envStyle, [
 					EnvGen.ar(
 						Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
 						gate: t_gate
@@ -73,20 +70,6 @@ KildareSample {
 					);
 				]
 			);
-
-			/*case
-			{ style != "distributed" } {
-				loop_env = EnvGen.ar(
-					Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
-					gate: t_gate
-				);
-			}
-			{ style == "distributed" } {
-				loop_env = EnvGen.ar(
-					Env([0,1,1,0],[loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
-					gate: t_gate
-				);
-			};*/
 
 			pos=Phasor.ar(
 				trig:aOrB,
