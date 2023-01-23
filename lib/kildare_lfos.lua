@@ -123,7 +123,8 @@ function lfos.add_params(track_count, fx_names, poly)
         params:hide("lfo_baseline_"..i)
         params:hide("lfo_reset_"..i)
         params:hide("lfo_reset_target_"..i)
-        _menu.rebuild_params()
+        -- _menu.rebuild_params()
+        menu_rebuild_queued = true
       elseif x == 2 then
         klfo[i]:start()
         params:show("lfo_target_track_"..i)
@@ -142,7 +143,8 @@ function lfos.add_params(track_count, fx_names, poly)
         params:show("lfo_baseline_"..i)
         params:show("lfo_reset_"..i)
         params:show("lfo_reset_target_"..i)
-        _menu.rebuild_params()
+        -- _menu.rebuild_params()
+        menu_rebuild_queued = true
       end
     end)
 
@@ -285,7 +287,8 @@ function lfos.add_params(track_count, fx_names, poly)
           params:show("lfo_free_"..i)
           klfo[i]:set('mode', 'free')
         end
-        _menu.rebuild_params()
+        -- _menu.rebuild_params()
+        menu_rebuild_queued = true
       end
     )
 
@@ -311,7 +314,8 @@ function lfos.add_params(track_count, fx_names, poly)
 
     -- params:hide("lfo_free_"..i)
     -- params:hide("lfo_beats_"..i)
-    _menu.rebuild_params()
+    -- _menu.rebuild_params()
+    menu_rebuild_queued = true
 
   end
 

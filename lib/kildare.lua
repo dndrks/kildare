@@ -143,7 +143,8 @@ function Kildare.rebuild_model_params(i,current_model)
     end
   end
   params.params[params.lookup['kildare_'..i..'_group']].name = i..': '..current_model
-  _menu.rebuild_params()
+  -- _menu.rebuild_params()
+  menu_rebuild_queued = true
   Kildare.model_change_callback(i,current_model)
   print(i,current_model)
   Kildare.push_new_model_params(i,current_model) -- TODO VERIFY THIS IS OK...
@@ -1212,7 +1213,8 @@ function Kildare.init(track_count, poly)
                     params:hide(i.."_"..v..'_delayRel')
                     params:hide(i.."_"..v..'_delayCurve')
                   end
-                  _menu.rebuild_params()
+                  -- _menu.rebuild_params()
+                  menu_rebuild_queued = true
                   engine.set_voice_param(i, d.id, x)
                   Kildare.voice_param_callback(i, d.id, x)
                 end
@@ -1231,7 +1233,8 @@ function Kildare.init(track_count, poly)
                     params:hide(i.."_"..v..'_feedbackRel')
                     params:hide(i.."_"..v..'_feedbackCurve')
                   end
-                  _menu.rebuild_params()
+                  -- _menu.rebuild_params()
+                  menu_rebuild_queued = true
                   engine.set_voice_param(i, d.id, x)
                   Kildare.voice_param_callback(i, d.id, x)
                 end
@@ -1340,7 +1343,8 @@ function Kildare.init(track_count, poly)
     params:add_separator('kildare_st_notice', "for 'distribute' sample mode")
     params:add_text('kildare_st_info', '')
     params:hide('kildare_st_info')
-    _menu.rebuild_params()
+    -- _menu.rebuild_params()
+    menu_rebuild_queued = true
     params:add_file('kildare_st_chop','chop w/ fade', _path.audio)
     params:set_action('kildare_st_chop',
     function(file)
@@ -1349,13 +1353,15 @@ function Kildare.init(track_count, poly)
         params:set('kildare_st_chop', '', true)
         params:set('kildare_st_info', '~~~ chopping '..file:match("^.+/(.+)$"))
         params:show('kildare_st_info')
-        _menu.rebuild_params()
+        -- _menu.rebuild_params()
+        menu_rebuild_queued = true
         clock.run(function()
           clock.sleep(2)
           params:set('kildare_st_info', '  ~~~ chopped! ~~~')
           clock.sleep(2)
           params:hide('kildare_st_info')
-          _menu.rebuild_params()
+          -- _menu.rebuild_params()
+          menu_rebuild_queued = true
         end)
       end
     end)
@@ -1444,7 +1450,8 @@ function Kildare.init(track_count, poly)
   params:hide('feedback_cMixer_inA')
   params:hide('feedback_cMixer_inB')
 
-  _menu.rebuild_params()
+  -- _menu.rebuild_params()
+  menu_rebuild_queued = true
 
   -- params:bang()
 
