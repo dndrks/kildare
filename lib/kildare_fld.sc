@@ -5,12 +5,71 @@ KildareFLD {
 		^super.new.init(srv);
 	}
 
+	*buildParams {
+		arg mainOutBus, delayLSendBus, delayRSendBus, feedbackSendBus;
+		var returnTable;
+		returnTable = Dictionary.newFrom([
+			\out,mainOutBus,
+			\delayAuxL,delayLSendBus,
+			\delayAuxR,delayRSendBus,
+			\feedbackAux,feedbackSendBus,
+			\delaySend,0,
+			\delayEnv,0,
+			\delayAtk,0,
+			\delayRel,2,
+			\delayCurve,-4,
+			\feedbackEnv,0,
+			\feedbackAtk,0,
+			\feedbackRel,2,
+			\feedbackCurve,-4,
+			\feedbackSend,0,
+			\poly,0,
+			\velocity,127,
+			\amp,0.7,
+			\carHz,55,
+			\carHzThird,55,
+			\carHzSeventh,55,
+			\carDetune,0,
+			\carAtk,0,
+			\carRel,3.3,
+			\carCurve,-4,
+			\modAmp,0,
+			\modHz,600,
+			\modFollow,0,
+			\modNum,1,
+			\modDenum,1,
+			\modAtk,0,
+			\modRel,0.05,
+			\modCurve,-4,
+			\feedAmp,1,
+			\rampDepth,0,
+			\rampDec,0.3,
+			\squishPitch,1,
+			\squishChunk,1,
+			\amDepth,0,
+			\amHz,8175.08,
+			\eqHz,6000,
+			\eqAmp,0,
+			\bitRate,24000,
+			\bitCount,24,
+			\lpHz,20000,
+			\hpHz,20,
+			\filterQ,50,
+			\lpAtk,0,
+			\lpRel,0.3,
+			\lpCurve,-4,
+			\lpDepth,0,
+			\pan,0,
+		]);
+		^returnTable
+	}
+
 	init {
 
 		SynthDef(\kildare_fld, {
 			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
-			delayEnv, delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel, delayCurve = -4,
 			feedbackAux, feedbackSend,
 			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 0, amp,
@@ -30,7 +89,6 @@ KildareFLD {
 			mod, modHzThird, modHzSeventh,
 			carEnv, modEnv, carRamp,
 			feedMod, feedCar, ampMod,
-			mod_1, mod_2, mod_3,
 			filterEnv, delEnv, feedEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
@@ -62,11 +120,11 @@ KildareFLD {
 			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
 
 			modEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,modAtk,modRel], curve: [0, modCurve*(-1), modCurve]),
 				gate: t_gate
 			);
 			filterEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
 			carRamp = EnvGen.kr(
@@ -74,31 +132,19 @@ KildareFLD {
 				gate: t_gate
 			);
 			carEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.02,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
 				gate: t_gate
 			);
 
-			mod_1 = SinOscFB.ar(
+			mod = SinOscFB.ar(
 				modHz + ((carRamp*3)*rampDepth),
 				feedAmp,
 				modAmp*10
-			)* modEnv;
+			) * modEnv;
 
-			/*mod_2 = SinOscFB.ar(
-				modHzThird + ((carRamp*3)*rampDepth),
-				feedAmp,
-				modAmp*10
-			)* modEnv;
-
-			mod_3 = SinOscFB.ar(
-				modHzSeventh + ((carRamp*3)*rampDepth),
-				feedAmp,
-				modAmp*10
-			)* modEnv;*/
-
-			car = (SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) + Saw.ar(carHz/4)) ;
-			carThird = (SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) + LFTri.ar(carHz/4));
-			carSeventh = (SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth)) + LFPar.ar(carHz/4));
+			car = (SinOsc.ar(carHz + (mod) + (carRamp*rampDepth)) + Saw.ar(carHz/4)) ;
+			carThird = (SinOsc.ar(carHz + (mod) + (carRamp*rampDepth)) + LFTri.ar(carHz/4));
+			carSeventh = (SinOsc.ar(carHz + (mod) + (carRamp*rampDepth)) + LFPar.ar(carHz/4));
 
 			car = ((car * 0.5) + (carThird * 0.32) + (carSeventh * 0.18)) * carEnv;
 
@@ -120,7 +166,7 @@ KildareFLD {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -130,7 +176,7 @@ KildareFLD {
 				feedbackEnv > 0, [
 					feedbackSend,
 					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

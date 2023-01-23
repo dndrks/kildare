@@ -5,9 +5,10 @@ KildareBD {
 		^super.new.init(srv);
 	}
 
-	/**buildParams {
+	*buildParams {
 		arg mainOutBus, delayLSendBus, delayRSendBus, feedbackSendBus;
-		Dictionary.newFrom([
+		var returnTable;
+		returnTable = Dictionary.newFrom([
 			\out,mainOutBus,
 			\delayAuxL,delayLSendBus,
 			\delayAuxR,delayRSendBus,
@@ -60,7 +61,8 @@ KildareBD {
 			\lpDepth,0,
 			\pan,0,
 		]);
-	}*/
+		^returnTable
+	}
 
 	init {
 
@@ -86,7 +88,6 @@ KildareBD {
 			mod,
 			carEnv, modEnv, carRamp,
 			feedMod, feedCar, ampMod, click, clicksound,
-			mod_1, mod_2, mod_3,
 			filterEnv, delEnv, feedEnv, mainSend;
 
 			eqHz = eqHz.lag3(0.1);
@@ -106,11 +107,11 @@ KildareBD {
 			carHz = carHz * (2.pow(carDetune/12));
 
 			modEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [modCurve,modCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,modAtk,modRel], curve: [0, modCurve*(-1), modCurve]),
 				gate: t_gate
 			);
 			filterEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
 			carRamp = EnvGen.kr(
@@ -118,17 +119,17 @@ KildareBD {
 				gate: t_gate
 			);
 			carEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
 				gate: t_gate
 			);
 
-			mod_1 = SinOscFB.ar(
+			mod = SinOscFB.ar(
 				modHz + ((carRamp*3)*rampDepth),
 				feedAmp,
 				modAmp*10
-			)* modEnv;
+			) * modEnv;
 
-			car = SinOsc.ar(carHz + (mod_1) + (carRamp*rampDepth));
+			car = SinOsc.ar(carHz + (mod) + (carRamp*rampDepth));
 			car = car*carEnv;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:(amDepth/2),add:1);
@@ -154,7 +155,7 @@ KildareBD {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel], curve: [delayCurve,delayCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -164,7 +165,7 @@ KildareBD {
 				feedbackEnv > 0, [
 					feedbackSend,
 					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

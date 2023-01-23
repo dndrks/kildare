@@ -5,18 +5,87 @@ KildareTimbre {
 		^super.new.init(srv);
 	}
 
+	*buildParams {
+		arg mainOutBus, delayLSendBus, delayRSendBus, feedbackSendBus;
+		var returnTable;
+		returnTable = Dictionary.newFrom([
+			\out,mainOutBus,
+			\delayAuxL,delayLSendBus,
+			\delayAuxR,delayRSendBus,
+			\feedbackAux,feedbackSendBus,
+			\delayEnv,0,
+			\delayAtk,0,
+			\delayRel,2,
+			\delayCurve,-4,
+			\delaySend,0,
+			\feedbackEnv,0,
+			\feedbackAtk,0,
+			\feedbackRel,2,
+			\feedbackCurve,-4,
+			\feedbackSend,0,
+			\poly,0,
+			\velocity,127,
+			\amp,0.7,
+			\shapeA,0.5,
+			\shapeB,0.5,
+			\shapeC,0.5,
+			\pwA,0,
+			\pwB,0,
+			\pwC,0,
+			\carHz,55,
+			\carDetune,0,
+			\carAtk,0,
+			\carRel,3.3,
+			\carCurve,-4,
+			\modAmp,0,
+			\modSawAmp,0,
+			\modTriAmp,0,
+			\modPulseAmp,0,
+			\modSineAmp,0,
+			\modHz,600,
+			\modLP,20000,
+			\modQ,50,
+			\modFollow,0,
+			\modNum,1,
+			\modDenum,1,
+			\modAtk,0,
+			\modRel,0.05,
+			\modCurve,-4,
+			\feedAmp,1,
+			\rampDepth,0,
+			\rampDec,0.3,
+			\squishPitch,1,
+			\squishChunk,1,
+			\amDepth,0,
+			\amHz,8175.08,
+			\eqHz,6000,
+			\eqAmp,0,
+			\bitRate,24000,
+			\bitCount,24,
+			\lpHz,20000,
+			\hpHz,20,
+			\filterQ,50,
+			\lpAtk,0,
+			\lpRel,0.3,
+			\lpCurve,-4,
+			\lpDepth,0,
+			\pan,0,
+		]);
+		^returnTable
+	}
+
 	init {
 
 		SynthDef(\kildare_timbre, {
 			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
-			delayEnv, delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel, delayCurve = -4,
 			feedbackAux, feedbackSend,
 			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 127, amp,
 			pwA, pwB, pwC,
 			shapeA, shapeB, shapeC,
-			carHz, carHzThird, carHzSeventh,
+			carHz,
 			carDetune, carAtk, carRel, carCurve = -4,
 			pan, rampDepth, rampDec,
 			squishPitch, squishChunk,
@@ -43,11 +112,9 @@ KildareTimbre {
 			amDepth = LinLin.kr(amDepth,0.0,1.0,0.0,2.0);
 
 			carHz = carHz * (2.pow(carDetune/12));
-			carHzThird = carHzThird * (2.pow(carDetune/12));
-			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
 
 			filterEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
 			carRamp = EnvGen.kr(
@@ -55,7 +122,7 @@ KildareTimbre {
 				gate: t_gate
 			);
 			carEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
 				gate: t_gate
 			);
 
@@ -66,13 +133,13 @@ KildareTimbre {
 			);
 
 			carThird = NeoVarSawOsc.ar(
-				freq: carHzThird + (carRamp*rampDepth),
+				freq: carHz + (carRamp*rampDepth),
 				pw: pwB,
 				waveshape: shapeB
 			);
 
 			carSeventh = NeoVarSawOsc.ar(
-				freq: carHzSeventh + (carRamp*rampDepth),
+				freq: carHz + (carRamp*rampDepth),
 				pw: pwC,
 				waveshape: shapeC
 			);
@@ -96,7 +163,7 @@ KildareTimbre {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -106,7 +173,7 @@ KildareTimbre {
 				feedbackEnv > 0, [
 					feedbackSend,
 					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

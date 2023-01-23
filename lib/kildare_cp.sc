@@ -5,11 +5,58 @@ KildareCP {
 		^super.new.init(srv);
 	}
 
+	*buildParams {
+		arg mainOutBus, delayLSendBus, delayRSendBus, feedbackSendBus;
+		var returnTable;
+		returnTable = Dictionary.newFrom([
+			\out,mainOutBus,
+			\delayAuxL,delayLSendBus,
+			\delayAuxR,delayRSendBus,
+			\feedbackAux,feedbackSendBus,
+			\delayAtk,0,
+			\delayRel,2,
+			\delayCurve,-4,
+			\delaySend,0,
+			\feedbackEnv,0,
+			\feedbackAtk,0,
+			\feedbackRel,2,
+			\feedbackCurve,-4,
+			\feedbackSend,0,
+			\poly,0,
+			\amp,0.7,
+			\carHz,1600,
+			\carDetune,0,
+			\carRel,0.43,
+			\modAmp,1,
+			\modHz,300,
+			\modFollow,0,
+			\modNum,1,
+			\modDenum,1,
+			\modRel,0.5,
+			\feedAmp,1,
+			\click,0,
+			\squishPitch,1,
+			\squishChunk,1,
+			\amDepth,0,
+			\amHz,2698.8,
+			\eqHz,6000,
+			\eqAmp,0,
+			\bitRate,24000,
+			\bitCount,24,
+			\click,1,
+			\lpHz,24000,
+			\hpHz,20,
+			\filterQ,50,
+			\pan,0,
+		]);
+		^returnTable
+	}
+
 	init {
 		SynthDef(\kildare_cp, {
 			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
-			delayEnv, delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel, delayCurve = -4,
 			feedbackAux,feedbackSend,
 			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 0,
@@ -51,7 +98,7 @@ KildareCP {
 				),gate: t_gate
 			);
 			filterEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
 			carEnv = EnvGen.ar(
@@ -94,7 +141,7 @@ KildareCP {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -104,7 +151,7 @@ KildareCP {
 				feedbackEnv > 0, [
 					feedbackSend,
 					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

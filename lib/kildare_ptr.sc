@@ -5,12 +5,73 @@ KildarePTR {
 		^super.new.init(srv);
 	}
 
+	*buildParams {
+		arg mainOutBus, delayLSendBus, delayRSendBus, feedbackSendBus;
+		var returnTable;
+		returnTable = Dictionary.newFrom([
+			\out,mainOutBus,
+			\delayAuxL,delayLSendBus,
+			\delayAuxR,delayRSendBus,
+			\feedbackAux,feedbackSendBus,
+			\delaySend,0,
+			\delayEnv,0,
+			\delayAtk,0,
+			\delayRel,2,
+			\delayCurve,-4,
+			\feedbackEnv,0,
+			\feedbackAtk,0,
+			\feedbackRel,2,
+			\feedbackCurve,-4,
+			\feedbackSend,0,
+			\poly,0,
+			\velocity,127,
+			\amp,0.7,
+			\carHz,55,
+			\carHzThird,55,
+			\carHzSeventh,55,
+			\carDetune,0,
+			\carAtk,0,
+			\carRel,3.3,
+			\carCurve,-4,
+			\formantHz,55,
+			\formantFollow,0,
+			\formantNum,1,
+			\formantDenum,1,
+			\width,0.5,
+			\phaseMul,0,
+			\phaseAmp,0,
+			\sync,0,
+			\phaseAtk,0,
+			\phaseRel,0.05,
+			\phaseCurve,-4,
+			\rampDepth,0,
+			\rampDec,0.3,
+			\squishPitch,1,
+			\squishChunk,1,
+			\amDepth,0,
+			\amHz,8175.08,
+			\eqHz,6000,
+			\eqAmp,0,
+			\bitRate,24000,
+			\bitCount,24,
+			\lpHz,20000,
+			\hpHz,20,
+			\filterQ,50,
+			\lpAtk,0,
+			\lpRel,0.3,
+			\lpCurve,-4,
+			\lpDepth,0,
+			\pan,0,
+		]);
+		^returnTable
+	}
+
 	init {
 
 		SynthDef(\kildare_ptr, {
 			arg out = 0, t_gate = 0,
 			delayAuxL, delayAuxR, delaySend,
-			delayEnv, delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel, delayCurve = -4,
 			feedbackAux, feedbackSend,
 			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 127, amp,
@@ -61,11 +122,11 @@ KildarePTR {
 			phz = Pulse.ar(freq:pulseHz, mul: phaseMul);
 
 			phaseEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,phaseAtk,phaseRel], curve: [phaseCurve,phaseCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,phaseAtk,phaseRel], curve: [0,phaseCurve*(-1),phaseCurve]),
 				gate: t_gate
 			);
 			filterEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
 			carRamp = EnvGen.kr(
@@ -73,12 +134,12 @@ KildarePTR {
 				gate: t_gate
 			);
 			carEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
 				gate: t_gate
 			);
 
 			car = FormantTriPTR.ar(
-				freq: carHz,
+				freq: carHz + (carRamp*rampDepth),
 				formant: carHz * (formantNum/formantDenum),
 				width: width,
 				phase: (phz * phaseAmp * phaseEnv),
@@ -104,7 +165,7 @@ KildarePTR {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -114,7 +175,7 @@ KildarePTR {
 				feedbackEnv > 0, [
 					feedbackSend,
 					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

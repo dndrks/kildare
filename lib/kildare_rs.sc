@@ -5,6 +5,56 @@ KildareRS {
 		^super.new.init(srv);
 	}
 
+	*buildParams {
+		arg mainOutBus, delayLSendBus, delayRSendBus, feedbackSendBus;
+		var returnTable;
+		returnTable = Dictionary.newFrom([
+			\out,mainOutBus,
+			\delayAuxL,delayLSendBus,
+			\delayAuxR,delayRSendBus,
+			\feedbackAux,feedbackSendBus,
+			\delayEnv,0,
+			\delayAtk,0,
+			\delayRel,2,
+			\delayCurve,-4,
+			\delaySend,0,
+			\feedbackEnv,0,
+			\feedbackAtk,0,
+			\feedbackRel,2,
+			\feedbackCurve,-4,
+			\feedbackSend,0,
+			\poly,0,
+			\amp,1.0,
+			\carHz,370,
+			\carDetune,0,
+			\carAtk,0,
+			\carRel,0.05,
+			\modAmp,1,
+			\modHz,4000,
+			\modFollow,0,
+			\modNum,1,
+			\modDenum,1,
+			\sdAmp,1,
+			\sdAtk,0,
+			\sdRel,0.05,
+			\rampDepth,0,
+			\rampDec,0.06,
+			\squishPitch,1,
+			\squishChunk,1,
+			\amDepth,0,
+			\amHz,8175.08,
+			\eqHz,6000,
+			\eqAmp,0,
+			\bitRate,24000,
+			\bitCount,24,
+			\lpHz,19000,
+			\hpHz,20,
+			\filterQ,50,
+			\pan,0,
+		]);
+		^returnTable
+	}
+
 	init {
 		SynthDef(\kildare_rs, {
 			arg out = 0, t_gate = 0,
@@ -53,11 +103,11 @@ KildareRS {
 				gate: t_gate
 			);
 			carEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
 				gate: t_gate
 			);
 			filterEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [lpCurve,lpCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
 
@@ -83,7 +133,7 @@ KildareRS {
 
 			sd_modHz = carHz*2.52;
 			sd_modEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.01,carAtk,carRel], curve: [carCurve,carCurve*(-1)]),
+				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0,carCurve*(-1),carCurve]),
 				gate: t_gate
 			);
 			sd_carRamp = EnvGen.kr(
@@ -105,7 +155,7 @@ KildareRS {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel], curve: [delayCurve,delayCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -126,7 +176,7 @@ KildareRS {
 				feedbackEnv > 0, [
 					feedbackSend,
 					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

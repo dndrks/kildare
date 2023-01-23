@@ -5,6 +5,57 @@ KildareSample {
 		^super.new.init(srv);
 	}
 
+	*buildParams {
+		arg bufnum, mainOutBus, delayLSendBus, delayRSendBus, feedbackSendBus;
+		var returnTable;
+		returnTable = Dictionary.newFrom([
+			\bufnum, bufnum,
+			\out,mainOutBus,
+			\delayAuxL,delayLSendBus,
+			\delayAuxR,delayRSendBus,
+			\feedbackAux,feedbackSendBus,
+			\channels,2,
+			\delayEnv,0,
+			\delayAtk,0,
+			\delayRel,2,
+			\delayCurve,-4,
+			\delaySend,0,
+			\feedbackEnv,0,
+			\feedbackAtk,0,
+			\feedbackRel,2,
+			\feedbackCurve,-4,
+			\feedbackSend,0,
+			\poly,0,
+			\amp,1,
+			\loopAtk,0.03,
+			\loopRel,0.05,
+			\envStyle,0,
+			\sampleStart,0,
+			\sampleEnd,1,
+			\loop,0,
+			\rate,1,
+			\squishPitch,1,
+			\squishChunk,1,
+			\amDepth,0,
+			\amHz,8175.08,
+			\eqHz,6000,
+			\eqAmp,0,
+			\bitRate,24000,
+			\bitCount,24,
+			\lpHz,19000,
+			\hpHz,20,
+			\filterQ,50,
+			\pan,0,
+			\t_trig,1,
+			\t_gate,0,
+			\startA, 0,
+			\startB, 0,
+			\crossfade, 0,
+			\aOrB, 0
+		]);
+		^returnTable
+	}
+
 	init {
 		SynthDef(\kildare_sample, {
 			arg bufnum, envStyle = 0, out = 0, amp = 1,
@@ -14,7 +65,7 @@ KildareSample {
 			loop = 0, envCurve = -4,
 			pan = 0,
 			delayAuxL, delayAuxR, delaySend = 0,
-			delayEnv, delayAtk, delayRel,
+			delayEnv, delayAtk, delayRel, delayCurve = -4,
 			feedbackAux, feedbackSend = 0,
 			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			// baseRate = 1, rateOffset = 0, pitchControl = 0,
@@ -38,7 +89,6 @@ KildareSample {
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
 			eqAmp = LinLin.kr(eqAmp,-2.0,2.0,-10.0,10.0);
-			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
 			// sample handling all adapted from Zack Scholl: https://schollz.com/blog/sampler/
 
@@ -58,28 +108,11 @@ KildareSample {
 			loopAtk = LinLin.kr(loopAtk,0,100,0,duration/2);
 			loopRel = LinLin.kr(loopRel,0,100,0,duration/2);
 
-			/*loop_env = Select.kr(
-				envStyle, [
-					/*EnvGen.ar(
-						Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
-						gate: t_gate
-					),*/
-					EnvGen.ar(
-						Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [0,envCurve,0,envCurve*(-1)]),
-						gate: t_gate
-					),
-					EnvGen.ar(
-						Env([0,1,1,0],[loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
-						gate: t_gate
-					);
-				]
-			);*/
-
 			loop_env = EnvGen.ar(
 				Env(
 					levels: [0,0,1,1,0],
 					times: [0.01,loopAtk,duration-(loopAtk+loopRel),loopRel],
-					curve: [0,envCurve,0,envCurve*(-1)]
+					curve: [0,envCurve*(-1),0,envCurve] // TODO: should envCurves be reversed?
 				),
 				gate: t_gate
 			);
@@ -115,7 +148,7 @@ KildareSample {
 
 			// ^^ sample handling all adapted from Zack Scholl: https://schollz.com/blog/sampler/ ^^
 
-			ampMod = SinOsc.ar(freq:amHz,mul:amDepth/10,add:1);
+			ampMod = SinOsc.ar(freq:amHz,mul:amDepth, add:1);
 
 			// crossfade.poll;
 
@@ -137,7 +170,7 @@ KildareSample {
 				delayEnv > 0, [
 					delaySend,
 					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel]),
+						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -147,11 +180,12 @@ KildareSample {
 				feedbackEnv > 0, [
 					feedbackSend,
 					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [feedbackCurve,feedbackCurve*(-1)]),
+						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]
 			);
+
 
 			Out.ar(out, mainSend);
 			Out.ar(delayAuxL, (mainSend * delEnv));
