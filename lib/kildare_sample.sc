@@ -58,10 +58,14 @@ KildareSample {
 			loopAtk = LinLin.kr(loopAtk,0,100,0,duration/2);
 			loopRel = LinLin.kr(loopRel,0,100,0,duration/2);
 
-			loop_env = Select.kr(
+			/*loop_env = Select.kr(
 				envStyle, [
-					EnvGen.ar(
+					/*EnvGen.ar(
 						Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [envCurve,envCurve*(-1)]),
+						gate: t_gate
+					),*/
+					EnvGen.ar(
+						Env([0,0,1,1,0],[0.01,loopAtk,duration-(loopAtk+loopRel),loopRel], curve: [0,envCurve,0,envCurve*(-1)]),
 						gate: t_gate
 					),
 					EnvGen.ar(
@@ -69,6 +73,15 @@ KildareSample {
 						gate: t_gate
 					);
 				]
+			);*/
+
+			loop_env = EnvGen.ar(
+				Env(
+					levels: [0,0,1,1,0],
+					times: [0.01,loopAtk,duration-(loopAtk+loopRel),loopRel],
+					curve: [0,envCurve,0,envCurve*(-1)]
+				),
+				gate: t_gate
 			);
 
 			pos=Phasor.ar(
