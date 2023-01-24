@@ -1270,9 +1270,6 @@ function Kildare.init(track_count, poly)
           elseif d.id == 'loop' then
             params:set_action(i.."_"..v..'_'..d.id,
               function(x)
-                if x == 0 then
-                  engine.stop_sample(i)
-                end
               end
             )
           end
