@@ -12,6 +12,7 @@ Kildare {
 
 	var <outputSynths;
 	var <feedbackSynths;
+	var <feedbackEnabled;
 	var <busses;
 	var <delayBufs;
 	var <delayParams;
@@ -395,6 +396,7 @@ Kildare {
 		feedbackSynths[\bProcess] = Synth(\processB, target: ~processing);
 		feedbackSynths[\cProcess] = Synth(\processC, target: ~processing);
 		feedbackSynths[\mainMixer] = Synth(\mainMixer, target: ~main);
+		feedbackEnabled = true;
 		// \ feedback
 
 		s.sync;
@@ -995,6 +997,31 @@ Kildare {
 		},{
 			voiceTracker[voice][indexTracker[voice]].set(\t_trig, -1.1);
 			voiceTracker[voice][indexTracker[voice]].set(\t_gate, -1.1);
+		});
+	}
+
+	getRidOfFeedback{
+		if ( feedbackEnabled == true, {
+			feedbackSynths.do({arg bus;
+				bus.free;
+			});
+			feedbackEnabled = false;
+		});
+	}
+
+	buildFeedback{ // TODO: when re-enabling, want to rebuild params from where we left off...
+		if ( feedbackEnabled == false, {
+			feedbackSynths[\aFeedback] = Synth("feedback1", target: ~feedback);
+			feedbackSynths[\bFeedback] = Synth("feedback2", target: ~feedback);
+			feedbackSynths[\cFeedback] = Synth("feedback3", target: ~feedback);
+			feedbackSynths[\aMixer] = Synth(\input1Mixer, target: ~mixer);
+			feedbackSynths[\bMixer] = Synth(\input2Mixer, target: ~mixer);
+			feedbackSynths[\cMixer] = Synth(\input3Mixer, target: ~mixer);
+			feedbackSynths[\aProcess] = Synth(\processA, target: ~processing);
+			feedbackSynths[\bProcess] = Synth(\processB, target: ~processing);
+			feedbackSynths[\cProcess] = Synth(\processC, target: ~processing);
+			feedbackSynths[\mainMixer] = Synth(\mainMixer, target: ~main);
+			feedbackEnabled = true;
 		});
 	}
 

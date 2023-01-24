@@ -120,6 +120,14 @@ Engine_Kildare : CroneEngine {
 			kernel.loadPolyParams(msg[1].asString);
 		});
 
+		this.addCommand(\free_feedback,"", {
+			kernel.getRidOfFeedback();
+		});
+
+		this.addCommand(\init_feedback,"", {
+			kernel.buildFeedback();
+		});
+
 		//("/home/we/dust/data/kildare/test.txt")
 		//("/home/we/dust/data/hills/test.txt")
 

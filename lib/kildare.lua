@@ -234,7 +234,6 @@ function Kildare.init(track_count, poly)
     {type = 'separator', name = 'voice params'},
     {id = 'poly', name = 'polyphony', type = 'control', min = 1, max = 2,  step = 1, warp = "lin", default = 1, quantum = 1, formatter = function(param) local modes = {"mono","poly"} return modes[(type(param) == 'table' and param:get() or param)] end},
     {id = 'amp', name = 'amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-    {id = 'envStyle', name = 'loop env style', type = 'control', min = 0, max = 1, warp = "lin", default = 0, quantum = 1, step = 1, formatter = function(param) local modes = {"4-stage","3-stage"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
     {id = 'loopAtk', name = 'loop attack', type = 'control', min = 0, max = 100, warp = 'lin', default = 0, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
     {id = 'loopRel', name = 'loop release', type = 'control', min = 0, max = 100, warp = 'lin', default = 50, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
     {id = 'envCurve', name = 'loop env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
