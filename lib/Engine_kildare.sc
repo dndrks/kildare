@@ -121,11 +121,11 @@ Engine_Kildare : CroneEngine {
 		});
 
 		this.addCommand(\free_feedback,"", {
-			kernel.getRidOfFeedback();
+			kernel.freeFeedback();
 		});
 
 		this.addCommand(\init_feedback,"", {
-			kernel.buildFeedback();
+			kernel.initFeedback();
 		});
 
 		//("/home/we/dust/data/kildare/test.txt")

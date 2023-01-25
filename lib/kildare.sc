@@ -1000,7 +1000,7 @@ Kildare {
 		});
 	}
 
-	getRidOfFeedback{
+	freeFeedback{
 		if ( feedbackEnabled == true, {
 			feedbackSynths.do({arg bus;
 				bus.free;
@@ -1009,7 +1009,7 @@ Kildare {
 		});
 	}
 
-	buildFeedback{ // TODO: when re-enabling, want to rebuild params from where we left off...
+	initFeedback{ // TODO: when re-enabling, want to rebuild params from where we left off...
 		if ( feedbackEnabled == false, {
 			feedbackSynths[\aFeedback] = Synth("feedback1", target: ~feedback);
 			feedbackSynths[\bFeedback] = Synth("feedback2", target: ~feedback);
