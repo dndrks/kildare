@@ -25,10 +25,9 @@ KildareSample {
 			\feedbackRel,2,
 			\feedbackCurve,-4,
 			\feedbackSend,0,
-			\poly,0,
 			\amp,1,
-			\loopAtk,0.03,
-			\loopRel,0.05,
+			\loopAtk,0,
+			\loopRel,50,
 			\envStyle,0,
 			\sampleStart,0,
 			\sampleEnd,1,
@@ -59,7 +58,7 @@ KildareSample {
 	init {
 		SynthDef(\kildare_sample, {
 			arg bufnum, envStyle = 0, out = 0, amp = 1,
-			t_trig = 1, t_gate = 0, loopAtk = 0.03, loopRel = 0.05,
+			t_trig = 1, t_gate = 0, loopAtk = 0, loopRel = 50,
 			velocity = 127,
 			sampleStart = 0, sampleEnd = 1,
 			loop = 0, envCurve = -4,

@@ -456,12 +456,10 @@ function lfos.build_params_static(poly)
     local style_name_iter = 1
     for j = 1,#parent do
       if parent[j].type ~= "separator" and parent[j].lfo_exclude == nil then
-        if (parent[j].id ~= "poly") then
-          lfos.params_list[style].ids[style_id_iter] = parent[j].id
-          lfos.params_list[style].names[style_name_iter] = parent[j].name
-          style_id_iter = style_id_iter + 1
-          style_name_iter = style_name_iter + 1
-        end
+        lfos.params_list[style].ids[style_id_iter] = parent[j].id
+        lfos.params_list[style].names[style_name_iter] = parent[j].name
+        style_id_iter = style_id_iter + 1
+        style_name_iter = style_name_iter + 1
       end
     end
 
@@ -540,27 +538,25 @@ function lfos.rebuild_model_spec(k,poly)
   for key,val in pairs(param_group[focus_voice]) do
     if param_group[focus_voice][key].type ~= "separator" then
       if param_group[focus_voice][key].lfo_exclude == nil then
-        if val.id ~= "poly" then
-          local concat_name = type(k) == 'number' and (k.."_"..focus_voice..'_'..param_group[focus_voice][key].id) or (k.."_"..param_group[focus_voice][key].id)
-          local system_id = params.lookup[concat_name]
-          local quantum_size;
-          -- print(system_id, concat_name)
-          if params.params[system_id].controlspec ~= nil then
-            quantum_size = params.params[system_id].controlspec.quantum
-          else
-            quantum_size = param_group[focus_voice][key].quantum ~= nil and param_group[focus_voice][key].quantum or 0.01
-          end
-          lfos.specs[k][i] = {
-            min = param_group[focus_voice][key].min,
-            max = param_group[focus_voice][key].max,
-            warp = param_group[focus_voice][key].warp,
-            step = 0,
-            default = param_group[focus_voice][key].default,
-            quantum = quantum_size,
-            formatter = param_group[focus_voice][key].formatter
-          }
-          i = i+1 -- do not increment by the separators' gaps...
+        local concat_name = type(k) == 'number' and (k.."_"..focus_voice..'_'..param_group[focus_voice][key].id) or (k.."_"..param_group[focus_voice][key].id)
+        local system_id = params.lookup[concat_name]
+        local quantum_size;
+        -- print(system_id, concat_name)
+        if params.params[system_id].controlspec ~= nil then
+          quantum_size = params.params[system_id].controlspec.quantum
+        else
+          quantum_size = param_group[focus_voice][key].quantum ~= nil and param_group[focus_voice][key].quantum or 0.01
         end
+        lfos.specs[k][i] = {
+          min = param_group[focus_voice][key].min,
+          max = param_group[focus_voice][key].max,
+          warp = param_group[focus_voice][key].warp,
+          step = 0,
+          default = param_group[focus_voice][key].default,
+          quantum = quantum_size,
+          formatter = param_group[focus_voice][key].formatter
+        }
+        i = i+1 -- do not increment by the separators' gaps...
       end
     end
   end

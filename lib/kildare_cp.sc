@@ -22,7 +22,6 @@ KildareCP {
 			\feedbackRel,2,
 			\feedbackCurve,-4,
 			\feedbackSend,0,
-			\poly,0,
 			\amp,0.7,
 			\carHz,1600,
 			\carDetune,0,

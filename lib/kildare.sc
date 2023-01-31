@@ -74,14 +74,14 @@ Kildare {
 
 		voiceTracker = Dictionary.new;
 		voiceLimit = Dictionary.newFrom([
-			\1, 4,
-			\2, 4,
-			\3, 4,
-			\4, 4,
-			\5, 4,
-			\6, 4,
-			\7, 4,
-			\8, 4,
+			\1, 1,
+			\2, 1,
+			\3, 1,
+			\4, 1,
+			\5, 1,
+			\6, 1,
+			\7, 1,
+			\8, 1,
 		]);
 		polyParams = Dictionary.new(voiceKeys.size);
 		polyParamStyle = Dictionary.newFrom([
@@ -597,198 +597,89 @@ Kildare {
 	test_trigger { arg voiceKey, velocity, allocVoice;
 
 		paramProtos[voiceKey][\velocity] = velocity;
-		if( paramProtos[voiceKey][\poly] == 0,{
-			if( groups[voiceKey].isPlaying,{
-				groups[voiceKey].set(\velocity, velocity);
-				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-					groups[voiceKey].set(\t_trig, 1);
-					// ('triggering sample').postln;
-					/*Routine{
-						groups[voiceKey].set(\loop_trig,0);
-						0.01.wait;
-						groups[voiceKey].set(\t_trig, 1);
-						groups[voiceKey].set(\loop_trig,1);
-					}.play;*/
-				});
-				groups[voiceKey].set(\t_gate, 1);
+		indexTracker[voiceKey] = allocVoice;
+		if (voiceTracker[voiceKey][allocVoice].isPlaying, {
+			voiceTracker[voiceKey][allocVoice].set(\velocity, velocity);
+			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+				voiceTracker[voiceKey][allocVoice].set(\t_trig, 1);
+				// ('triggering sample').postln;
 			});
-		},{
-			// indexTracker[voiceKey] = (indexTracker[voiceKey] + 1) % voiceLimit[voiceKey];
-			indexTracker[voiceKey] = allocVoice;
-			if (voiceTracker[voiceKey][allocVoice].isPlaying, {
-				voiceTracker[voiceKey][allocVoice].set(\velocity, velocity);
-				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-					voiceTracker[voiceKey][allocVoice].set(\t_trig, 1);
-					// ('triggering poly sample').postln;
-				});
-				voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
-			});
+			voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
+			(' ' ++ indexTracker[voiceKey] ++ ' ' ++ allocVoice).postln;
 		});
 	}
 
-	/*trigger { arg voiceKey, velocity, retrigFlag;
-
-		paramProtos[voiceKey][\velocity] = velocity;
-		if( paramProtos[voiceKey][\poly] == 0,{
-			if( groups[voiceKey].isPlaying, {
-				indexTracker[voiceKey] = voiceLimit[voiceKey];
-				if( retrigFlag == 'true',{
-					if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-					},{
-						groups[voiceKey].set(\stopGate, -1.05);
-					});
-				},{
-					groups[voiceKey].set(\stopGate, -1.1);
-				});
-				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-					if( retrigFlag == 'true',{
-						groups[voiceKey].set(\t_trig, 1);
-					},{
-						groups[voiceKey].set(\t_trig, -1.05);
-						Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
-					});
-				},{
-					Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
-				});
-			});
-		},{
-			indexTracker[voiceKey] = (indexTracker[voiceKey] + 1) % voiceLimit[voiceKey];
-			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isNil.not, {
-				if (voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying, {
-					if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\t_trig, -1.05);
-					},{
-						voiceTracker[voiceKey][indexTracker[voiceKey]].set(\stopGate, -1.1);
-					});
-				});
-			});
-			if ((""++synthKeys[voiceKey]++"").contains("sample"),{
-				voiceTracker[voiceKey][indexTracker[voiceKey]] = Synth.new(\kildare_sample, paramProtos[voiceKey].getPairs, groups[voiceKey]);
-			},{
-				voiceTracker[voiceKey][indexTracker[voiceKey]] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs, groups[voiceKey]);
-			});
-
-			if (voiceTracker[voiceKey][indexTracker[voiceKey]].isNil.not, {
-				NodeWatcher.register(voiceTracker[voiceKey][indexTracker[voiceKey]],true);
-			});
-		}
-		);
-	}*/
-
 	setVoiceParam { arg voiceKey, paramKey, paramValue;
-		var prevPoly = paramProtos[voiceKey][\poly];
 		paramProtos[voiceKey][paramKey] = paramValue;
 
-		if( paramKey == \poly, { // if the key is 'poly', then...
-			(voiceLimit[voiceKey]).do({ arg voiceIndex;
-				if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
-					voiceTracker[voiceKey][voiceIndex].free;
-					('looks like '++voiceKey++', '++voiceIndex++' needed to be freed: 1206').postln;
+		if( voiceLimit[voiceKey] == 1,
+			{ // if mono:
+				if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
+					{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue)}
+				);
+				8.do({ arg i;
+					polyParams[voiceKey][i][paramKey] = paramValue; // write to poly voice storage
 				});
-			});
-			if( paramValue == 1, {
-				if (groups[voiceKey].isPlaying, {
-					('would want to clear mono voice for poly '++voiceKey).postln;
-					('node ID: ' ++ groups[voiceKey].nodeID).postln;
-					groups[voiceKey].set(\t_gate, -1.1);
-					Routine {
-						0.15.wait;
-						('freeing this node: '++(groups[voiceKey].nodeID)).postln;
-						groups[voiceKey].free;
-					}.play;
-				});
-				(voiceLimit[voiceKey]).do({ arg voiceIndex;
-					if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
-						voiceTracker[voiceKey][voiceIndex].free;
-						('looks like '++voiceKey++', '++voiceIndex++' needed to be freed: 1223').postln;
-					});
-					if( emptyVoices[voiceKey] == false, {
-						voiceTracker[voiceKey][voiceIndex] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
-						NodeWatcher.register(voiceTracker[voiceKey][voiceIndex],true);
-					});
-				});
-			},{
-				if( prevPoly != 0, {
-					(voiceKey++' sending '++paramKey++ ' ' ++paramValue).postln;
-					(voiceLimit[voiceKey]).do({ arg voiceIndex;
-						if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
-							('looks like '++voiceKey++', '++voiceIndex++' needed to be freed: 1235').postln;
-							voiceTracker[voiceKey][voiceIndex].set(\t_gate, -1.1);
-							Routine {
-								0.15.wait;
-								voiceTracker[voiceKey][voiceIndex].free;
-							}.play;
-						});
-					});
-					if (groups[voiceKey].isPlaying, {
-						('clearing mono voice for new mono '++voiceKey).postln;
-						groups[voiceKey].free;
-						groups[voiceKey] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
-						NodeWatcher.register(groups[voiceKey],true);
-					},{
-						if( emptyVoices[voiceKey] == false, {
-							('making mono voice '++voiceKey).postln;
-							groups[voiceKey] = Synth.new(synthKeys[voiceKey], paramProtos[voiceKey].getPairs);
-							NodeWatcher.register(groups[voiceKey],true);
-						});
-					});
-					indexTracker[voiceKey] = voiceLimit[voiceKey];
-				});
-			});
-		},{ // if the key is not 'poly', then...
-			if( paramProtos[voiceKey][\poly] == 0,
-				{ // if mono:
-					if( groups[voiceKey].isPlaying,
-						{groups[voiceKey].set(paramKey, paramValue);}
+			},
+			{ // if poly:
+				case
+				{(paramKey.asString).contains("carHz")}
+				{
+					if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
+						{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue)}
 					);
-					8.do({ arg i;
-						polyParams[voiceKey][i][paramKey] = paramValue; // write to poly voice storage
-					});
-				},
-				{ // if poly:
-					if ( (paramKey.asString).contains("carHz"), {
-						if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
-							{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue)}
-						);
-					},{
-						// set parameters for every voice:
-						case
-						{ polyParamStyle[voiceKey] == "all voices"}{
-							(voiceLimit[voiceKey]).do{ arg i;
-								if( voiceTracker[voiceKey][i].isPlaying,
-									{
-										voiceTracker[voiceKey][i].set(paramKey, paramValue);
-									}
-								);
-							};
-							8.do({ arg i; // write to all poly voice storage
-								polyParams[voiceKey][i][paramKey] = paramValue;
-							});
+				}
+				{(paramKey.asString).contains("sampleStart") || (paramKey.asString).contains("sampleEnd")}
+				{
+					var current = indexTracker[voiceKey];
+					if( voiceTracker[voiceKey][current].isPlaying,
+						{
+							voiceTracker[voiceKey][current].set(paramKey, paramValue);
+							polyParams[voiceKey][current][paramKey] = paramValue;
 						}
-						{ polyParamStyle[voiceKey] == "current voice"}{
-							if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
+					);
+				}
+				{(paramKey.asString).contains("carHz") == false}
+				{
+					case
+					{ polyParamStyle[voiceKey] == "all voices"}{
+						(voiceLimit[voiceKey]).do{ arg i;
+							if( voiceTracker[voiceKey][i].isPlaying,
 								{
-									voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue);
-									polyParams[voiceKey][indexTracker[voiceKey]][paramKey] = paramValue;
-								}
-							);
-						}
-						{ polyParamStyle[voiceKey] == "next voice"}{
-							if( voiceTracker[voiceKey][(indexTracker[voiceKey] + 1) % voiceLimit[voiceKey]].isPlaying,
-								{
-									voiceTracker[voiceKey][(indexTracker[voiceKey] + 1) % voiceLimit[voiceKey]].set(paramKey, paramValue);
-									polyParams[voiceKey][(indexTracker[voiceKey] + 1) % voiceLimit[voiceKey]][paramKey] = paramValue;
-
+									voiceTracker[voiceKey][i].set(paramKey, paramValue);
 								}
 							);
 						};
-					});
+						8.do({ arg i; // write to all poly voice storage
+							polyParams[voiceKey][i][paramKey] = paramValue;
+						});
+					}
+					// set parameters for the current voice:
+					{ polyParamStyle[voiceKey] == "current voice"}{
+						var current = indexTracker[voiceKey];
+						if( voiceTracker[voiceKey][current].isPlaying,
+							{
+								voiceTracker[voiceKey][current].set(paramKey, paramValue);
+								polyParams[voiceKey][current][paramKey] = paramValue;
+							}
+						);
+					}
+					// set parameters for the next voice:
+					{ polyParamStyle[voiceKey] == "next voice"}{
+						var next = (indexTracker[voiceKey] + 1) % voiceLimit[voiceKey];
+						if( voiceTracker[voiceKey][next].isPlaying,
+							{
+								voiceTracker[voiceKey][next].set(paramKey, paramValue);
+								polyParams[voiceKey][next][paramKey] = paramValue;
+
+							}
+						);
+					};
 				}
-			);
-		});
+			}
+		);
 	}
 
-	//not used yet:
 	setPolyVoiceParam{ arg voiceKey, allocVoice, paramKey, paramValue;
 		if ( (paramKey.asString).contains("carHz"), {
 			if( voiceTracker[voiceKey][allocVoice].isPlaying,
@@ -844,17 +735,13 @@ Kildare {
 	}
 
 	freeVoice { arg voiceKey;
-		if (groups[voiceKey].isPlaying, {
-			('clearing '++voiceKey).postln;
-			groups[voiceKey].set(\t_gate, -1.1);
-			Routine {
-				0.15.wait;
-				groups[voiceKey].free;
-			}.play;
-		});
 		(voiceLimit[voiceKey]).do({ arg voiceIndex;
 			if (voiceTracker[voiceKey][voiceIndex].isPlaying, {
-				voiceTracker[voiceKey][voiceIndex].free;
+				voiceTracker[voiceKey][voiceIndex].set(\t_gate, -1.1);
+				Routine {
+					0.15.wait;
+					voiceTracker[voiceKey][voiceIndex].free;
+				}.play;
 			});
 		});
 		emptyVoices[voiceKey] = true;
@@ -867,24 +754,38 @@ Kildare {
 	}
 
 	setVoiceLimit { arg voice, limit;
-		if( paramProtos[voice][\poly] == 1,{
-			(voiceLimit[voice]).do({ arg voiceIndex;
-				if (voiceTracker[voice][voiceIndex].isPlaying, {
-					voiceTracker[voice][voiceIndex].free;
-					('looks like '++voice++', '++voiceIndex++' needed to be freed: setVoiceLimit').postln;
+		var prevPoly = voiceLimit[voice];
+
+		// - check to see if old voices (greater than the new limit) need to be cleared out
+		// - instantiate any new voices needed (up to the new limit)
+
+		if( limit < prevPoly, {
+			('should remove poly voices '++limit ++ ' '++prevPoly).postln;
+			(prevPoly..limit+1).do({ arg voiceIndex;
+				if (voiceTracker[voice][voiceIndex-1].isPlaying, {
+					voiceTracker[voice][voiceIndex-1].set(\t_gate, -1.1);
+					Routine {
+						0.15.wait;
+						voiceTracker[voice][voiceIndex-1].free;
+					}.play;
+					('looks like '++voice++', '++(voiceIndex-1)++' needed to be freed: 760').postln;
 				});
 			});
-		});
-		voiceLimit[voice] = limit;
-		if( paramProtos[voice][\poly] == 1,{
-			(voiceLimit[voice]).do({ arg voiceIndex;
+		},{
+			(prevPoly+1..limit).do({ arg voiceIndex;
 				if( emptyVoices[voice] == false, {
-					// voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
-					voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], polyParams[voice][voiceIndex].getPairs);
-					NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
+					voiceTracker[voice][voiceIndex-1] = Synth.new(
+						synthKeys[voice],
+						polyParams[voice][voiceIndex-1].getPairs
+					);
+					NodeWatcher.register(voiceTracker[voice][voiceIndex-1],true);
+					(voiceIndex-1).postln;
 				});
 			});
 		});
+
+		voiceLimit[voice] = limit;
+		indexTracker[voice] = limit;
 	}
 
 	setPolyParamStyle { arg voice, style;
@@ -904,13 +805,10 @@ Kildare {
 
 	loadFile { arg msg;
 		var voice = msg[1], filename = msg[2];
-		if (paramProtos[voice][\poly] == 0,{
-			groups[voice].set(\t_trig, -1);
-			groups[voice].set(\t_gate, -1);
-		},{
-			voiceTracker[voice][indexTracker[voice]].set(\t_trig, -1);
-			voiceTracker[voice][indexTracker[voice]].set(\t_gate, -1);
-		});
+
+		voiceTracker[voice][indexTracker[voice]].set(\t_trig, -1);
+		voiceTracker[voice][indexTracker[voice]].set(\t_gate, -1);
+
 		this.clearSamples(voice);
 		sampleInfo[voice][\samples][0] = Buffer.read(Server.default, filename ,action:{
 			arg bufnum;
@@ -927,34 +825,22 @@ Kildare {
 			paramProtos[voice][\bufnum] = sampleInfo[voice][\pointers][samplenum];
 			sampleInfo[voice][\samplerates][samplenum] = sampleInfo[voice][\samples][samplenum].sampleRate;
 			paramProtos[voice][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
-			if (paramProtos[voice][\poly] == 0,{
-				groups[voice].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
-				groups[voice].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
-				if( fromLoad == true, {
-					8.do({ arg alloc;
-						polyParams[voice][alloc][\bufnum] = sampleInfo[voice][\pointers][samplenum];
-						polyParams[voice][alloc][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
-						('pre-setting buffer for ' ++ voice ++ ', ' ++ alloc ++ ': buffer ' ++ sampleInfo[voice][\pointers][samplenum]).postln;
-					});
+			if (fromLoad == true, {
+				8.do({ arg alloc;
+					voiceTracker[voice][alloc].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
+					voiceTracker[voice][alloc].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
+					polyParams[voice][alloc][\bufnum] = sampleInfo[voice][\pointers][samplenum];
+					polyParams[voice][alloc][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
+					('setting buffer for ' ++ voice ++ ', ' ++ alloc ++ ': buffer ' ++ sampleInfo[voice][\pointers][samplenum]).postln;
 				});
 			},{
-				if (fromLoad == true, {
-					8.do({ arg alloc;
-						voiceTracker[voice][alloc].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
-						voiceTracker[voice][alloc].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
-						polyParams[voice][alloc][\bufnum] = sampleInfo[voice][\pointers][samplenum];
-						polyParams[voice][alloc][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
-						('setting buffer for ' ++ voice ++ ', ' ++ alloc ++ ': buffer ' ++ sampleInfo[voice][\pointers][samplenum]).postln;
-					});
-				},{
-					voiceTracker[voice][indexTracker[voice]].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
-					voiceTracker[voice][indexTracker[voice]].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
-					polyParams[voice][indexTracker[voice]][\bufnum] = sampleInfo[voice][\pointers][samplenum];
-					polyParams[voice][indexTracker[voice]][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
-				});
+				voiceTracker[voice][indexTracker[voice]].set(\bufnum, sampleInfo[voice][\pointers][samplenum]);
+				voiceTracker[voice][indexTracker[voice]].set(\channels, sampleInfo[voice][\samples][samplenum].numChannels);
+				polyParams[voice][indexTracker[voice]][\bufnum] = sampleInfo[voice][\pointers][samplenum];
+				polyParams[voice][indexTracker[voice]][\channels] = sampleInfo[voice][\samples][samplenum].numChannels;
 			});
 			('channel count: '++paramProtos[voice][\channels]).postln;
-			('group: ' ++ groups[voice]).postln;
+			// ('group: ' ++ groups[voice]).postln;
 		});
 	}
 
@@ -980,24 +866,19 @@ Kildare {
 		('loadFolder called').postln;
 	}
 
-	adjustSampleMult { arg voice, mult;
+	/*adjustSampleMult { arg voice, mult;
 		if (paramProtos[voice][\rate] != mult, {
 			groups[voice].set(\rate, paramProtos[voice][\rate] * mult);
 		});
-	}
+	}*/
 
-	adjustSampleOffset { arg voice, offset;
+	/*adjustSampleOffset { arg voice, offset;
 		groups[voice].set(\rate, (paramProtos[voice][\rate]) * (0.5**((offset*-1)/12)));
-	}
+	}*/
 
 	stopSample { arg voice;
-		if (paramProtos[voice][\poly] == 0,{
-			groups[voice].set(\t_trig, -1.1);
-			groups[voice].set(\t_gate, -1.1);
-		},{
-			voiceTracker[voice][indexTracker[voice]].set(\t_trig, -1.1);
-			voiceTracker[voice][indexTracker[voice]].set(\t_gate, -1.1);
-		});
+		voiceTracker[voice][indexTracker[voice]].set(\t_trig, -1.1);
+		voiceTracker[voice][indexTracker[voice]].set(\t_gate, -1.1);
 	}
 
 	freeFeedback{
@@ -1031,20 +912,11 @@ Kildare {
 			if (synthKeys[voice] != model,
 				{
 					compileFlag = true;
-					if( paramProtos[voice][\poly] == 0,
-						{
-							if( groups[voice].isPlaying, {
-								groups[voice].free;
-								'freeing mono'.postln;
-							});
-						},
-						{
-							(voiceLimit[voice]).do({ arg voiceIndex;
-								if( voiceTracker[voice][voiceIndex].isPlaying, {
-									voiceTracker[voice][voiceIndex].free;
-									('freeing poly '++voiceTracker[voice][voiceIndex].nodeID).postln;
-								});
-							});
+					(voiceLimit[voice]).do({ arg voiceIndex;
+						if( voiceTracker[voice][voiceIndex].isPlaying, {
+							voiceTracker[voice][voiceIndex].free;
+							('freeing poly '++voiceTracker[voice][voiceIndex].nodeID).postln;
+						});
 					});
 					synthKeys[voice] = model;
 					paramProtos[voice] = Dictionary.newFrom(generalizedParams[model]);
@@ -1060,30 +932,16 @@ Kildare {
 			);
 			if (compileFlag, {
 				('building synth ' ++ voice ++ ' ' ++ model).postln;
-				if( paramProtos[voice][\poly] == 1,
-					{
-						(voiceLimit[voice]).do({ arg voiceIndex;
-							voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
-							NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
-							('poly: '++voiceTracker[voice][voiceIndex].isPlaying).postln;
-						});
-					},
-					{
-						groups[voice] = Synth.new(model, paramProtos[voice].getPairs);
-						NodeWatcher.register(groups[voice],true);
-					}
-				);
+				(voiceLimit[voice]).do({ arg voiceIndex;
+					voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
+					NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
+					('poly: '++voiceTracker[voice][voiceIndex].isPlaying).postln;
+				});
 			});
 		});
 	}
 
 	free {
-		groups.do({arg voice;
-			if( voice.isPlaying, {
-				('freeing mono voice '++voice).postln;
-				voice.free;
-			});
-		});
 		// topGroup.free;
 		feedbackSynths.do({arg bus;
 			bus.free;
@@ -1099,7 +957,7 @@ Kildare {
 			(voice).do({ arg voiceIndex;
 				voiceIndex.postln;
 				if (voiceIndex.isPlaying, {
-					('freeing poly voice '++voiceIndex).postln;
+					('freeing voice '++voiceIndex).postln;
 					voiceIndex.free;
 				});
 			});

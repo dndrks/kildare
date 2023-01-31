@@ -23,7 +23,6 @@ KildareSaw {
 			\feedbackRel,2,
 			\feedbackCurve,-4,
 			\feedbackSend,0,
-			\poly,0,
 			\velocity,127,
 			\amp,0.7,
 			\carHz,55,

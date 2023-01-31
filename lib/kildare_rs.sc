@@ -23,7 +23,6 @@ KildareRS {
 			\feedbackRel,2,
 			\feedbackCurve,-4,
 			\feedbackSend,0,
-			\poly,0,
 			\amp,1.0,
 			\carHz,370,
 			\carDetune,0,

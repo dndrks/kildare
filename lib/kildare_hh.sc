@@ -23,7 +23,6 @@ KildareHH {
 			\feedbackRel,2,
 			\feedbackCurve,-4,
 			\feedbackSend,0,
-			\poly,0,
 			\amp,0.7,
 			\carHz,200,
 			\carHzThird,200,
