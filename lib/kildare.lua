@@ -1099,6 +1099,28 @@ function Kildare.init(track_count, poly)
     params:lookup_param(i..'_'..j..'_osc_value').controlspec = build_controlspec(i,j)
   end
 
+  local queued_inits = {}
+
+  local function add_to_init_queue(i,model)
+    queued_inits[#queued_inits+1] = {voice = i, model = model}
+  end
+
+  init_clock = clock.run(
+    function()
+      while true do
+        clock.sleep(0.1)
+        if #queued_inits > 0 then
+          local i = queued_inits[1].voice
+          local model = queued_inits[1].model
+          engine.init_voice(i, 'kildare_'..model)
+          print('activating voice '..i)
+          Kildare.rebuild_model_params(i, model)
+          table.remove(queued_inits,1)
+        end
+      end
+    end
+  )
+
   for i = 1,track_count do
     local osc_params_count = 0
     local shown_set = params:string('voice_model_'..i)
@@ -1111,12 +1133,13 @@ function Kildare.init(track_count, poly)
       if x == 0 then
         engine.free_voice(i)
       else
-        engine.init_voice(i, 'kildare_'..params:string('voice_model_'..i))
-        print('activating voice '..i)
-        Kildare.rebuild_model_params(i, params:string('voice_model_'..i))
+        -- engine.init_voice(i, 'kildare_'..params:string('voice_model_'..i))
+        -- print('activating voice '..i)
+        -- Kildare.rebuild_model_params(i, params:string('voice_model_'..i))
+        add_to_init_queue(i,params:string('voice_model_'..i))
       end
     end)
-    params:add_number(i..'_poly_voice_count', 'poly voice count', 1, 8, 2)
+    params:add_number(i..'_poly_voice_count', 'voice count', 1, 8, 1)
     params:set_action(i..'_poly_voice_count', function(x) engine.set_voice_limit(i,x) Kildare.allocVoice[i] = 0 end)
     params:add_option(i..'_poly_param_style', 'poly params', {'all voices','current voice','next voice'}, 1)
     params:set_action(i..'_poly_param_style', function(x) engine.set_poly_param_style(i, params:string(i..'_poly_param_style')) end)
