@@ -602,11 +602,21 @@ Kildare {
 			voiceTracker[voiceKey][allocVoice].set(\velocity, velocity);
 			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
 				voiceTracker[voiceKey][allocVoice].set(\t_trig, 1);
-				// ('triggering sample').postln;
+				('triggering sample '++allocVoice).postln;
 			});
 			voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
 			(' ' ++ indexTracker[voiceKey] ++ ' ' ++ allocVoice).postln;
 		});
+	}
+
+	setSampleBounds { arg voiceKey, paramKey, paramValue, allocVoice;
+		if( voiceTracker[voiceKey][allocVoice].isPlaying,
+			{
+				('setting '++ paramKey ++ ' ' ++ allocVoice ++ ' ' ++paramValue).postln;
+				voiceTracker[voiceKey][allocVoice].set(paramKey, paramValue);
+				polyParams[voiceKey][allocVoice][paramKey] = paramValue;
+			}
+		);
 	}
 
 	setVoiceParam { arg voiceKey, paramKey, paramValue;
@@ -615,7 +625,12 @@ Kildare {
 		if( voiceLimit[voiceKey] == 1,
 			{ // if mono:
 				if( voiceTracker[voiceKey][indexTracker[voiceKey]].isPlaying,
-					{voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue)}
+					{
+						voiceTracker[voiceKey][indexTracker[voiceKey]].set(paramKey, paramValue);
+						if( (paramKey.asString).contains("sampleEnd"),
+							{paramValue.postln}
+						);
+					}
 				);
 				8.do({ arg i;
 					polyParams[voiceKey][i][paramKey] = paramValue; // write to poly voice storage
@@ -632,6 +647,8 @@ Kildare {
 				{(paramKey.asString).contains("sampleStart") || (paramKey.asString).contains("sampleEnd")}
 				{
 					var current = indexTracker[voiceKey];
+					('voiceKey: '++ current).postln;
+					(voiceTracker[voiceKey][current]).postln;
 					if( voiceTracker[voiceKey][current].isPlaying,
 						{
 							voiceTracker[voiceKey][current].set(paramKey, paramValue);
@@ -785,7 +802,7 @@ Kildare {
 		});
 
 		voiceLimit[voice] = limit;
-		indexTracker[voice] = limit;
+		indexTracker[voice] = limit-1; // TODO 230131: this shouldn't be just 'limit', right?
 	}
 
 	setPolyParamStyle { arg voice, style;
@@ -935,7 +952,7 @@ Kildare {
 				(voiceLimit[voice]).do({ arg voiceIndex;
 					voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
 					NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
-					('poly: '++voiceTracker[voice][voiceIndex].isPlaying).postln;
+					('poly: '++ voice ++ ', ' ++ voiceIndex ++ ', '++voiceTracker[voice][voiceIndex].isPlaying).postln;
 				});
 			});
 		});

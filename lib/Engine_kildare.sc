@@ -77,6 +77,14 @@ Engine_Kildare : CroneEngine {
 			kernel.stopSample(voiceKey);
 		});
 
+		this.addCommand(\set_sample_bounds, "isfi", { arg msg;
+			var voiceKey = msg[1].asSymbol;
+			var paramKey = msg[2].asSymbol;
+			var paramValue = msg[3].asFloat;
+			var allocVoice = msg[4].asInteger-1;
+			kernel.setSampleBounds(voiceKey, paramKey, paramValue, allocVoice);
+		});
+
 		this.addCommand(\clear_samples, "s", { arg msg;
 			var voiceKey = msg[1].asSymbol;
 			kernel.clearSamples(voiceKey);

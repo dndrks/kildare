@@ -67,7 +67,6 @@ KildareSample {
 			delayEnv, delayAtk, delayRel, delayCurve = -4,
 			feedbackAux, feedbackSend = 0,
 			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
-			// baseRate = 1, rateOffset = 0, pitchControl = 0,
 			channels = 2,
 			rate = 1,
 			amDepth, amHz,
