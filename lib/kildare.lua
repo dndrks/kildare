@@ -122,6 +122,7 @@ function Kildare.purge_saved_audio()
 end
 
 function Kildare.rebuild_model_params(i,current_model)
+  print('rebuilding model params!')
   for j = 1,#swappable_drums do
     if swappable_drums[j] ~= current_model then
       -- local swappable_drums_iter = 1
@@ -157,7 +158,14 @@ function Kildare.rebuild_model_params(i,current_model)
       end
     end
   end
-  clock.run(function() clock.sleep(0.25) Kildare.push_new_model_params(i,current_model) end)
+  clock.run(
+    function()
+      clock.sleep(0.25)
+      if readingPSET == nil or not readingPSET then
+        print('pushing new model')
+        Kildare.push_new_model_params(i,current_model)
+      end
+    end)
 end
 
 function Kildare.push_new_model_params(i,current_model)
@@ -230,7 +238,7 @@ function Kildare.init(track_count, poly)
     {type = 'separator', name = 'sample management'},
     {lfo_exclude = true, type = 'option', id = 'sampleMode', name = 'play mode', options = {"chop", "playthrough", "distribute"}, default = 1},
     {lfo_exclude = true, type = 'file', id = 'sampleFile', name = 'load', default = _path.audio},
-    {lfo_exclude = true, type = 'binary', id = 'sampleClear', name = 'clear', behavior = 'trigger'},
+    {lfo_exclude = true, type = 'binary', id = 'sampleClear', name = 'clear', behavior = 'momentary'},
     {type = 'separator', name = 'voice params'},
     {id = 'amp', name = 'amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
     {id = 'loopAtk', name = 'loop attack', type = 'control', min = 0, max = 100, warp = 'lin', default = 0, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
@@ -1256,9 +1264,13 @@ function Kildare.init(track_count, poly)
           elseif d.id == "sampleClear" then
             params:set_action(i.."_"..v..'_'..d.id,
               function(x)
-                engine.clear_samples(i)
-                params:set(i.."_"..v.."_sampleFile", _path.audio, silent)
-                Kildare.clear_callback(i)
+                print(x)
+                if x == 1 then
+                  print(params:string(i.."_"..v.."_sampleFile"))
+                  engine.clear_samples(i)
+                  params:set(i.."_"..v.."_sampleFile", _path.audio, silent)
+                  Kildare.clear_callback(i)
+                end
               end
             )
           elseif d.id == 'playbackRateBase' then
@@ -1443,15 +1455,10 @@ function Kildare.init(track_count, poly)
   params:hide('feedback_cMixer_inA')
   params:hide('feedback_cMixer_inB')
 
-  -- _menu.rebuild_params()
   menu_rebuild_queued = true
-
-  -- params:bang()
 
   params:add_separator("kildare_lfo_header","kildare lfos")
   Kildare.lfos.add_params(track_count, Kildare.fx ,poly)
-  
-  -- params:bang()
 
   Kildare.loaded = true
   

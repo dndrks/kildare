@@ -724,6 +724,7 @@ Kildare {
 			voiceID.pairsDo({arg key,val;
 				if( voiceTracker[voiceKey][key].isPlaying,
 					{
+						if( voiceKey == \1,{key.postln});
 						val.pairsDo({ arg name, value;
 							voiceTracker[voiceKey][key].set(name, value);
 						});
