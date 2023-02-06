@@ -45,6 +45,7 @@ Kildare {
 				synthDefs[\fld] = KildareFLD.new(Crone.server);
 				synthDefs[\timbre] = KildareTimbre.new(Crone.server);
 				synthDefs[\ptr] = KildarePTR.new(Crone.server);
+				synthDefs[\input] = KildareInput.new(Crone.server);
 				synthDefs[\sample] = KildareSample.new(Crone.server);
 
 			} // Server.waitForBoot
@@ -493,6 +494,12 @@ Kildare {
 				busses[\feedbackSend],
 			),
 			\kildare_timbre, KildareTimbre.buildParams(
+				busses[\mainOut],
+				busses[\delayLSend],
+				busses[\delayRSend],
+				busses[\feedbackSend],
+			),
+			\kildare_input, KildareInput.buildParams(
 				busses[\mainOut],
 				busses[\delayLSend],
 				busses[\delayRSend],

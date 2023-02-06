@@ -34,7 +34,7 @@ function lfos.add_params(track_count, fx_names, poly)
     klfo[i] = _lfo:add{
       action = 
       function(s,r)
-        local target_track = params:string("lfo_target_track_"..i)
+        local target_track = params:string("lfoTargetTrack_"..i)
         local target_param = params:get("lfo_target_param_"..i)
         local param_name = lfos.params_list[target_track]
         if not lfos.current_baseline[i] then
@@ -90,7 +90,7 @@ function lfos.add_params(track_count, fx_names, poly)
 
   lfos.build_params_static(poly)
 
-  params:add_group("lfos",lfos.count * 15)
+  params:add_group("lfos",lfos.count * 16)
   for i = 1,lfos.count do
     lfos.last_track[i] = 1
     lfos.last_param[i] = "amp"
@@ -110,6 +110,7 @@ function lfos.add_params(track_count, fx_names, poly)
           print('lfo state callback',i)
           lfos.return_to_baseline(i,true,true)
         end
+        params:hide("lfoTargetTrack_"..i)
         params:hide("lfo_target_track_"..i)
         params:hide("lfo_target_param_"..i)
         params:hide("lfo_shape_"..i)
@@ -148,12 +149,23 @@ function lfos.add_params(track_count, fx_names, poly)
       end
     end)
 
-    params:add_option("lfo_target_track_"..i, "track", lfos.targets, 1)
-    params:set_action("lfo_target_track_"..i,
+    params:add_option("lfoTargetTrack_"..i, "track", lfos.targets, 1)
+    params:set_action("lfoTargetTrack_"..i,
       function(x)
         lfos.change_target(i,x)
       end
     )
+    local endcaps = {'delay','feedback','main'}
+    params:add_number("lfo_target_track_"..i, "track", 1,10,1,
+      function(param)
+        if param:get() <=  kildare_total_tracks then
+          return (param:get() .. ': ' .. params:string('voice_model_'..param:get()))
+        else
+          return (endcaps[param:get() - kildare_total_tracks])
+        end
+      end
+    )
+    params:set_action("lfo_target_track_"..i, function(x) params:set('lfoTargetTrack_'..i, x) end)
 
     params:add_option("lfo_target_param_"..i, "param",lfos.params_list[lfos.targets[1]].names,1)
     params:set_action("lfo_target_param_"..i,
@@ -209,7 +221,6 @@ function lfos.add_params(track_count, fx_names, poly)
       end
     )
 
-    -- params:add_number("lfo_depth_"..i,"depth",0,100,0,function(param) return (param:get().."%") end)
     params:add_control(
       "lfo_depth_"..i,
       "depth",
@@ -226,7 +237,6 @@ function lfos.add_params(track_count, fx_names, poly)
       end
     end)
 
-    -- params:add_number('lfo_offset_'..i, 'lfo offset', -100, 100, 0, function(param) return (param:get().."%") end)
     params:add_control(
       "lfo_offset_"..i,
       "offset",
@@ -237,7 +247,7 @@ function lfos.add_params(track_count, fx_names, poly)
       klfo[i]:set('offset',x/100)
     end)
 
-    local target_track = params:string("lfo_target_track_"..i)
+    local target_track = params:string("lfoTargetTrack_"..i)
     local target_param = params:get("lfo_target_param_"..i)
     params:add{
       type='control',
@@ -287,7 +297,6 @@ function lfos.add_params(track_count, fx_names, poly)
           params:show("lfo_free_"..i)
           klfo[i]:set('mode', 'free')
         end
-        -- _menu.rebuild_params()
         menu_rebuild_queued = true
       end
     )
@@ -312,9 +321,6 @@ function lfos.add_params(track_count, fx_names, poly)
       klfo[i]:set('reset_target', params:lookup_param("lfo_reset_target_"..i).options[x])
     end)
 
-    -- params:hide("lfo_free_"..i)
-    -- params:hide("lfo_beats_"..i)
-    -- _menu.rebuild_params()
     menu_rebuild_queued = true
 
   end
@@ -322,12 +328,12 @@ function lfos.add_params(track_count, fx_names, poly)
 end
 
 function lfos.reset_bounds_in_menu(i)
-  local target_track = params:string("lfo_target_track_"..i)
+  local target_track = params:string("lfoTargetTrack_"..i)
   local target_param = params:get("lfo_target_param_"..i)
   local restore_min = lfos.specs[target_track][target_param].min
   local restore_max;
-  if params:get("lfo_target_track_"..i) <= 8 then
-    restore_max = params:get(target_track.."_"..params:string('voice_model_'..params:get("lfo_target_track_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
+  if params:get("lfoTargetTrack_"..i) <= kildare_total_tracks then
+    restore_max = params:get(target_track.."_"..params:string('voice_model_'..params:get("lfoTargetTrack_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
   else
     restore_max = params:get(target_track.."_"..lfos.params_list[target_track].ids[(target_param)])
   end
@@ -345,7 +351,7 @@ function lfos.change_target(i,x)
   local new_target = x
   local target_param_id = params.lookup["lfo_target_param_"..i] -- just looks up the ID for this parameter bucket
   local target_params_selector = params.params[target_param_id] -- the parameter bucket
-  local track_id = lfos.targets[params:get("lfo_target_track_"..i)]
+  local track_id = lfos.targets[params:get("lfoTargetTrack_"..i)]
   target_params_selector.options = lfos.params_list[track_id].names -- rebuild parameter names
   target_params_selector.count = tab.count(target_params_selector.options) -- count the names
   -- print(params:get("lfo_target_param_"..i))
@@ -362,7 +368,7 @@ end
 
 function lfos.return_to_baseline(i,silent,poly)
   -- print('return to baseline: '..i)
-  local drum_target = params:get("lfo_target_track_"..i)
+  local drum_target = params:get("lfoTargetTrack_"..i)
   local parent = lfos.targets[drum_target]
   local current_param_name = parent.."_"..(lfos.params_list[parent].ids[(params:get("lfo_target_param_"..i))])
   local param_exclusions = {'delay','feedback','main'}
@@ -400,12 +406,12 @@ end
 
 function lfos.rebuild_param(param,i)
   local param_id = params.lookup["lfo_"..param.."_"..i]
-  local target_track = params:string("lfo_target_track_"..i)
+  local target_track = params:string("lfoTargetTrack_"..i)
   local target_param = params:get("lfo_target_param_"..i)
   local default_value;
-  if params:get("lfo_target_track_"..i) <= 8 then
+  if params:get("lfoTargetTrack_"..i) <= kildare_total_tracks then
     default_value = param == "min" and lfos.specs[target_track][target_param].min
-    or params:get(target_track.."_"..params:string('voice_model_'..params:string("lfo_target_track_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
+    or params:get(target_track.."_"..params:string('voice_model_'..params:string("lfoTargetTrack_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
   else
     -- print(target_track,target_param,lfos.params_list[target_track].ids[(target_param)])
     default_value = param == "min" and lfos.specs[target_track][target_param].min
