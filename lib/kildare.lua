@@ -15,6 +15,11 @@ Kildare.allocVoice = {}
 
 Kildare.soundfile_append = ''
 
+local function send_to_engine(action, args)
+  engine[action](table.unpack(args))
+  osc.send({"192.168.0.137",57120},"/command",{action,table.unpack(args)})
+end
+
 local sox_installed = os.execute('which sox')
 
 function round_form(param,quant,form)
@@ -1103,11 +1108,11 @@ function Kildare.init(track_count, poly)
     params:add_option('voice_model_'..i, 'voice '..i, models, i)
     params:set_action('voice_model_'..i, function(x)
       if all_loaded then
-        engine.set_model(i, 'kildare_'..models[x], 'false')
+        -- engine.set_model(i, 'kildare_'..models[x], 'false')
+        send_to_engine('set_model', {i, 'kildare_'..models[x], 'false'})
         print('model build')
         Kildare.rebuild_model_params(i, models[x])
       end
-      -- engine.set_model(i, 'kildare_'..models[x], 'false')
     end)
   end
 
@@ -1160,7 +1165,8 @@ function Kildare.init(track_count, poly)
         if #queued_inits > 0 then
           local i = queued_inits[1].voice
           local model = queued_inits[1].model
-          engine.init_voice(i, 'kildare_'..model)
+          -- engine.init_voice(i, 'kildare_'..model)
+          send_to_engine('init_voice', {i, 'kildare_'..model})
           print('activating voice '..i)
           Kildare.rebuild_model_params(i, model)
           table.remove(queued_inits,1)
@@ -1179,18 +1185,23 @@ function Kildare.init(track_count, poly)
     params:set_action(i..'_voice_state',
     function(x)
       if x == 0 then
-        engine.free_voice(i)
+        -- engine.free_voice(i)
+        send_to_engine('free_voice', {i})
       else
-        -- engine.init_voice(i, 'kildare_'..params:string('voice_model_'..i))
-        -- print('activating voice '..i)
-        -- Kildare.rebuild_model_params(i, params:string('voice_model_'..i))
         add_to_init_queue(i,params:string('voice_model_'..i))
       end
     end)
     params:add_number(i..'_poly_voice_count', 'voice count', 1, 8, 1)
-    params:set_action(i..'_poly_voice_count', function(x) engine.set_voice_limit(i,x) Kildare.allocVoice[i] = 0 end)
+    -- params:set_action(i..'_poly_voice_count', function(x) engine.set_voice_limit(i,x) Kildare.allocVoice[i] = 0 end)
+    params:set_action(i..'_poly_voice_count', function(x)
+      send_to_engine('set_voice_limit', {i,x})
+      Kildare.allocVoice[i] = 0
+    end)
     params:add_option(i..'_poly_param_style', 'poly params', {'all voices','current voice','next voice'}, 1)
-    params:set_action(i..'_poly_param_style', function(x) engine.set_poly_param_style(i, params:string(i..'_poly_param_style')) end)
+    -- params:set_action(i..'_poly_param_style', function(x) engine.set_poly_param_style(i, params:string(i..'_poly_param_style')) end)
+    params:set_action(i..'_poly_param_style', function(x)
+      send_to_engine('set_poly_param_style', {i, params:string(i..'_poly_param_style')})
+    end)
 
     for k,v in pairs(swappable_drums) do
       for prms,d in pairs(kildare_drum_params[v]) do
@@ -1241,7 +1252,8 @@ function Kildare.init(track_count, poly)
             params:set_action(i.."_"..v..'_'..d.id, function(x)
               if engine.name == "Kildare" then
                 if v == params:string('voice_model_'..i) then
-                  engine.set_voice_param(i, d.id, x)
+                  -- engine.set_voice_param(i, d.id, x)
+                  send_to_engine('set_voice_param', {i, d.id, x})
                   Kildare.voice_param_callback(i, d.id, x)
                 end
               end
@@ -1250,9 +1262,8 @@ function Kildare.init(track_count, poly)
             params:set_action(i.."_"..v..'_'..d.id, function(x)
               if engine.name == "Kildare" then
                 if v == params:string('voice_model_'..i) then
-                  engine.set_voice_param(i, d.id, musicutil.note_num_to_freq(x))
-                  engine.set_voice_param(i, 'carHzThird', musicutil.note_num_to_freq(x))
-                  engine.set_voice_param(i, 'carHzSeventh', musicutil.note_num_to_freq(x))
+                  -- engine.set_voice_param(i, d.id, musicutil.note_num_to_freq(x))
+                  send_to_engine('set_voice_param', {i, d.id, musicutil.note_num_to_freq(x)})
                   Kildare.voice_param_callback(i, d.id, x)
                 end
               end
@@ -1272,7 +1283,8 @@ function Kildare.init(track_count, poly)
                   end
                   -- _menu.rebuild_params()
                   menu_rebuild_queued = true
-                  engine.set_voice_param(i, d.id, x)
+                  -- engine.set_voice_param(i, d.id, x)
+                  send_to_engine('set_voice_param', {i, d.id, x})
                   Kildare.voice_param_callback(i, d.id, x)
                 end
               end
@@ -1292,7 +1304,8 @@ function Kildare.init(track_count, poly)
                   end
                   -- _menu.rebuild_params()
                   menu_rebuild_queued = true
-                  engine.set_voice_param(i, d.id, x)
+                  -- engine.set_voice_param(i, d.id, x)
+                  send_to_engine('set_voice_param', {i, d.id, x})
                   Kildare.voice_param_callback(i, d.id, x)
                 end
               end
@@ -1305,10 +1318,12 @@ function Kildare.init(track_count, poly)
                   if params:string(i.."_"..v.."_sampleMode") == "distribute" then
                     local split_at = string.match(file, "^.*()/")
                     local folder = string.sub(file, 1, split_at)
-                    engine.load_folder(i,folder)
+                    -- engine.load_folder(i,folder)
+                    send_to_engine('load_folder', {i,folder})
                     Kildare.folder_callback(i,folder)
                   else
-                    engine.load_file(i,file)
+                    -- engine.load_file(i,file)
+                    send_to_engine('load_file', {i,file})
                     Kildare.file_callback(i,file)
                   end
                 end
@@ -1320,7 +1335,8 @@ function Kildare.init(track_count, poly)
                 print(x)
                 if x == 1 then
                   print(params:string(i.."_"..v.."_sampleFile"))
-                  engine.clear_samples(i)
+                  -- engine.clear_samples(i)
+                  send_to_engine('clear_samples', {i})
                   params:set(i.."_"..v.."_sampleFile", _path.audio, silent)
                   Kildare.clear_callback(i)
                 end
@@ -1473,9 +1489,11 @@ function Kildare.init(track_count, poly)
         params:set_action(k.."_"..d.id, function(x)
           if engine.name == "Kildare" then
             if k == "delay" and d.id == "time" then
-              engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128)
+              -- engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128)
+              send_to_engine("set_"..k.."_param", {d.id, clock.get_beat_sec() * x/128})
             elseif k ~= 'feedback' then
-              engine["set_"..k.."_param"](d.id, x)
+              -- engine["set_"..k.."_param"](d.id, x)
+              send_to_engine("set_"..k.."_param", {d.id, x})
             elseif k == 'feedback' then
               local sub = '_'
               local keys = {}
@@ -1493,7 +1511,8 @@ function Kildare.init(track_count, poly)
               elseif paramKey == 'outC' then
                 params:set('feedback_cMixer_in'..targetLine, x)
               end
-              engine['set_feedback_param'](targetKey, paramKey, x)
+              -- engine['set_feedback_param'](targetKey, paramKey, x)
+              send_to_engine('set_feedback_param', {targetKey, paramKey, x})
             end
           end
         end)

@@ -28,6 +28,11 @@ klfo = {}
 
 ivals = {}
 
+local function send_to_engine(action, args)
+  engine[action](table.unpack(args))
+  osc.send({"192.168.0.137",57120},"/command",{action,table.unpack(args)})
+end
+
 function lfos.add_params(track_count, fx_names, poly)
 
   for i = 1,lfos.count do
@@ -380,12 +385,15 @@ function lfos.return_to_baseline(i,silent,poly)
     local focus_voice = params:string('voice_model_'..parent)
     if focus_voice ~= 'sample' then
       if lfos.last_param[i] ~= "carHz" then
-        engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
+        send_to_engine('set_voice_param', {parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])})
+        -- engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
       elseif lfos.last_param[i] == "carHz" then
+        -- idk what this is:
         -- engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])))
       end
     else
-      engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
+      -- engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
+      send_to_engine('set_voice_param',{parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])})
     end
   elseif (parent == "delay" or parent == "feedback" or parent == "main") and engine.name == "Kildare" then
     local sources = {delay = lfos.delay_params, feedback = lfos.feedback_params, main = lfos.main_params}
@@ -393,9 +401,11 @@ function lfos.return_to_baseline(i,silent,poly)
       lfos.last_param[i] = sources[parent][1]
     end
     if parent == "delay" and lfos.last_param[i] == "time" then
-      engine["set_"..parent.."_param"](lfos.last_param[i],clock.get_beat_sec() * params:get(parent.."_"..lfos.last_param[i])/128)
+      -- engine["set_"..parent.."_param"](lfos.last_param[i],clock.get_beat_sec() * params:get(parent.."_"..lfos.last_param[i])/128)
+      send_to_engine("set_"..parent.."_param",{lfos.last_param[i],clock.get_beat_sec() * params:get(parent.."_"..lfos.last_param[i])/128})
     elseif parent ~= 'feedback' then
-      engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
+      -- engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
+      send_to_engine("set_"..parent.."_param",{lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i])})
     end
   end
   if not silent then
@@ -474,9 +484,11 @@ end
 
 function lfos.set_delay_param(param_target,value)
   if param_target == "time" then
-    engine.set_delay_param(param_target,clock.get_beat_sec() * value/128)
+    send_to_engine('set_delay_param', {param_target,clock.get_beat_sec() * value/128})
+    -- engine.set_delay_param(param_target,clock.get_beat_sec() * value/128)
   else
-    engine.set_delay_param(param_target,value)
+    send_to_engine('set_delay_param', {param_target,value})
+    -- engine.set_delay_param(param_target,value)
   end
 end
 
@@ -488,13 +500,15 @@ function lfos.send_param_value(target_track, target_id, value)
     if string.find(target_track,'sample') and (target_id == 'playbackRateBase' or target_id == 'loop') then
       params:set(target_track..'_'..target_id,util.round(value))
     else
-      engine.set_voice_param(target_track,target_id,value)
+      send_to_engine('set_voice_param', {target_track,target_id,value})
+      -- engine.set_voice_param(target_track,target_id,value)
     end
   else
     if target_track == "delay" then
       lfos.set_delay_param(target_id,value)
     elseif target_track ~= 'feedback' then
-      engine["set_"..target_track.."_param"](target_id,value)
+      -- engine["set_"..target_track.."_param"](target_id,value)
+      send_to_engine("set_"..target_track.."_param", {target_id,value})
     elseif target_track == 'feedback' then
       local sub = '_'
       local keys = {}
@@ -506,14 +520,18 @@ function lfos.send_param_value(target_track, target_id, value)
       -- print(targetKey, paramKey)
       local targetLine = string.upper(string.sub(targetKey, 1, 1))
       if paramKey == 'outA' then
-        engine['set_feedback_param']('aMixer','in'..targetLine, value)
+        -- engine['set_feedback_param']('aMixer','in'..targetLine, value)
+        send_to_engine('set_feedback_param', {'aMixer','in'..targetLine, value})
       elseif paramKey == 'outB' then
-        engine['set_feedback_param']('bMixer','in'..targetLine, value)
+        -- engine['set_feedback_param']('bMixer','in'..targetLine, value)
+        send_to_engine('set_feedback_param', {'bMixer','in'..targetLine, value})
       elseif paramKey == 'outC' then
-        engine['set_feedback_param']('cMixer','in'..targetLine, value)
+        -- engine['set_feedback_param']('cMixer','in'..targetLine, value)
+        send_to_engine('set_feedback_param', {'cMixer','in'..targetLine, value})
       end
       -- print('todo! send lfos to feedback matrix', target_id)
-      engine['set_feedback_param'](targetKey, paramKey, value)
+      -- engine['set_feedback_param'](targetKey, paramKey, value)
+      send_to_engine('set_feedback_param', {targetKey, paramKey, value})
     end
   end
 end
