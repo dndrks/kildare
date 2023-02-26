@@ -28,11 +28,6 @@ klfo = {}
 
 ivals = {}
 
-local function send_to_engine(action, args)
-  engine[action](table.unpack(args))
-  osc.send({"192.168.0.137",57120},"/command",{action,table.unpack(args)})
-end
-
 function lfos.add_params(track_count, fx_names, poly)
 
   for i = 1,lfos.count do

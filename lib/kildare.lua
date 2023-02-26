@@ -15,9 +15,11 @@ Kildare.allocVoice = {}
 
 Kildare.soundfile_append = ''
 
-local function send_to_engine(action, args)
+function send_to_engine(action, args)
   engine[action](table.unpack(args))
-  osc.send({"192.168.0.137",57120},"/command",{action,table.unpack(args)})
+  if action ~= 'free_voice' then
+    osc.send({osc_echo,57120},"/command",{action,table.unpack(args)})
+  end
 end
 
 local sox_installed = os.execute('which sox')
@@ -1176,9 +1178,9 @@ function Kildare.init(track_count, poly)
   )
 
   for i = 1,track_count do
-    local osc_params_count = 0
+    local osc_params_count = 4
     local shown_set = params:string('voice_model_'..i)
-    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + 4 + osc_params_count)
+    params:add_group('kildare_'..i..'_group', i..': '..shown_set, how_many_params + osc_params_count)
     
     params:add_separator('voice_management_'..i, 'voice management')
     params:add_binary(i..'_voice_state', 'active?', 'toggle', 1)
@@ -1191,6 +1193,7 @@ function Kildare.init(track_count, poly)
         add_to_init_queue(i,params:string('voice_model_'..i))
       end
     end)
+    -- params:add_binary(i..'_external_send', 'send as OSC only?', 'toggle', 0)
     params:add_number(i..'_poly_voice_count', 'voice count', 1, 8, 1)
     -- params:set_action(i..'_poly_voice_count', function(x) engine.set_voice_limit(i,x) Kildare.allocVoice[i] = 0 end)
     params:set_action(i..'_poly_voice_count', function(x)
