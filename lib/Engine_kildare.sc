@@ -136,6 +136,16 @@ Engine_Kildare : CroneEngine {
 			kernel.initFeedback();
 		});
 
+		this.addCommand(\pset_switch,"", {
+			kernel.psetSwitch();
+		});
+
+		this.addCommand(\reset,"", {
+			kernel.resetVoices();
+			kernel.resetParams();
+			kernel.resetBuffers();
+		});
+
 		//("/home/we/dust/data/kildare/test.txt")
 		//("/home/we/dust/data/hills/test.txt")
 

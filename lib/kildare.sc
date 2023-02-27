@@ -818,6 +818,7 @@ Kildare {
 	}
 
 	clearSamples { arg voice;
+		("clearSamples: " ++ voice).postln;
 		if ( sampleInfo[voice][\samples].size > 0, {
 			for ( 0, sampleInfo[voice][\samples].size-1, {
 				arg i;
@@ -831,6 +832,9 @@ Kildare {
 	loadFile { arg msg;
 		var voice = msg[1], filename = msg[2];
 
+		voice.postln;
+		indexTracker.postln;
+		indexTracker[voice].postln;
 		voiceTracker[voice][indexTracker[voice]].set(\t_trig, -1);
 		voiceTracker[voice][indexTracker[voice]].set(\t_gate, -1);
 
@@ -964,6 +968,47 @@ Kildare {
 				});
 			});
 		});
+	}
+
+	resetParams {
+		voiceKeys.do({ arg voiceKey;
+			indexTracker[voiceKey] = 0;
+			polyParams[voiceKey] = Dictionary.new(8);
+			8.do{ arg i;
+				voiceTracker[voiceKey] = Dictionary.new(8);
+				polyParams[voiceKey][i] = Dictionary.new;
+			};
+		});
+	}
+
+	resetVoices {
+		voiceTracker.do({arg voice;
+			(voice).do({ arg voiceIndex;
+				voiceIndex.postln;
+				if (voiceIndex.isPlaying, {
+					('freeing voice '++voiceIndex).postln;
+					voiceIndex.free;
+				});
+			});
+		});
+	}
+
+	resetBuffers {
+		(1..8).do({arg voice; this.clearSamples(voice.asSymbol);})
+	}
+
+	psetSwitch {
+		voiceTracker.do({arg voice;
+			(voice).do({ arg voiceIndex;
+				voiceIndex.postln;
+				if (voiceIndex.isPlaying, {
+					('freeing voice '++voiceIndex).postln;
+					voiceIndex.free;
+				});
+			});
+		});
+		// 8.do({arg voice; this.clearSamples((voice+1).asSymbol);})
+		// Buffer.freeAll(Crone.server);
 	}
 
 	free {

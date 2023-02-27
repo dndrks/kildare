@@ -16,8 +16,13 @@ Kildare.allocVoice = {}
 Kildare.soundfile_append = ''
 
 function send_to_engine(action, args)
-  engine[action](table.unpack(args))
-  if action ~= 'free_voice' then
+  -- engine[action](table.unpack(args))
+  -- if action ~= 'free_voice' then
+  --   osc.send({osc_echo,57120},"/command",{action,table.unpack(args)})
+  -- end
+  if osc_echo == nil then
+    engine[action](table.unpack(args))
+  else
     osc.send({osc_echo,57120},"/command",{action,table.unpack(args)})
   end
 end
@@ -1537,6 +1542,18 @@ function Kildare.init(track_count, poly)
 
   Kildare.loaded = true
   
+end
+
+function Kildare.reset_params()
+  for i = 1,kildare_total_tracks do
+    for k,v in pairs(swappable_drums) do
+      for prms,d in pairs(kildare_drum_params[v]) do
+        if d.type ~= 'separator' and d.default ~= nil then
+          params:set(i..'_'..v..'_'..d.id, d.default)
+        end
+      end
+    end
+  end
 end
 
 return Kildare
