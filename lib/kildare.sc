@@ -32,27 +32,28 @@ Kildare {
 			var s = Server.default;
 
 			s.waitForBoot {
-				synthDefs = Dictionary.new;
-
-				synthDefs[\bd] = KildareBD.new(Crone.server);
-				synthDefs[\sd] = KildareSD.new(Crone.server);
-				synthDefs[\tm] = KildareTM.new(Crone.server);
-				synthDefs[\cp] = KildareCP.new(Crone.server);
-				synthDefs[\rs] = KildareRS.new(Crone.server);
-				synthDefs[\cb] = KildareCB.new(Crone.server);
-				synthDefs[\hh] = KildareHH.new(Crone.server);
-				synthDefs[\saw] = KildareSaw.new(Crone.server);
-				synthDefs[\fld] = KildareFLD.new(Crone.server);
-				synthDefs[\timbre] = KildareTimbre.new(Crone.server);
-				synthDefs[\ptr] = KildarePTR.new(Crone.server);
-				synthDefs[\input] = KildareInput.new(Crone.server);
-				synthDefs[\sample] = KildareSample.new(Crone.server);
 
 			} // Server.waitForBoot
 		} // StartUp
 	} // *initClass
 
 	*new {
+		synthDefs = Dictionary.new;
+
+		synthDefs[\bd] = KildareBD.new(Server.default);
+		synthDefs[\sd] = KildareSD.new(Server.default);
+		synthDefs[\tm] = KildareTM.new(Server.default);
+		synthDefs[\cp] = KildareCP.new(Server.default);
+		synthDefs[\rs] = KildareRS.new(Server.default);
+		synthDefs[\cb] = KildareCB.new(Server.default);
+		synthDefs[\hh] = KildareHH.new(Server.default);
+		synthDefs[\saw] = KildareSaw.new(Server.default);
+		synthDefs[\fld] = KildareFLD.new(Server.default);
+		synthDefs[\timbre] = KildareTimbre.new(Server.default);
+		synthDefs[\ptr] = KildarePTR.new(Server.default);
+		synthDefs[\input] = KildareInput.new(Server.default);
+		synthDefs[\sample] = KildareSample.new(Server.default);
+
 		^super.new.init;
 	}
 
@@ -612,7 +613,7 @@ Kildare {
 				('triggering sample '++allocVoice).postln;
 			});
 			voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
-			(' ' ++ indexTracker[voiceKey] ++ ' ' ++ allocVoice).postln;
+			// (' ' ++ indexTracker[voiceKey] ++ ' ' ++ allocVoice).postln;
 		});
 	}
 
