@@ -251,8 +251,8 @@ function Kildare.init(track_count, poly)
     {lfo_exclude = true, type = 'binary', id = 'sampleClear', name = 'clear', behavior = 'momentary'},
     {type = 'separator', name = 'voice params'},
     {id = 'amp', name = 'amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
-    {id = 'loopAtk', name = 'loop attack', type = 'control', min = 0, max = 100, warp = 'lin', default = 0, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
-    {id = 'loopRel', name = 'loop release', type = 'control', min = 0, max = 100, warp = 'lin', default = 50, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
+    {id = 'loopAtk', name = 'loop attack', type = 'control', min = 0, max = 100, warp = 'lin', default = 5, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
+    {id = 'loopRel', name = 'loop release', type = 'control', min = 0, max = 100, warp = 'lin', default = 5, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,"%")) end},
     {id = 'envCurve', name = 'loop env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
       util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
       1,"%")) end},
