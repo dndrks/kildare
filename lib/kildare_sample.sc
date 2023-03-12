@@ -31,7 +31,7 @@ KildareSample {
 			\envStyle,0,
 			\sampleStart,0,
 			\sampleEnd,1,
-			\loop,0,
+			\loop,1,
 			\rate,1,
 			\squishPitch,1,
 			\squishChunk,1,

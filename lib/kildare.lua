@@ -194,6 +194,18 @@ function Kildare.push_model_to_lfos(i,current_model)
 
 end
 
+local sample_speedlist = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 4}
+
+local function get_resampled_rate(voice)
+  local total_offset;
+  total_offset = params:get(voice..'_sample_playbackRateOffset')
+  total_offset = math.pow(0.5, -total_offset / 12)
+  if util.round(params:get(voice..'_sample_playbackPitchControl'),0.01) ~= 0 then
+    total_offset = total_offset + (total_offset * (util.round(params:get(voice..'_sample_playbackPitchControl'),0.01)/100))
+  end
+  return (total_offset * sample_speedlist[params:get(voice..'_sample_playbackRateBase')])
+end
+
 function Kildare.init(track_count, poly)
 
   kildare_total_tracks = track_count
@@ -1350,11 +1362,21 @@ function Kildare.init(track_count, poly)
                 end
               end
             )
-          elseif d.id == 'playbackRateBase' then
-          elseif d.id == 'playbackRateOffset' or d.id == 'playbackPitchControl' then
+          elseif d.id == 'playbackRateBase' or d.id == 'playbackRateOffset' or d.id == 'playbackPitchControl' then
+            params:set_action(i..'_'..v..'_'..d.id,
+            function(x)
+              send_to_engine('set_voice_param',{i, 'rate', get_resampled_rate(i)})
+            end
+          )
           elseif d.id == 'loop' then
             params:set_action(i.."_"..v..'_'..d.id,
               function(x)
+                send_to_engine('set_voice_param', {i, 'loop', x})
+                if (x == 0 and params:get(i..'_poly_param_style') == 1) or (x == 0 and params:get(i..'_poly_voice_count') == 1) then
+                  for j = 1,8 do
+                    send_to_engine('set_sample_loop',{i,j})
+                  end
+                end
               end
             )
           end
