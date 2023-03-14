@@ -268,7 +268,9 @@ function Kildare.init(track_count, poly)
     {id = 'envCurve', name = 'loop env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
       util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
       1,"%")) end},
-    {id = 'playbackRateBase', name = 'rate', type = 'control', min = 1, max = 11, warp = 'lin', default = 9, step = 1, quantum = 1/10, formatter = function(param) local rate_options = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 4} return rate_options[(type(param) == 'table' and param:get() or param)]..'x' end},
+    {id = 'sampleStart', name = 'sample start', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param) * 100,1,"%")) end},
+    {id = 'sampleEnd', name = 'sample end', type = 'control', min = 0, max = 1, warp = 'lin', default = 1, quantum = 1/100, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param) * 100,1,"%")) end},
+      {id = 'playbackRateBase', name = 'rate', type = 'control', min = 1, max = 11, warp = 'lin', default = 9, step = 1, quantum = 1/10, formatter = function(param) local rate_options = {-4, -2, -1, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 4} return rate_options[(type(param) == 'table' and param:get() or param)]..'x' end},
     {id = 'playbackRateOffset', name = 'offset', type = 'control', min = -24, max = 24, warp = 'lin', default = 0, step = 1, quantum = 1/48, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1," semitones")) end},
     {id = 'playbackPitchControl', name = 'pitch control', type = 'control', min = -12, max = 12, warp = 'lin', default = 0, step = 1/10, quantum = 1/240, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01,"%")) end},
     {id = 'loop', name = 'loop', type = 'control', min = 0, max = 1, warp = "lin", default = 0, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
@@ -1331,6 +1333,32 @@ function Kildare.init(track_count, poly)
               end
             end)
           elseif d.id == "sampleMode" then
+            params:set_action(i..'_'..v..'_'..d.id,
+              function(x)
+                if params:string('voice_model_'..i) == 'sample' then
+                  if x == 3 then
+                    send_to_engine('set_sample_mode', {i,"kildare_sampleFolder"})
+                    params:hide(i..'_'..v..'_loopAtk')
+                    params:hide(i..'_'..v..'_loopRel')
+                    params:hide(i..'_'..v..'_sampleStart')
+                    params:hide(i..'_'..v..'_sampleEnd')
+                  elseif x == 2 then
+                    send_to_engine('set_sample_mode', {i,"kildare_samplePlaythrough"})
+                    params:show(i..'_'..v..'_loopAtk')
+                    params:show(i..'_'..v..'_loopRel')
+                    params:show(i..'_'..v..'_sampleStart')
+                    params:show(i..'_'..v..'_sampleEnd')
+                  elseif x == 1 then
+                    send_to_engine('set_sample_mode', {i,"kildare_sample"})
+                    params:show(i..'_'..v..'_loopAtk')
+                    params:show(i..'_'..v..'_loopRel')
+                    params:hide(i..'_'..v..'_sampleStart')
+                    params:hide(i..'_'..v..'_sampleEnd')
+                  end
+                  menu_rebuild_queued = true
+                end
+              end
+            )
           elseif d.id == "sampleFile" then
             params:set_action(i.."_"..v..'_'..d.id,
               function(file)

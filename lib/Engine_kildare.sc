@@ -120,6 +120,12 @@ Engine_Kildare : CroneEngine {
 			kernel.setVoiceLimit(voice, limit);
 		});
 
+		this.addCommand(\set_sample_mode, "is", { arg msg;
+			var voice = msg[1].asSymbol;
+			var mode = msg[2].asSymbol;
+			kernel.setSampleMode(voice,mode);
+		});
+
 		this.addCommand(\set_poly_param_style, "is", { arg msg;
 			var voice = msg[1].asSymbol;
 			var style = msg[2].asString;
