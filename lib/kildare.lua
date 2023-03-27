@@ -1394,6 +1394,9 @@ function Kildare.init(track_count, poly)
             params:set_action(i..'_'..v..'_'..d.id,
             function(x)
               send_to_engine('set_voice_param',{i, 'rate', get_resampled_rate(i)})
+              -- for j = 1,8 do
+              --   send_to_engine('set_sample_rate',{i,j,get_resampled_rate(i)})
+              -- end
             end
           )
           elseif d.id == 'loop' then

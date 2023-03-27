@@ -670,6 +670,20 @@ Kildare {
 		);
 	}
 
+	setSampleRate { arg voiceKey, allocVoice, paramValue;
+		var frames, start, end, duration, rate;
+		if( voiceTracker[voiceKey][allocVoice].isPlaying,
+			{
+				frames = polyParams[voiceKey][allocVoice][\bufnum].numFrames;
+				if( paramValue >= 0,
+					{voiceTracker[voiceKey][allocVoice].set(\startPos, 0.0)},
+					{voiceTracker[voiceKey][allocVoice].set(\startPos, frames - 1)}
+				);
+				voiceTracker[voiceKey][allocVoice].set(\rate,paramValue);
+			}
+		);
+	}
+
 	setVoiceParam { arg voiceKey, paramKey, paramValue;
 		paramProtos[voiceKey][paramKey] = paramValue;
 

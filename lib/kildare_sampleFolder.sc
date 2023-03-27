@@ -29,6 +29,7 @@ KildareSampleFolder {
 			\loopAtk,0,
 			\loopRel,50,
 			\envStyle,0,
+			\startPos,0,
 			\sampleStart,0,
 			\sampleEnd,1,
 			\loop,0,
@@ -60,6 +61,7 @@ KildareSampleFolder {
 			arg bufnum, envStyle = 0, out = 0, amp = 1,
 			t_trig = 1, t_gate = 0, loopAtk = 0, loopRel = 50,
 			velocity = 127,
+			startPos = 0,
 			sampleStart = 0, sampleEnd = 1,
 			loop = 0, envCurve = -4,
 			pan = 0,
@@ -104,25 +106,24 @@ KildareSampleFolder {
 				gate: t_gate
 			);
 
+			startPos = Select.kr(
+				rate >= 0, [
+					startPos = (frames - 1), // false
+					startPos = 0.0 // true
+				]
+			);
+
 			snd = PlayBuf.ar(
 				numChannels: 2,
 				bufnum: bufnum,
 				rate: rate,
-				trigger: t_trig
+				trigger: t_trig,
+				startPos: startPos
 			);
-
-			// snd.poll;
-
-			// snd = snd * loop_env;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
 
 			mainSend = snd * ampMod;
-
-			/*if( loopAtk == 0 && loopRel == 0,
-				{mainSend = snd * ampMod; 'none'.postln},
-				{mainSend = (snd * loop_env) * ampMod}
-			);*/
 
 			mainSend = Squiz.ar(in:mainSend, pitchratio:squishPitch, zcperchunk:squishChunk, mul:1);
 			mainSend = Decimator.ar(mainSend,bitRate,bitCount,1.0);
