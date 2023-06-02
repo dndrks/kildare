@@ -171,7 +171,7 @@ function Kildare.rebuild_model_params(i,current_model)
   clock.run(
     function()
       clock.sleep(0.25)
-      if readingPSET == nil or not readingPSET then
+      if not readingPSET then
         print('pushing new model')
         Kildare.push_new_model_params(i,current_model)
       end
@@ -1272,27 +1272,27 @@ function Kildare.init(track_count, poly)
         if d.type ~= 'separator' then
           if not tab.contains(custom_actions,d.id) then
             params:set_action(i.."_"..v..'_'..d.id, function(x)
-              if engine.name == "Kildare" then
+              -- if engine.name == "Kildare" then
                 if v == params:string('voice_model_'..i) then
-                  -- engine.set_voice_param(i, d.id, x)
                   send_to_engine('set_voice_param', {i, d.id, x})
                   Kildare.voice_param_callback(i, d.id, x)
+                  Kildare.last_adjusted_param = {i, v, d.id}
                 end
-              end
+              -- end
             end)
           elseif d.id == "carHz" then
             params:set_action(i.."_"..v..'_'..d.id, function(x)
-              if engine.name == "Kildare" then
+              -- if engine.name == "Kildare" then
                 if v == params:string('voice_model_'..i) then
-                  -- engine.set_voice_param(i, d.id, musicutil.note_num_to_freq(x))
                   send_to_engine('set_voice_param', {i, d.id, musicutil.note_num_to_freq(x)})
                   Kildare.voice_param_callback(i, d.id, x)
+                  Kildare.last_adjusted_param = {i, v, d.id}
                 end
-              end
+              -- end
             end)
           elseif d.id == "delayEnv" then
             params:set_action(i.."_"..v..'_'..d.id, function(x)
-              if engine.name == "Kildare" then
+              -- if engine.name == "Kildare" then
                 if v == params:string('voice_model_'..i) then
                   if x == 1 then
                     params:show(i.."_"..v..'_delayAtk')
@@ -1303,17 +1303,16 @@ function Kildare.init(track_count, poly)
                     params:hide(i.."_"..v..'_delayRel')
                     params:hide(i.."_"..v..'_delayCurve')
                   end
-                  -- _menu.rebuild_params()
                   menu_rebuild_queued = true
-                  -- engine.set_voice_param(i, d.id, x)
                   send_to_engine('set_voice_param', {i, d.id, x})
                   Kildare.voice_param_callback(i, d.id, x)
+                  Kildare.last_adjusted_param = {i, v, d.id}
                 end
-              end
+              -- end
             end)
           elseif d.id == "feedbackEnv" then
             params:set_action(i.."_"..v..'_'..d.id, function(x)
-              if engine.name == "Kildare" then
+              -- if engine.name == "Kildare" then
                 if v == params:string('voice_model_'..i) then
                   if x == 1 then
                     params:show(i.."_"..v..'_feedbackAtk')
@@ -1324,13 +1323,12 @@ function Kildare.init(track_count, poly)
                     params:hide(i.."_"..v..'_feedbackRel')
                     params:hide(i.."_"..v..'_feedbackCurve')
                   end
-                  -- _menu.rebuild_params()
                   menu_rebuild_queued = true
-                  -- engine.set_voice_param(i, d.id, x)
                   send_to_engine('set_voice_param', {i, d.id, x})
                   Kildare.voice_param_callback(i, d.id, x)
+                  Kildare.last_adjusted_param = {i, v, d.id}
                 end
-              end
+              -- end
             end)
           elseif d.id == "sampleMode" then
             params:set_action(i..'_'..v..'_'..d.id,
@@ -1355,6 +1353,7 @@ function Kildare.init(track_count, poly)
                     params:hide(i..'_'..v..'_sampleStart')
                     params:hide(i..'_'..v..'_sampleEnd')
                   end
+                  Kildare.last_adjusted_param = {i, v, d.id}
                   menu_rebuild_queued = true
                 end
               end
@@ -1394,6 +1393,7 @@ function Kildare.init(track_count, poly)
             params:set_action(i..'_'..v..'_'..d.id,
             function(x)
               send_to_engine('set_voice_param',{i, 'rate', get_resampled_rate(i)})
+              Kildare.last_adjusted_param = {i, v, d.id}
               -- for j = 1,8 do
               --   send_to_engine('set_sample_rate',{i,j,get_resampled_rate(i)})
               -- end
@@ -1403,6 +1403,7 @@ function Kildare.init(track_count, poly)
             params:set_action(i.."_"..v..'_'..d.id,
               function(x)
                 send_to_engine('set_voice_param', {i, 'loop', x})
+                Kildare.last_adjusted_param = {i, v, d.id}
                 if (x == 0 and params:get(i..'_poly_param_style') == 1) or (x == 0 and params:get(i..'_poly_voice_count') == 1) then
                   for j = 1,8 do
                     send_to_engine('set_sample_loop',{i,j})
@@ -1416,7 +1417,6 @@ function Kildare.init(track_count, poly)
     end
 
     -- print('end of the road!')
-    -- Kildare.rebuild_model_params(i,shown_set)
 
   end
 
@@ -1548,13 +1548,15 @@ function Kildare.init(track_count, poly)
       end
       if d.type ~= 'separator' then
         params:set_action(k.."_"..d.id, function(x)
-          if engine.name == "Kildare" then
+          -- if engine.name == "Kildare" then
             if k == "delay" and d.id == "time" then
               -- engine["set_"..k.."_param"](d.id, clock.get_beat_sec() * x/128)
               send_to_engine("set_"..k.."_param", {d.id, clock.get_beat_sec() * x/128})
+              Kildare.last_adjusted_param = {nil, k, d.id}
             elseif k ~= 'feedback' then
               -- engine["set_"..k.."_param"](d.id, x)
               send_to_engine("set_"..k.."_param", {d.id, x})
+              Kildare.last_adjusted_param = {nil, k, d.id}
             elseif k == 'feedback' then
               local sub = '_'
               local keys = {}
@@ -1574,8 +1576,9 @@ function Kildare.init(track_count, poly)
               end
               -- engine['set_feedback_param'](targetKey, paramKey, x)
               send_to_engine('set_feedback_param', {targetKey, paramKey, x})
+              Kildare.last_adjusted_param = {nil, k, d.id}
             end
-          end
+          -- end
         end)
       end
     end

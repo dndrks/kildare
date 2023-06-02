@@ -385,13 +385,11 @@ function lfos.return_to_baseline(i,silent,poly)
         if focus_voice ~= 'sample' then
           if lfos.last_param[i] ~= "carHz" then
             send_to_engine('set_voice_param', {parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])})
-            -- engine.set_voice_param(parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
           elseif lfos.last_param[i] == "carHz" then
             -- idk what this is:
             -- engine.set_voice_param(parent,lfos.last_param[i],musicutil.note_num_to_freq(params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])))
           end
         else
-          -- engine["set_voice_param"](parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i]))
           send_to_engine('set_voice_param',{parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])})
         end
       end
@@ -402,10 +400,8 @@ function lfos.return_to_baseline(i,silent,poly)
       end
       if params.lookup[parent.."_"..lfos.last_param[i]] ~= nil then
         if parent == "delay" and lfos.last_param[i] == "time" then
-          -- engine["set_"..parent.."_param"](lfos.last_param[i],clock.get_beat_sec() * params:get(parent.."_"..lfos.last_param[i])/128)
           send_to_engine("set_"..parent.."_param",{lfos.last_param[i],clock.get_beat_sec() * params:get(parent.."_"..lfos.last_param[i])/128})
         elseif parent ~= 'feedback' then
-          -- engine["set_"..parent.."_param"](lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i]))
           send_to_engine("set_"..parent.."_param",{lfos.last_param[i],params:get(parent.."_"..lfos.last_param[i])})
         end
       end
@@ -418,13 +414,13 @@ function lfos.return_to_baseline(i,silent,poly)
 end
 
 function lfos.rebuild_param(param,i)
-  if readingPSET == false then
+  if not readingPSET then
     local param_id = params.lookup["lfo_"..param.."_"..i]
     local target_track = params:string("lfoTargetTrack_"..i)
     local target_param = params:get("lfo_target_param_"..i)
     local default_value;
     if params:get("lfoTargetTrack_"..i) <= kildare_total_tracks then
-      print(i, target_track, target_param)
+      -- print(i, target_track, target_param)
       default_value = param == "min" and lfos.specs[target_track][target_param].min
       or params:get(target_track.."_"..params:string('voice_model_'..params:string("lfoTargetTrack_"..i))..'_'..lfos.params_list[target_track].ids[(target_param)])
     else
