@@ -16,14 +16,20 @@ Kildare.allocVoice = {}
 Kildare.soundfile_append = ''
 
 function send_to_engine(action, args)
-  -- engine[action](table.unpack(args))
-  -- if action ~= 'free_voice' then
-  --   osc.send({osc_echo,57120},"/command",{action,table.unpack(args)})
-  -- end
   if osc_echo == nil then
     engine[action](table.unpack(args))
   else
-    osc.send({osc_echo,57120},"/command",{action,table.unpack(args)})
+    -- osc.send({osc_echo,57120},"/command",{action,table.unpack(args)})
+    osc.send({osc_echo,57120},"/command/"..action,{table.unpack(args)})
+  end
+end
+
+function load_file_in_engine(action, args)
+  if osc_echo == nil then
+    engine[action](table.unpack(args))
+  else
+    -- osc.send({osc_echo,57120},"/command",{action,table.unpack(args)})
+    osc.send({osc_echo,57120},"/load_file_from_norns",{action,table.unpack(args)})
   end
 end
 
@@ -172,7 +178,7 @@ function Kildare.rebuild_model_params(i,current_model)
     function()
       clock.sleep(0.25)
       if not readingPSET then
-        print('pushing new model')
+        print('pushing new model', i, current_model)
         Kildare.push_new_model_params(i,current_model)
       end
     end)
@@ -188,6 +194,7 @@ function Kildare.push_new_model_params(i,current_model)
       end
     end
   end
+  Kildare.last_adjusted_param = {}
 end
 
 function Kildare.push_model_to_lfos(i,current_model)
@@ -305,7 +312,7 @@ function Kildare.init(track_count, poly)
   }
   
   kildare_drum_params = {
-    ["bd"] = {
+    ["bd"] = { -- do i want to add 'param pools' to make indexing for geodesy easier?
       {type = 'separator', name = 'carrier'},
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 15, max = 67, warp = 'lin', default = 33, step = 1, formatter = function(param) return (musicutil.note_num_to_name((type(param) == 'table' and param:get() or param),true)) end},
@@ -1119,9 +1126,9 @@ function Kildare.init(track_count, poly)
 
   params:add_separator("kildare_voice_header","kildare voices")
 
-  if engine.name ~= "Kildare" then
-    params:add_option("no_kildare","----- kildare not loaded -----",{" "})
-  end
+  -- if engine.name ~= "Kildare" then
+  --   params:add_option("no_kildare","----- kildare not loaded -----",{" "})
+  -- end
 
   params:add_group('kildare_model_management', 'models', track_count)
   local models = swappable_drums
@@ -1369,8 +1376,8 @@ function Kildare.init(track_count, poly)
                     send_to_engine('load_folder', {i,folder})
                     Kildare.folder_callback(i,folder)
                   else
-                    -- engine.load_file(i,file)
-                    send_to_engine('load_file', {i,file})
+                    -- send_to_engine('load_file', {i,file})
+                    load_file_in_engine('load_file', {i,file})
                     Kildare.file_callback(i,file)
                   end
                 end

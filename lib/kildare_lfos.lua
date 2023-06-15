@@ -393,7 +393,8 @@ function lfos.return_to_baseline(i,silent,poly)
           send_to_engine('set_voice_param',{parent,lfos.last_param[i],params:get(parent.."_"..focus_voice..'_'..lfos.last_param[i])})
         end
       end
-    elseif (parent == "delay" or parent == "feedback" or parent == "main") and engine.name == "Kildare" then
+    -- elseif (parent == "delay" or parent == "feedback" or parent == "main") and engine.name == "Kildare" then
+    elseif (parent == "delay" or parent == "feedback" or parent == "main") then
       local sources = {delay = lfos.delay_params, feedback = lfos.feedback_params, main = lfos.main_params}
       if not tab.contains(sources[parent],lfos.last_param[i]) then
         lfos.last_param[i] = sources[parent][1]
@@ -585,6 +586,12 @@ function lfos.rebuild_model_spec(k,poly)
         i = i+1 -- do not increment by the separators' gaps...
       end
     end
+  end
+end
+
+function lfos.map_last_pressed()
+  if #Kildare.last_adjusted_param > 0 then
+  elseif #Kildare.last_adjusted_param == 2 then
   end
 end
 
