@@ -6,14 +6,15 @@ Kildare.lfos = include 'kildare/lib/kildare_lfos'
 Kildare.json = include 'kildare/lib/kildare_json'
 local musicutil = require 'musicutil'
 
-Kildare.drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','input','sample'}
-local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','input','sample'}
+Kildare.drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','input','sample','midi'}
+local swappable_drums = {'bd','sd','tm','cp','rs','cb','hh','saw','fld','timbre','ptr','input','sample','midi'}
+selectedVoiceModels = {'bd','sd','tm','cp','rs','cb','hh'}
 Kildare.fx = {"delay", "feedback", "main"}
 local fx = {"delay", "feedback", "main"}
 Kildare.voice_state = {}
 Kildare.allocVoice = {}
 
-Kildare.soundfile_append = ''
+Kildare.soundfile_append = '' 
 
 function send_to_engine(action, args)
   if osc_echo == nil then
@@ -164,7 +165,10 @@ function Kildare.rebuild_model_params(i,current_model)
   menu_rebuild_queued = true
   Kildare.model_change_callback(i,current_model)
   print(i,current_model)
-  Kildare.push_new_model_params(i,current_model) -- TODO VERIFY THIS IS OK...
+
+  -- IMPORTANT TODO: WHEN DOES THIS NEED TO HAPPEN? WHEN LOADING PSETS???
+  -- Kildare.push_new_model_params(i,current_model) -- TODO VERIFY THIS IS OK...
+  
   Kildare.lfos.build_params_static(true)
   if Kildare.loaded then
     Kildare.lfos.rebuild_model_spec(i,true)
@@ -263,7 +267,7 @@ function Kildare.init(track_count, poly)
     return ((type(param) == 'table' and param:get() or param).."%")
   end
 
-  local sample_params = {
+  sample_params = {
     {type = 'separator', name = 'sample management'},
     {lfo_exclude = true, type = 'option', id = 'sampleMode', name = 'play mode', options = {"chop", "playthrough", "distribute"}, default = 1},
     {lfo_exclude = true, type = 'file', id = 'sampleFile', name = 'load', default = _path.audio},
@@ -310,6 +314,14 @@ function Kildare.init(track_count, poly)
       util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
       1,"%")) end},
   }
+
+  midi_params = {}
+  for mpIter = 1,32 do
+    table.insert(midi_params, {type = 'separator', name = 'midi cc ouput #'..mpIter})
+    table.insert(midi_params, {id = 'midiCC_num_'..mpIter, name = 'cc number', type = 'control', min = 0, max = 127, warp = 'lin', default = mpIter, step = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end})
+    table.insert(midi_params, {id = 'midiCC_ch_'..mpIter, name = 'cc channel', type = 'control', min = 1, max = 16, warp = 'lin', default = 1, step = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end})
+    table.insert(midi_params, {id = 'midiCC_val_'..mpIter, name = 'cc value', type = 'control', min = 0, max = 127, warp = 'lin', default = 0, step = 1, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end})
+  end
   
   kildare_drum_params = {
     ["bd"] = { -- do i want to add 'param pools' to make indexing for geodesy easier?
@@ -317,7 +329,7 @@ function Kildare.init(track_count, poly)
       {id = 'amp', name = 'carrier amp', type = 'control', min = 0, max = 1.25, warp = 'lin', default = 0.7, quantum = 1/125, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'carHz', name = 'carrier freq', type = 'control', min = 15, max = 67, warp = 'lin', default = 33, step = 1, formatter = function(param) return (musicutil.note_num_to_name((type(param) == 'table' and param:get() or param),true)) end},
       {id = 'carDetune', name = 'detune', type = 'control', min = -12, max = 12, warp = 'lin', default = 0,  step = 1/10, quantum = 1/240, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.1," semitones")) end},
-      {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'carAtk', name = 'carrier attack', type = 'control', min = 0.003, max = 10, warp = 'exp', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'carRel', name = 'carrier release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.3, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'carCurve', name = 'carrier env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
         util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
@@ -328,7 +340,7 @@ function Kildare.init(track_count, poly)
       {id = 'modFollow', name = '--> freq from carrier?', type = 'control', warp = 'lin', min = 0, max = 1, default = 0,  step = 1, quantum = 1, formatter = function(param) if (type(param) == 'table' and param:get() or param) == 0 then return ("no") else return ("yes") end end},
       {id = 'modNum', name = '--> modulator num', type = 'control', min = -20, max = 20, warp = 'lin', default = 1,  step = 1, quantum = 1/40, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
       {id = 'modDenum', name = '--> modulator denum', type = 'control', min = -20, max = 20, warp = 'lin', default = 1,  step = 1, quantum = 1/40, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),1,'')) end},
-      {id = 'modAtk', name = 'modulator attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'modAtk', name = 'modulator attack', type = 'control', min = 0.003, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'modRel', name = 'modulator release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'modCurve', name = 'modulator env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
         util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
@@ -348,7 +360,7 @@ function Kildare.init(track_count, poly)
       {id = 'eqHz', name = 'eq freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 6000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
       {id = 'eqAmp', name = 'eq gain', type = 'control', min = -2, max = 2, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'lpHz', name = 'lo-pass freq', type = 'control', min = 20, max = 20000, warp = 'exp', default = 20000, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," Hz")) end},
-      {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'lpAtk', name = 'lo-pass attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.003, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'lpRel', name = 'lo-pass release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.05, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'lpCurve', name = 'lo-pass env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
         util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
@@ -360,14 +372,14 @@ function Kildare.init(track_count, poly)
       {type = 'separator', name = 'fx sends'},
       {id = 'delaySend', name = 'delay', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'delayEnv', name = 'delay envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
-      {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'delayAtk', name = 'delay send attack', type = 'control', min = 0.003, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayRel', name = 'delay send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'delayCurve', name = 'delay env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
         util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
         1,"%")) end},
       {id = 'feedbackSend', name = 'feedback', type = 'control', min = 0, max = 1, warp = 'lin', default = 0, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param)*100,1,"%")) end},
       {id = 'feedbackEnv', name = 'feedback envelope', type = 'control', min = 0, max = 1, warp = "lin", default = 0,  step = 1, quantum = 1, formatter = function(param) local modes = {"off","on"} return modes[(type(param) == 'table' and param:get() or param)+1] end},
-      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
+      {id = 'feedbackAtk', name = 'feedback send attack', type = 'control', min = 0.003, max = 10, warp = 'exp', default = 0.001, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'feedbackRel', name = 'feedback send release', type = 'control', min = 0.001, max = 10, warp = 'exp', default = 2, formatter = function(param) return (round_form((type(param) == 'table' and param:get() or param),0.01," s")) end},
       {id = 'feedbackCurve', name = 'feedback env curve', type = 'control', min = -12, max = 4, warp = 'lin', default = -4, quantum = 1/160, formatter = function(param) return (round_form(
         util.linlin(-12,4,0,100,(type(param) == 'table' and param:get() or param)),
@@ -1030,6 +1042,7 @@ function Kildare.init(track_count, poly)
         1,"%")) end},
     },
     ['sample'] = sample_params,
+    ['midi'] = midi_params
   }
 
   local feedback_channels = {'a','b','c'}
@@ -1136,8 +1149,8 @@ function Kildare.init(track_count, poly)
     params:add_option('voice_model_'..i, 'voice '..i, models, i)
     params:set_action('voice_model_'..i, function(x)
       if all_loaded then
-        -- engine.set_model(i, 'kildare_'..models[x], 'false')
         send_to_engine('set_model', {i, 'kildare_'..models[x], 'false'})
+        selectedVoiceModels[i] = models[x]
         print('model build')
         Kildare.rebuild_model_params(i, models[x])
       end
@@ -1156,6 +1169,13 @@ function Kildare.init(track_count, poly)
     'playbackPitchControl',
     'loop'
   }
+
+  midi_params = {}
+  for mpIter = 1,32 do
+    table.insert(custom_actions, 'midiCC_num_'..mpIter)
+    table.insert(custom_actions, 'midiCC_ch_'..mpIter)
+    table.insert(custom_actions, 'midiCC_val_'..mpIter)
+  end
   
   local how_many_params = 0
   for i = 1,#swappable_drums do
@@ -1416,6 +1436,21 @@ function Kildare.init(track_count, poly)
                     send_to_engine('set_sample_loop',{i,j})
                   end
                 end
+              end
+            )
+          elseif string.find(d.id, 'midiCC_val_') then -- midi cc value
+            local beg,which_def = string.find(i.."_"..v..'_'..d.id, i.."_"..v..'_midiCC_val_')
+            which_def = string.sub(i.."_"..v..'_'..d.id, which_def+1)
+            print(i,v,d.id,which_def)
+            params:set_action(i.."_"..v..'_'..d.id,
+              function(x)
+                local ccNum = params:get(i.."_"..v..'_midiCC_num_'..which_def)
+                local ch = params:get(i.."_"..v..'_midiCC_ch_'..which_def)
+                local dev = params:get("hill "..i.." MIDI device")
+                midi_device[dev]:cc(ccNum,x,ch)
+                -- print(ccNum,x,ch)
+                -- send to midi devices
+                Kildare.last_adjusted_param = {i, v, d.id}
               end
             )
           end

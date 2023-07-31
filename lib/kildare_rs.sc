@@ -86,6 +86,7 @@ KildareRS {
 			feedbackSend = feedbackSend.lag3(0.1);
 
 			carHz = carHz * (2.pow(carDetune/12));
+			carHz = carHz.lag2(t1: (carAtk/2).clip(0.01,0.1));
 			modHz = Select.kr(modFollow > 0, [modHz, carHz * (modNum / modDenum)]);
 
 			filterQ = LinLin.kr(filterQ,0,100,1.0,0.001);
@@ -97,15 +98,15 @@ KildareRS {
 			feedAmp3 = modAmp.linlin(0, 127, 0, 3);
 			feedAmp4 = modAmp.linlin(0, 127, 0, 4);
 
-			carRamp = EnvGen.kr(
+			carRamp = EnvGen.ar(
 				Env([600,600, 0.000001], [0,rampDec], curve: \lin),
 				gate: t_gate
 			);
-			carEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
+			carEnv = EnvGen.ar(
+				envelope: Env.new([0,0,1,0], times: [0.01,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
 				gate: t_gate
 			);
-			filterEnv = EnvGen.kr(
+			filterEnv = EnvGen.ar(
 				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
@@ -131,15 +132,15 @@ KildareRS {
 			car = car.softclip;
 
 			sd_modHz = carHz*2.52;
-			sd_modEnv = EnvGen.kr(
+			sd_modEnv = EnvGen.ar(
 				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0,carCurve*(-1),carCurve]),
 				gate: t_gate
 			);
-			sd_carRamp = EnvGen.kr(
+			sd_carRamp = EnvGen.ar(
 				Env([1000,1000, 0.000001], [0,rampDec], curve: \exp),
 				gate: t_gate
 			);
-			sd_carEnv = EnvGen.kr(
+			sd_carEnv = EnvGen.ar(
 				envelope: Env.new([0,0,1,0], times: [0.01,sdAtk,sdRel], curve: [sdCurve,sdCurve*(-1)]),
 				gate: t_gate
 			);
@@ -153,8 +154,8 @@ KildareRS {
 			delEnv = Select.kr(
 				delayEnv > 0, [
 					delaySend,
-					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
+					delaySend * EnvGen.ar(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -174,8 +175,8 @@ KildareRS {
 			feedEnv = Select.kr(
 				feedbackEnv > 0, [
 					feedbackSend,
-					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
+					feedbackSend * EnvGen.ar(
+						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

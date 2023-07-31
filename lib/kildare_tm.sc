@@ -66,7 +66,7 @@ KildareTM {
 			feedbackAux,feedbackSend,
 			feedbackEnv, feedbackAtk, feedbackRel, feedbackCurve = -4,
 			velocity = 127,
-			carHz, carHzThird, carHzSeventh,
+			carHz,
 			carDetune, modHz, modAmp, modAtk, modRel, modCurve = -4, feedAmp,
 			modFollow, modNum, modDenum,
 			carAtk, carRel, carCurve = -4, amp,
@@ -89,12 +89,8 @@ KildareTM {
 			feedbackSend = feedbackSend.lag3(0.1);
 
 			carHz = (carHz * (1 - modFollow)) + (carHz * modFollow * modNum);
-			carHzThird = (carHzThird * (1 - modFollow)) + (carHzThird * modFollow * modNum);
-			carHzSeventh = (carHzSeventh * (1 - modFollow)) + (carHzSeventh * modFollow * modNum);
-
 			carHz = carHz * (2.pow(carDetune/12));
-			carHzThird = carHzThird * (2.pow(carDetune/12));
-			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
+			carHz = carHz.lag2(t1: (carAtk/2).clip(0.01,0.1));
 
 			modHz = (modHz * (1 - modFollow)) + (carHz * modFollow * modDenum);
 
@@ -105,20 +101,20 @@ KildareTM {
 			rampDepth = LinLin.kr(rampDepth,0.0,1.0,0.0,2.0);
 			amDepth = LinLin.kr(amDepth,0,1.0,0.0,2.0);
 
-			modEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0,modAtk,modRel], curve: [0, modCurve*(-1), modCurve]),
+			modEnv = EnvGen.ar(
+				envelope: Env.new([0,0,1,0], times: [0.01,modAtk,modRel], curve: [0, modCurve*(-1), modCurve]),
 				gate: t_gate
 			);
-			filterEnv = EnvGen.kr(
+			filterEnv = EnvGen.ar(
 				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
-			carRamp = EnvGen.kr(
+			carRamp = EnvGen.ar(
 				Env([600,600, 0.000001], [0,rampDec], curve: \lin),
 				gate: t_gate
 			);
-			carEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
+			carEnv = EnvGen.ar(
+				envelope: Env.new([0,0,1,0], times: [0.01,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
 				gate: t_gate
 			);
 
@@ -131,8 +127,8 @@ KildareTM {
 			car = SinOsc.ar(carHz + (mod) + (carRamp*rampDepth)) * carEnv;
 
 			ampMod = SinOsc.ar(freq:amHz,mul:amDepth,add:1);
-			clicksound = LPF.ar(Impulse.ar(0.003),16000,click) * EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0.0,carAtk,0.2], curve: [carCurve,carCurve*(-1)]),
+			clicksound = LPF.ar(Impulse.ar(0.003),16000,click) * EnvGen.ar(
+				envelope: Env.new([0,0,1,0], times: [0.01,carAtk,0.2], curve: [carCurve,carCurve*(-1)]),
 				gate: t_gate
 			);
 
@@ -150,8 +146,8 @@ KildareTM {
 			delEnv = Select.kr(
 				delayEnv > 0, [
 					delaySend,
-					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
+					delaySend * EnvGen.ar(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -160,8 +156,8 @@ KildareTM {
 			feedEnv = Select.kr(
 				feedbackEnv > 0, [
 					feedbackSend,
-					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
+					feedbackSend * EnvGen.ar(
+						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

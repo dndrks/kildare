@@ -78,7 +78,7 @@ KildarePTR {
 			pulseHz, pulseFollow, pulseNum = 1, pulseDenum = 1,
 			width, phaseMul, phaseAmp, sync,
 			phaseAtk, phaseRel, phaseCurve = -4,
-			carHz, carHzThird, carHzSeventh,
+			carHz,
 			carDetune, carAtk, carRel, carCurve = -4,
 			pan, rampDepth, rampDec,
 			squishPitch, squishChunk,
@@ -113,27 +113,26 @@ KildarePTR {
 			// pulseDenum = pulseDenum.lag3(0.1);
 
 			carHz = carHz * (2.pow(carDetune/12));
-			carHzThird = carHzThird * (2.pow(carDetune/12));
-			carHzSeventh = carHzSeventh * (2.pow(carDetune/12));
+			carHz = carHz.lag2(t1: (carAtk/2).clip(0.01,0.1));
 
 			// pulseHz = ((pulseHz * (1 - pulseFollow)) + (carHz * (pulseFollow * (pulseNum / pulseDenum))));
 			pulseHz = (carHz * (pulseNum / pulseDenum));
 			phz = Pulse.ar(freq:pulseHz, mul: phaseMul);
 
-			phaseEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0,phaseAtk,phaseRel], curve: [0,phaseCurve*(-1),phaseCurve]),
+			phaseEnv = EnvGen.ar(
+				envelope: Env.new([0,0,1,0], times: [0.01,phaseAtk,phaseRel], curve: [0,phaseCurve*(-1),phaseCurve]),
 				gate: t_gate
 			);
-			filterEnv = EnvGen.kr(
+			filterEnv = EnvGen.ar(
 				envelope: Env.new([0,0,1,0], times: [0.01,lpAtk,lpRel], curve: [0, lpCurve*(-1), lpCurve]),
 				gate: t_gate
 			);
-			carRamp = EnvGen.kr(
+			carRamp = EnvGen.ar(
 				Env([1000,1000, 0.000001], [0,rampDec], curve: \exp),
 				gate: t_gate
 			);
-			carEnv = EnvGen.kr(
-				envelope: Env.new([0,0,1,0], times: [0,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
+			carEnv = EnvGen.ar(
+				envelope: Env.new([0,0,1,0], times: [0.01,carAtk,carRel], curve: [0, carCurve*(-1), carCurve]),
 				gate: t_gate
 			);
 
@@ -163,8 +162,8 @@ KildarePTR {
 			delEnv = Select.kr(
 				delayEnv > 0, [
 					delaySend,
-					delaySend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
+					delaySend * EnvGen.ar(
+						envelope: Env.new([0,0,1,0], times: [0.01,delayAtk,delayRel], curve: [0, delayCurve*(-1), delayCurve]),
 						gate: t_gate
 					)
 				]
@@ -173,8 +172,8 @@ KildarePTR {
 			feedEnv = Select.kr(
 				feedbackEnv > 0, [
 					feedbackSend,
-					feedbackSend * EnvGen.kr(
-						envelope: Env.new([0,0,1,0], times: [0,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
+					feedbackSend * EnvGen.ar(
+						envelope: Env.new([0,0,1,0], times: [0.01,feedbackAtk,feedbackRel], curve: [0, feedbackCurve*(-1), feedbackCurve]),
 						gate: t_gate
 					)
 				]

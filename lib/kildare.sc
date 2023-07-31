@@ -22,6 +22,7 @@ Kildare {
 	var <emptyVoices;
 	var <folderedSamples;
 	var <voiceLimit;
+	var <>reduceJitter;
 	classvar <sampleInfo;
 	classvar <indexTracker;
 
@@ -61,6 +62,8 @@ Kildare {
 
 	init {
 		var s = Server.default, sample_iterator = 1;
+
+		reduceJitter = false;
 
 		synthKeys = Dictionary.newFrom([
 			\1, \none,
@@ -217,7 +220,7 @@ Kildare {
 			mixSpread = 1, mixCenter = 0, mixLevel = 1,
 			lSHz = 600, lSdb = 0.0, lSQ = 50,
 			hSHz = 19000, hSdb = 0.0, hSQ = 50;
-			var outa, outb, outc, sound;
+			var outa, outb, outc, sound, bLo, bHi, bBand;
 
 			outa = Mix.ar(In.ar(busses[\feedback1], 2) * inA);
 			outb = Mix.ar(In.ar(busses[\feedback2], 2) * inB);
@@ -226,6 +229,7 @@ Kildare {
 			sound = Splay.ar([outa, outb, outc],spread: mixSpread, level: mixLevel, center: mixCenter);
 			sound = BLowShelf.ar(sound, lSHz, lSQ, lSdb);
 			sound = BHiShelf.ar(sound, hSHz, hSQ, hSdb);
+
 			sound = Limiter.ar(sound, 0.25);
 
 			sound = LeakDC.ar(sound);
@@ -618,19 +622,52 @@ Kildare {
 
 	}
 
+	renew { arg voiceKey, allocVoice, style;
+		voiceTracker[voiceKey][allocVoice].set(\t_gate, -1.1);
+		voiceTracker[voiceKey][allocVoice] = Synth.new(
+			synthKeys[voiceKey],
+			polyParams[voiceKey][allocVoice].getPairs
+		);
+		voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
+		NodeWatcher.register(voiceTracker[voiceKey][allocVoice],true);
+	}
+
 	test_trigger { arg voiceKey, velocity, allocVoice;
 
 		paramProtos[voiceKey][\velocity] = velocity;
 		indexTracker[voiceKey] = allocVoice;
+		voiceTracker[voiceKey][allocVoice].isPlaying.postln;
 		if (voiceTracker[voiceKey][allocVoice].isPlaying, {
-			voiceTracker[voiceKey][allocVoice].set(\velocity, velocity);
-			voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
-			if ((""++synthKeys[voiceKey]++"").contains("sample"), {
-				voiceTracker[voiceKey][allocVoice].set(\t_trig, 1);
-				('triggering sample '++allocVoice).postln;
+			if ((""++synthKeys[voiceKey]++"").contains("bd"), {
+				('kill and make new').postln;
+				voiceTracker[voiceKey][allocVoice].set(\t_gate, -1.1);
+				voiceTracker[voiceKey][allocVoice] = Synth.new(
+					synthKeys[voiceKey],
+					polyParams[voiceKey][allocVoice].getPairs
+				);
+				voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
+				NodeWatcher.register(voiceTracker[voiceKey][allocVoice],true);
+			},{
+				voiceTracker[voiceKey][allocVoice].set(\velocity, velocity);
+				voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
+				if ((""++synthKeys[voiceKey]++"").contains("sample"), {
+					voiceTracker[voiceKey][allocVoice].set(\t_trig, 1);
+					('triggering sample '++allocVoice).postln;
+				});
+				this.setSampleLoop(voiceKey, allocVoice);
+				// (' ' ++ indexTracker[voiceKey] ++ ' ' ++ allocVoice).postln;
 			});
-			this.setSampleLoop(voiceKey, allocVoice);
-			// (' ' ++ indexTracker[voiceKey] ++ ' ' ++ allocVoice).postln;
+		},{
+			if ((""++synthKeys[voiceKey]++"").contains("bd"), {
+				('should make a new bd').postln;
+				// voiceTracker[voiceKey][allocVoice].set(\t_gate, -1.2);
+				voiceTracker[voiceKey][allocVoice] = Synth.new(
+					synthKeys[voiceKey],
+					polyParams[voiceKey][allocVoice].getPairs
+				);
+				voiceTracker[voiceKey][allocVoice].set(\t_gate, 1);
+				NodeWatcher.register(voiceTracker[voiceKey][allocVoice],true);
+			});
 		});
 	}
 
@@ -857,12 +894,23 @@ Kildare {
 		},{
 			(prevPoly+1..limit).do({ arg voiceIndex;
 				if( emptyVoices[voice] == false, {
-					voiceTracker[voice][voiceIndex-1] = Synth.new(
-						synthKeys[voice],
-						polyParams[voice][voiceIndex-1].getPairs
-					);
-					NodeWatcher.register(voiceTracker[voice][voiceIndex-1],true);
-					(voiceIndex-1).postln;
+					if(reduceJitter, {
+						Server.default.bind({
+							voiceTracker[voice][voiceIndex-1] = Synth.new(
+								synthKeys[voice],
+								polyParams[voice][voiceIndex-1].getPairs
+							);
+							NodeWatcher.register(voiceTracker[voice][voiceIndex-1],true);
+							("bound!").postln;
+						});
+					},{
+						voiceTracker[voice][voiceIndex-1] = Synth.new(
+							synthKeys[voice],
+							polyParams[voice][voiceIndex-1].getPairs
+						);
+						NodeWatcher.register(voiceTracker[voice][voiceIndex-1],true);
+						(voiceIndex-1).postln;
+					});
 				});
 			});
 		});
@@ -1045,9 +1093,18 @@ Kildare {
 			if (compileFlag, {
 				('building synth ' ++ voice ++ ' ' ++ model).postln;
 				(voiceLimit[voice]).do({ arg voiceIndex;
-					voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
-					NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
-					('poly: '++ voice ++ ', ' ++ voiceIndex ++ ', '++voiceTracker[voice][voiceIndex].isPlaying).postln;
+					if(reduceJitter, {
+						Server.default.bind({
+							voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
+							NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
+							('bound!!: '++ voice ++ ', ' ++ voiceIndex ++ ', '++voiceTracker[voice][voiceIndex].isPlaying).postln;
+						});
+					},{
+						voiceTracker[voice][voiceIndex] = Synth.new(synthKeys[voice], paramProtos[voice].getPairs);
+						NodeWatcher.register(voiceTracker[voice][voiceIndex],true);
+						('poly: '++ voice ++ ', ' ++ voiceIndex ++ ', '++voiceTracker[voice][voiceIndex].isPlaying).postln;
+					});
+
 				});
 			});
 		});

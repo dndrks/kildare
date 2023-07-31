@@ -183,7 +183,7 @@ function lfos.add_params(track_count, fx_names, poly)
     )
 
     -- params:add_option("lfo_shape_"..i, "shape", {"sine","saw","square","random"},1)
-    local lfo_shapes = {"sine","saw","square","random"}
+    local lfo_shapes = {'sine','tri','square','random','up','down'}
     params:add_control(
       "lfo_shape_"..i,
       "shape",
